@@ -10,6 +10,7 @@ import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
+import { ImageSlider } from '@/components/image-slider';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -51,6 +52,15 @@ export default function Home() {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-20">
+        <div className="container px-4 md:px-6">
+           <div className="flex flex-col items-center space-y-4 text-center">
+             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Featured Projects</h2>
+           </div>
+           <ImageSlider />
         </div>
       </section>
     </>
