@@ -64,7 +64,7 @@ export default function ChatRoomPage() {
             <Link
                 href={`/chatroom/${room.id}`}
                 key={room.id}
-                className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer glow-border-hover bg-background"
+                className="block p-4 border rounded-lg hover:bg-muted/50 transition-all duration-300 cursor-pointer bg-background hover:shadow-primary/20 hover:shadow-[0_0_15px] focus:shadow-primary/20 focus:shadow-[0_0_15px] focus:outline-none"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -73,7 +73,7 @@ export default function ChatRoomPage() {
                                 src={room.imageUrl || 'https://placehold.co/40x40.png'}
                                 alt={`Image for ${room.name}`}
                                 fill
-                                objectFit="cover"
+                                style={{objectFit: "cover"}}
                                 data-ai-hint="project image"
                             />
                         </div>
