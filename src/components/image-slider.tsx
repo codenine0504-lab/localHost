@@ -13,12 +13,18 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 
+import awardImg from '../../../public/slider/award.jpg';
+import teamworkImg from '../../../public/slider/teamwork.jpg';
+import electronicsImg from '../../../public/slider/electronics.png';
+import startupImg from '../../../public/slider/startup.png';
+import meetingImg from '../../../public/slider/meeting.jpg';
+
 const sliderImages = [
-    { id: '1', title: 'Award', imageUrl: '/slider/award.jpg' },
-    { id: '2', title: 'Teamwork', imageUrl: '/slider/teamwork.jpg' },
-    { id: '3', title: 'Electronics', imageUrl: '/slider/electronics.png' },
-    { id: '4', title: 'Startup', imageUrl: '/slider/startup.png' },
-    { id: '5', title: 'Meeting', imageUrl: '/slider/meeting.jpg' },
+    { id: '1', title: 'Award', imageUrl: awardImg },
+    { id: '2', title: 'Teamwork', imageUrl: teamworkImg },
+    { id: '3', title: 'Electronics', imageUrl: electronicsImg },
+    { id: '4', title: 'Startup', imageUrl: startupImg },
+    { id: '5', title: 'Meeting', imageUrl: meetingImg },
 ]
 
 export function ImageSlider() {
@@ -58,6 +64,7 @@ export function ImageSlider() {
                       height={600}
                       className="object-cover w-full h-full"
                       data-ai-hint="showcase image"
+                      placeholder="blur"
                     />
                   </CardContent>
                 </Card>
