@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { chat } from '@/ai/flows/chat-flow';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -87,7 +86,6 @@ export default function ChatPage() {
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [isBotReplying, setIsBotReplying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -188,38 +186,19 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !projectId || isBotReplying || !user) return;
+    if (newMessage.trim() === '' || !projectId || !user) return;
 
     const userMessage = newMessage;
     setNewMessage('');
 
-    // Add user message to firestore
-    await addDoc(collection(db, `Chat/${projectId}/Chats`), {
-        text: userMessage,
-        createdAt: serverTimestamp(),
-        senderId: user.uid, 
-    });
-    
-    setIsBotReplying(true);
-
     try {
-      const aiResponse = await chat({ message: userMessage });
-
-      await addDoc(collection(db, `Chat/${projectId}/Chats`), {
-        text: aiResponse.response,
-        createdAt: serverTimestamp(),
-        senderId: 'bot', 
-      });
-
-    } catch(error) {
-        console.error("Error sending message or getting AI response:", error);
-         await addDoc(collection(db, `Chat/${projectId}/Chats`), {
-            text: "Sorry, I couldn't get a response. Please try again.",
+        await addDoc(collection(db, `Chat/${projectId}/Chats`), {
+            text: userMessage,
             createdAt: serverTimestamp(),
-            senderId: 'bot', 
-      });
-    } finally {
-        setIsBotReplying(false);
+            senderId: user.uid, 
+        });
+    } catch(error) {
+        console.error("Error sending message:", error);
     }
   };
   
@@ -285,17 +264,6 @@ export default function ChatPage() {
                     )}
                 </div>
                 ))}
-                {isBotReplying && (
-                <div className="flex items-start gap-3">
-                    <Avatar className="h-8 w-8">
-                            <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
-                            <AvatarFallback>BT</AvatarFallback>
-                        </Avatar>
-                        <div className="rounded-lg px-4 py-2 max-w-[70%] bg-muted">
-                            <p className="text-sm italic">Bot is typing...</p>
-                        </div>
-                </div>
-                )}
             </div>
         </ScrollArea>
         <div className="p-4 bg-background border-t">
@@ -305,10 +273,10 @@ export default function ChatPage() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type a message..."
-                disabled={isBotReplying || !user}
+                disabled={!user}
                 className="pr-12"
                 />
-                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={isBotReplying || newMessage.trim() === '' || !user}>
+                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user}>
                 <Send className="h-4 w-4" />
                 </Button>
             </div>

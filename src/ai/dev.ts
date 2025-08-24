@@ -1,2 +1,2 @@
-// Flows will be imported for their side effects in this file.
-import './flows/chat-flow';
+// This file is intentionally blank.
+// Flows are now imported dynamically where they are needed.
