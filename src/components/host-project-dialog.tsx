@@ -98,6 +98,9 @@ export function HostProjectDialog() {
         createdAt: serverTimestamp(),
       });
 
+      const audio = new Audio('/upload.mp3');
+      audio.play();
+
       toast({
         title: 'Project Hosted!',
         description: 'Your project and chat room have been created.',

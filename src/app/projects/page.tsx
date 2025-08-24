@@ -60,6 +60,8 @@ export default function ProjectsPage() {
           });
           return;
       }
+      const audio = new Audio('/join.mp3');
+      audio.play();
       router.push(`/chatroom/${projectId}`);
   }
 
