@@ -43,7 +43,7 @@ export function Footer() {
       <footer className="hidden md:block w-full border-t bg-background">
         <div className="container py-8 flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-lg">LocalHost</span>
+            <span className="font-bold text-lg text-primary">LocalHost</span>
           </div>
           <p className="text-sm text-muted-foreground mt-4 md:mt-0">
             © {new Date().getFullYear()} LocalHost. All rights reserved.
