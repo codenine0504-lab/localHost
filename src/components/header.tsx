@@ -50,7 +50,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2 ml-4">
           <span className="font-bold text-lg text-primary">LocalHost</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mr-4">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
