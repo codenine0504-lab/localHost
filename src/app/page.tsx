@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ImageSlider } from '@/components/image-slider';
 import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -19,9 +20,11 @@ export default function Home() {
             </div>
             <div className="flex flex-col gap-4 min-[400px]:flex-row">
               <Button size="lg">Host a project</Button>
-              <Button size="lg" variant="secondary">
-                Join a project
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/projects">
+                  Join a project
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </div>
