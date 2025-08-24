@@ -33,7 +33,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
-  theme: z.enum(['software', 'hardware', 'event']),
+  theme: z.enum(['software', 'hardware', 'event', 'design']),
   description: z.string().min(1, 'Description is required.'),
 });
 
@@ -160,6 +160,7 @@ export function HostProjectDialog() {
                       <SelectItem value="software">Software</SelectItem>
                       <SelectItem value="hardware">Hardware</SelectItem>
                       <SelectItem value="event">Event</SelectItem>
+                      <SelectItem value="design">Design</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
