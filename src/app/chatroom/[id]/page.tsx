@@ -91,6 +91,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const memberCache = useRef<Map<string, Member>>(new Map());
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(setUser);
@@ -99,74 +100,77 @@ export default function ChatPage() {
 
   const fetchProjectAndMembers = useCallback(async () => {
     if (!projectId) return;
+    setLoading(true);
 
-    // Fetch project details
-    const projectDoc = await getDoc(doc(db, "projects", projectId));
-    if (projectDoc.exists()) {
-        const projectData = projectDoc.data();
-        setProjectDetails({
-            id: projectDoc.id,
-            title: projectData.title,
-            description: projectData.description,
-            imageUrl: projectData.imageUrl,
-            owner: projectData.owner,
-        });
+    try {
+        const projectDoc = await getDoc(doc(db, "projects", projectId));
+        if (projectDoc.exists()) {
+            const projectData = projectDoc.data();
+            const projDetails = {
+                id: projectDoc.id,
+                title: projectData.title,
+                description: projectData.description,
+                imageUrl: projectData.imageUrl,
+                owner: projectData.owner,
+            };
+            setProjectDetails(projDetails);
+        }
+
+        const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
+        if (chatRoomDoc.exists()) {
+            setChatRoom({ id: chatRoomDoc.id, ...chatRoomDoc.data() } as ChatRoom);
+        }
+    } catch(error) {
+        console.error("Error fetching project details:", error);
+    } finally {
+        setLoading(false);
     }
-
-    // Fetch chat room details
-    const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
-    if (chatRoomDoc.exists()) {
-        setChatRoom({ id: chatRoomDoc.id, ...chatRoomDoc.data() } as ChatRoom);
-    } 
   }, [projectId]);
 
 
   useEffect(() => {
-    if (!projectId) return;
     fetchProjectAndMembers();
+  }, [fetchProjectAndMembers]);
+
+
+  useEffect(() => {
+    if (!projectId) return;
 
     const q = query(collection(db, `Chat/${projectId}/Chats`), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const msgs: Message[] = [];
-      const senderIds = new Set<string>();
-      querySnapshot.forEach((doc) => {
-        const msg = { id: doc.id, ...doc.data() } as Message;
-        msgs.push(msg);
-        if (msg.senderId !== 'bot') {
-            senderIds.add(msg.senderId);
-        }
-      });
+      const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs);
 
-       if (projectDetails) {
-            senderIds.add(projectDetails.owner);
-       }
+      const senderIds = new Set(msgs.map(msg => msg.senderId).filter(id => id !== 'bot'));
+      if (projectDetails) {
+          senderIds.add(projectDetails.owner);
+      }
+      
+      const newSenderIds = Array.from(senderIds).filter(id => !memberCache.current.has(id));
 
-       const memberList: Member[] = [];
-       if(senderIds.size > 0) {
-            const userDocs = await getDocs(query(collection(db, "users")));
-            const allUsers = new Map(userDocs.docs.map(d => [d.id, d.data()]));
+      if (newSenderIds.length > 0) {
+        const userDocs = await getDocs(query(collection(db, "users")));
+        const allUsers = new Map(userDocs.docs.map(d => [d.id, d.data()]));
 
-            senderIds.forEach(id => {
-                const userData = allUsers.get(id);
-                 memberList.push({
-                    id: id,
-                    displayName: userData?.displayName || 'Unknown User',
-                    photoURL: userData?.photoURL || null,
-                    isAdmin: id === projectDetails?.owner
-                });
-            })
-       }
-       setMembers(memberList);
-
-
-      if(loading){
-        setLoading(false);
+        newSenderIds.forEach(id => {
+            const userData = allUsers.get(id);
+            memberCache.current.set(id, {
+                id: id,
+                displayName: userData?.displayName || 'Unknown User',
+                photoURL: userData?.photoURL || null,
+                isAdmin: id === projectDetails?.owner
+            });
+        });
+        setMembers(Array.from(memberCache.current.values()));
+      }
+      
+      if (loading) {
+          setLoading(false);
       }
     });
 
     return () => unsubscribe();
-  }, [projectId, loading, fetchProjectAndMembers, projectDetails]);
+  }, [projectId, projectDetails, loading]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -235,18 +239,18 @@ export default function ChatPage() {
   const getSenderName = (senderId: string) => {
       if (senderId === 'bot') return 'Bot';
       if (senderId === user?.uid) return 'You';
-      const member = members.find(m => m.id === senderId);
+      const member = memberCache.current.get(senderId);
       return member?.displayName || 'A member';
   }
   const getSenderAvatar = (senderId: string) => {
       if(senderId === 'bot') return "https://placehold.co/32x32.png";
-      const member = members.find(m => m.id === senderId);
+      const member = memberCache.current.get(senderId);
       return member?.photoURL;
   }
   const getSenderFallback = (senderId: string) => {
     if(senderId === 'bot') return 'BT';
     if (senderId === user?.uid) return user.displayName?.substring(0, 2).toUpperCase() || 'U';
-    const member = members.find(m => m.id === senderId);
+    const member = memberCache.current.get(senderId);
     return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
   };
 
