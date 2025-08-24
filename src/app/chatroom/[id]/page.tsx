@@ -169,16 +169,19 @@ export default function ChatPage() {
          </div>
       </ScrollArea>
       <div className="p-4 bg-background border-t">
-        <form onSubmit={handleSendMessage} className="flex gap-2 max-w-4xl mx-auto w-full">
+        <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
+          <div className="relative">
             <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            disabled={isBotReplying}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              disabled={isBotReplying}
+              className="pr-12"
             />
-            <Button type="submit" size="icon" disabled={isBotReplying || newMessage.trim() === ''}>
-            <Send className="h-4 w-4" />
+            <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8" disabled={isBotReplying || newMessage.trim() === ''}>
+              <Send className="h-4 w-4" />
             </Button>
+          </div>
         </form>
       </div>
     </div>
