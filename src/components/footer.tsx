@@ -27,12 +27,12 @@ export function Footer() {
               className={cn(
                 'group inline-flex flex-col items-center justify-center px-5 focus:outline-none transition-colors',
                 pathname === item.href
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'text-primary'
                   : 'text-muted-foreground hover:bg-primary/90 hover:text-primary-foreground'
               )}
             >
               <item.icon className={cn("h-6 w-6 mb-1",
-                 pathname === item.href ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-primary-foreground'
+                 pathname === item.href ? 'text-primary' : 'text-muted-foreground group-hover:text-primary-foreground'
               )} />
               <span className="text-xs font-medium">{item.label}</span>
             </Link>
