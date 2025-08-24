@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { ImageSlider } from '@/components/image-slider';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { HostProjectDialog } from '@/components/host-project-dialog';
 
 export default function Home() {
   return (
@@ -19,7 +20,7 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col gap-4 min-[400px]:flex-row">
-              <Button size="lg">Host a project</Button>
+              <HostProjectDialog />
               <Button size="lg" variant="secondary" asChild>
                 <Link href="/projects">
                   Join a project
