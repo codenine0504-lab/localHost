@@ -59,7 +59,6 @@ export default function ProjectsPage() {
               <CardDescription>{project.college}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">
-              <p className="text-sm text-muted-foreground mb-4">{project.description}</p>
               <div className="flex flex-wrap gap-2">
                  <Badge variant="secondary">{project.theme}</Badge>
               </div>
