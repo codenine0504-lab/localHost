@@ -2,16 +2,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { Header } from '@/components/header';
-
+import Image from 'next/image';
 
 interface ChatRoom {
   id: string;
   name: string;
+  imageUrl?: string;
 }
 
 export default function ChatRoomPage() {
@@ -20,10 +21,21 @@ export default function ChatRoomPage() {
 
   useEffect(() => {
     const q = query(collection(db, 'chatRooms'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const rooms: ChatRoom[] = [];
+      const projectIds = querySnapshot.docs.map(doc => doc.id);
+
+      // Fetch project data to get image URLs
+      const projectsSnapshot = await getDocs(collection(db, 'projects'));
+      const projectsData = new Map(projectsSnapshot.docs.map(doc => [doc.id, doc.data()]));
+
       querySnapshot.forEach((doc) => {
-        rooms.push({ id: doc.id, ...doc.data() } as ChatRoom);
+        const projectData = projectsData.get(doc.id);
+        rooms.push({ 
+          id: doc.id, 
+          name: doc.data().name,
+          imageUrl: projectData?.imageUrl,
+        });
       });
       setChatRooms(rooms);
       setLoading(false);
@@ -53,11 +65,17 @@ export default function ChatRoomPage() {
               className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center justify-between">
-                <div className="flex flex-col">
+                <div className="flex items-center gap-4">
+                   <div className="relative h-10 w-10 rounded-full overflow-hidden">
+                     <Image
+                        src={room.imageUrl || 'https://placehold.co/40x40.png'}
+                        alt={`Image for ${room.name}`}
+                        layout="fill"
+                        objectFit="cover"
+                        data-ai-hint="project image"
+                    />
+                   </div>
                   <h3 className="text-lg font-semibold">{room.name}</h3>
-                   <p className="text-sm text-muted-foreground mt-1">
-                    Join the conversation for the {room.name} project.
-                  </p>
                 </div>
                 <MessageSquare className="h-6 w-6 text-muted-foreground" />
               </div>
