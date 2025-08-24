@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const collegesByCity: Record<string, string[]> = {
-  raipur: ["NIT Raipur", "Government Engineering College, Raipur"],
+  raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
   bilaspur: ["Guru Ghasidas Vishwavidyalaya", "Government Engineering College, Bilaspur"],
   bhilai: ["IIT Bhilai", "Bhilai Institute of Technology, Durg"],
 };
