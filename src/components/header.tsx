@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ArrowLeft, LogOut } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface HeaderProps {
   onTitleClick?: () => void;
@@ -58,7 +58,22 @@ export function Header({ onTitleClick }: HeaderProps) {
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const loggedInUser = result.user;
+      
+      // Check if user exists in Firestore, if not create a document
+      const userDocRef = doc(db, "users", loggedInUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+            uid: loggedInUser.uid,
+            email: loggedInUser.email,
+            displayName: loggedInUser.displayName,
+            photoURL: loggedInUser.photoURL,
+        }, { merge: true });
+      }
+
     } catch (error) {
       console.error('Error during sign-in:', error);
     }
@@ -88,12 +103,12 @@ export function Header({ onTitleClick }: HeaderProps) {
               </TitleComponent>
             </>
           ) : (
-            <Link href="/" className="flex items-center gap-2 ml-4">
+            <Link href="/" className="flex items-center gap-2">
               <span className="font-bold text-lg text-primary">LocalHost</span>
             </Link>
           )}
         </div>
-        <div className="flex items-center gap-4 mr-4">
+        <div className="flex items-center gap-4">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
