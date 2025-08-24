@@ -22,7 +22,7 @@ function ChatRoomListSkeleton() {
         <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-10 w-10 rounded-lg" />
                     <Skeleton className="h-6 w-1/2" />
                 </div>
             ))}
@@ -78,7 +78,7 @@ export default function ChatRoomPage() {
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden">
+                        <div className="relative h-10 w-10 rounded-lg overflow-hidden">
                             <Image
                                 src={room.imageUrl || 'https://placehold.co/40x40.png'}
                                 alt={`Image for ${room.name}`}
