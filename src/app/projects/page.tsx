@@ -6,9 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import Link from 'next/link';
 import Image from 'next/image';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface Project {
   id: string;
@@ -22,10 +25,18 @@ interface Project {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const { toast } = useToast();
+  const router = useRouter();
+
 
   useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+    });
+
     const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribeProjects = onSnapshot(q, (querySnapshot) => {
       const projs: Project[] = [];
       querySnapshot.forEach((doc) => {
         projs.push({ id: doc.id, ...doc.data() } as Project);
@@ -34,8 +45,23 @@ export default function ProjectsPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+        unsubscribeAuth();
+        unsubscribeProjects();
+    };
   }, []);
+
+  const handleJoinChat = (projectId: string) => {
+      if (!user) {
+          toast({
+              title: "Authentication Required",
+              description: "Please log in to join the chat.",
+              variant: "destructive"
+          });
+          return;
+      }
+      router.push(`/chatroom/${projectId}`);
+  }
 
   if (loading) {
     return (
@@ -75,10 +101,8 @@ export default function ProjectsPage() {
               </div>
             </CardContent>
             <CardFooter>
-                <Button className="w-full" asChild>
-                    <Link href={`/chatroom/${project.id}`}>
-                        Join Chat
-                    </Link>
+                <Button className="w-full" onClick={() => handleJoinChat(project.id)}>
+                    Join Chat
                 </Button>
             </CardFooter>
           </Card>

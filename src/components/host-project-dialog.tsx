@@ -25,22 +25,23 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, setDoc, doc } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
   theme: z.enum(['software', 'hardware', 'event']),
   description: z.string().min(1, 'Description is required.'),
-  // image validation is complex, skipping for now
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export function HostProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
   const {
     handleSubmit,
@@ -56,18 +57,42 @@ export function HostProjectDialog() {
     },
   });
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleDialogOpen = (open: boolean) => {
+    if (open && !user) {
+        toast({
+            title: "Authentication Required",
+            description: "Please log in with Google to host a project.",
+            variant: "destructive"
+        });
+        return;
+    }
+    setIsOpen(open);
+  }
+
   const onSubmit = async (data: ProjectFormValues) => {
+    if (!user) {
+        toast({ title: "Not Logged In", description: "You must be logged in to host a project.", variant: "destructive" });
+        return;
+    }
+
     try {
-      // Create project document
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const college = userDoc.exists() ? userDoc.data().college : "Unknown College";
+
       const projectRef = await addDoc(collection(db, 'projects'), {
         ...data,
         createdAt: serverTimestamp(),
-        // Hardcoding user/college for now, this should come from auth
-        college: 'NIT Raipur', 
-        owner: 'user1',
+        college: college, 
+        owner: user.uid,
       });
 
-      // Create a corresponding chat room document using the project ID
       await setDoc(doc(db, 'chatRooms', projectRef.id), {
         name: data.title,
         createdAt: serverTimestamp(),
@@ -90,7 +115,7 @@ export function HostProjectDialog() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
       <DialogTrigger asChild>
         <Button size="lg">Host a project</Button>
       </DialogTrigger>
