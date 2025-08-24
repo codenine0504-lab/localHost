@@ -217,7 +217,7 @@ export default function ChatPage() {
             <div className="space-y-4 max-w-4xl mx-auto w-full">
                 {messages.length === 0 && (
                 <div className="text-center text-muted-foreground py-10">
-                        <p>Welcome to the chat! Be the first to send a message.</p>
+                        <p>Discuss Your project here</p>
                 </div>
                 )}
                 {messages.map((msg) => (
