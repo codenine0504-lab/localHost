@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Project {
   id: string;
@@ -15,6 +16,7 @@ interface Project {
   description: string;
   theme: string;
   college: string;
+  imageUrl?: string;
 }
 
 export default function ProjectsPage() {
@@ -53,7 +55,16 @@ export default function ProjectsPage() {
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
-          <Card key={project.id} className="flex flex-col">
+          <Card key={project.id} className="flex flex-col overflow-hidden">
+            <div className="relative h-48 w-full">
+                <Image
+                    src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                    alt={`Image for ${project.title}`}
+                    layout="fill"
+                    objectFit="cover"
+                    data-ai-hint="project image"
+                />
+            </div>
             <CardHeader>
               <CardTitle>{project.title}</CardTitle>
               <CardDescription>{project.college}</CardDescription>
