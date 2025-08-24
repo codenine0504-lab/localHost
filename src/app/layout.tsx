@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Footer } from '@/components/footer';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: 'LocalHost',
@@ -28,11 +29,18 @@ export default function RootLayout({
         <meta name="theme-color" content="#34D399" />
       </head>
       <body className="font-body antialiased overflow-x-hidden">
-        <div className="relative flex min-h-screen flex-col bg-background">
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-        <Toaster />
+         <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+        >
+            <div className="relative flex min-h-screen flex-col bg-background">
+            <main className="flex-1">{children}</main>
+            <Footer />
+            </div>
+            <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

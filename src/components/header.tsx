@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { ArrowLeft, LogOut, Settings } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -120,6 +120,12 @@ export function Header({ onTitleClick }: HeaderProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user.displayName}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <Link href="/settings">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
