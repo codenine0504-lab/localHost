@@ -29,18 +29,18 @@ export function HostProjectDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="title" className="text-right">
+          <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="sm:text-right">
               Title
             </Label>
-            <Input id="title" placeholder="Your project title" className="col-span-3" />
+            <Input id="title" placeholder="Your project title" className="col-span-1 sm:col-span-3" />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="theme" className="text-right">
+          <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+            <Label htmlFor="theme" className="sm:text-right">
               Theme
             </Label>
              <Select>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="col-span-1 sm:col-span-3">
                   <SelectValue placeholder="Select a theme" />
                 </SelectTrigger>
                 <SelectContent>
@@ -50,17 +50,17 @@ export function HostProjectDialog() {
                 </SelectContent>
               </Select>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="description" className="text-right">
+          <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="sm:text-right">
               Description
             </Label>
-            <Textarea id="description" placeholder="Describe your project" className="col-span-3" />
+            <Textarea id="description" placeholder="Describe your project" className="col-span-1 sm:col-span-3" />
           </div>
-           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="upload" className="text-right">
+           <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+            <Label htmlFor="upload" className="sm:text-right">
               Image
             </Label>
-            <Input id="upload" type="file" className="col-span-3" />
+            <Input id="upload" type="file" className="col-span-1 sm:col-span-3" />
           </div>
         </div>
         <DialogFooter>
