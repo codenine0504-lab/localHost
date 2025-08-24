@@ -1,14 +1,16 @@
+
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 
 const collegesByCity: Record<string, string[]> = {
@@ -18,10 +20,34 @@ const collegesByCity: Record<string, string[]> = {
 };
 
 export default function ProfilePage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [colleges, setColleges] = useState<string[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<string>('');
   const { toast } = useToast();
+
+   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Fetch user's saved data from Firestore
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.city) {
+            setSelectedCity(userData.city);
+            setColleges(collegesByCity[userData.city] || []);
+          }
+          if (userData.college) {
+            setSelectedCollege(userData.college);
+          }
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
@@ -30,10 +56,13 @@ export default function ProfilePage() {
   };
 
   const handleUpdate = async () => {
+    if (!user) {
+        toast({ title: "Not Logged In", description: "You must be logged in to update your profile.", variant: "destructive" });
+        return;
+    }
     if (selectedCity && selectedCollege) {
       try {
-        // Assuming a user with ID "user1" for now. You'll replace this with dynamic user auth later.
-        await setDoc(doc(db, "users", "user1"), {
+        await setDoc(doc(db, "users", user.uid), {
           city: selectedCity,
           college: selectedCollege
         }, { merge: true });
@@ -59,6 +88,15 @@ export default function ProfilePage() {
     }
   };
 
+  if (loading) {
+    return <div className="container mx-auto py-12 px-4 md:px-6 text-center">Loading profile...</div>;
+  }
+
+  if (!user) {
+    return <div className="container mx-auto py-12 px-4 md:px-6 text-center">Please log in to view your profile.</div>;
+  }
+
+
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
       <div className="grid gap-8 md:grid-cols-3">
@@ -66,11 +104,11 @@ export default function ProfilePage() {
           <Card>
             <CardHeader className="flex flex-col items-center text-center p-6">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src="https://placehold.co/100x100.png" alt="User avatar" data-ai-hint="user avatar" />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt="User avatar" data-ai-hint="user avatar" />
+                <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
-              <CardTitle className="text-2xl">John Doe</CardTitle>
-              <CardDescription>john.doe@example.com</CardDescription>
+              <CardTitle className="text-2xl">{user.displayName}</CardTitle>
+              <CardDescription>{user.email}</CardDescription>
             </CardHeader>
           </Card>
         </div>
