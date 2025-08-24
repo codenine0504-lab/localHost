@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,11 +9,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil } from 'lucide-react';
+import { Pencil, Upload, Loader2 } from 'lucide-react';
 
 interface ProjectDetails {
     id: string;
@@ -44,7 +45,10 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [title, setTitle] = useState(project.title);
     const [description, setDescription] = useState(project.description);
+    const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     const isOwner = currentUser?.uid === project.owner;
 
@@ -71,6 +75,32 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
+     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !isOwner) return;
+
+        setIsUploading(true);
+        try {
+            const imageRef = ref(storage, `project-images/${project.id}/${file.name}`);
+            await uploadBytes(imageRef, file);
+            const downloadURL = await getDownloadURL(imageRef);
+
+            const projectRef = doc(db, 'projects', project.id);
+            await updateDoc(projectRef, { imageUrl: downloadURL });
+
+            const chatRoomRef = doc(db, 'chatRooms', project.id);
+            await updateDoc(chatRoomRef, { imageUrl: downloadURL });
+
+            onProjectUpdate();
+            toast({ title: "Success", description: "Project image updated." });
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            toast({ title: "Error", description: "Could not upload image.", variant: 'destructive' });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const getInitials = (name: string | null | undefined) => {
         if (!name) return "U";
         const nameParts = name.split(" ");
@@ -85,7 +115,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             <SheetContent className="w-full sm:max-w-md overflow-y-auto pt-10">
                 <div className="py-6 space-y-6">
                     {/* Project Image */}
-                    <div className="relative h-48 w-full rounded-lg overflow-hidden">
+                    <div className="relative h-48 w-full rounded-lg overflow-hidden group">
                         <Image
                             src={project.imageUrl || 'https://placehold.co/600x400.png'}
                             alt={`Image for ${project.title}`}
@@ -93,6 +123,30 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             objectFit="cover"
                             data-ai-hint="project image"
                         />
+                         {isOwner && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="bg-transparent border-white text-white hover:bg-white/20"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                >
+                                    {isUploading ? (
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <Upload className="h-5 w-5" />
+                                    )}
+                                </Button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                    accept="image/*"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Project Title */}
