@@ -71,15 +71,21 @@
 
 @layer utilities {
   .pulse-glow {
-    animation: pulse-glow-animation 2s infinite;
+    animation: pulse-glow-animation 5s infinite ease-in-out;
   }
   
   @keyframes pulse-glow-animation {
     0%, 100% {
-      box-shadow: 0 0 0 0 theme('colors.primary.DEFAULT');
+      box-shadow: 0 0 40px 10px theme('colors.primary.DEFAULT');
+      opacity: 0.2;
     }
     50% {
-      box-shadow: 0 0 10px 2px theme('colors.primary.DEFAULT');
+      box-shadow: 0 0 60px 20px theme('colors.primary.DEFAULT');
+      opacity: 0.3;
     }
+  }
+
+  .radial-gradient-background {
+      background: radial-gradient(circle at center, hsla(var(--primary), 0.1), transparent 50%);
   }
 }
