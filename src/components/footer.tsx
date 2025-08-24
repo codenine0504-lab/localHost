@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -24,13 +25,15 @@ export function Footer() {
               key={item.href}
               href={item.href}
               className={cn(
-                'inline-flex flex-col items-center justify-center px-5 hover:bg-accent/50 focus:outline-none transition-colors',
+                'group inline-flex flex-col items-center justify-center px-5 focus:outline-none transition-colors',
                 pathname === item.href
-                  ? 'text-primary'
-                  : 'text-muted-foreground'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-primary/90 hover:text-primary-foreground'
               )}
             >
-              <item.icon className="h-6 w-6 mb-1" />
+              <item.icon className={cn("h-6 w-6 mb-1",
+                 pathname === item.href ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-primary-foreground'
+              )} />
               <span className="text-xs font-medium">{item.label}</span>
             </Link>
           ))}
