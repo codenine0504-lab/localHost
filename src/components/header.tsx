@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,10 +15,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut } from 'lucide-react';
+import { ArrowLeft, LogOut } from 'lucide-react';
+import { usePathname, useRouter, useParams } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const [chatRoomName, setChatRoomName] = useState<string | null>(null);
+  const pathname = usePathname();
+  const params = useParams();
+  const router = useRouter();
+  const isChatPage = pathname.startsWith('/chatroom/');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -26,6 +33,23 @@ export function Header() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const fetchChatRoomName = async () => {
+      if (isChatPage && params.id) {
+        const chatRoomId = params.id as string;
+        const chatRoomDoc = await getDoc(doc(db, "chatRooms", chatRoomId));
+        if (chatRoomDoc.exists()) {
+          setChatRoomName(chatRoomDoc.data().name);
+        } else {
+          setChatRoomName("Chat");
+        }
+      } else {
+        setChatRoomName(null);
+      }
+    };
+    fetchChatRoomName();
+  }, [pathname, params, isChatPage]);
 
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
@@ -47,9 +71,20 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 ml-4">
-          <span className="font-bold text-lg text-primary">LocalHost</span>
-        </Link>
+        <div className="flex items-center gap-2">
+           {isChatPage ? (
+            <>
+              <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <span className="font-bold text-lg">{chatRoomName || 'Chat'}</span>
+            </>
+          ) : (
+            <Link href="/" className="flex items-center gap-2 ml-4">
+              <span className="font-bold text-lg text-primary">LocalHost</span>
+            </Link>
+          )}
+        </div>
         <div className="flex items-center gap-4 mr-4">
           {user ? (
             <DropdownMenu>

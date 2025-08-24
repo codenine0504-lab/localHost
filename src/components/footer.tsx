@@ -9,11 +9,17 @@ import { cn } from '@/lib/utils';
 export function Footer() {
   const pathname = usePathname();
 
+  const isChatPage = pathname.startsWith('/chatroom/');
+
   const navItems = [
     { href: '/', icon: Home, label: 'Home' },
     { href: '/chatroom', icon: MessageCircle, label: 'ChatRoom' },
     { href: '/profile', icon: User, label: 'Profile' },
   ];
+
+  if (isChatPage) {
+    return null;
+  }
 
   return (
     <>
