@@ -7,7 +7,7 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { HostProjectDialog } from '@/components/host-project-dialog';
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -18,22 +18,11 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
     });
     return () => unsubscribe();
   }, []);
-
-  const handleJoinProjectClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!user) {
-      e.preventDefault();
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to join a project.',
-        variant: 'destructive',
-      });
-    }
-  };
 
 
   return (
@@ -53,7 +42,7 @@ export default function Home() {
             <div className="flex flex-col gap-4 min-[400px]:flex-row">
               <HostProjectDialog />
               <Button size="lg" variant="secondary" asChild>
-                <Link href="/projects" onClick={handleJoinProjectClick}>
+                <Link href="/projects">
                   Join a project
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
