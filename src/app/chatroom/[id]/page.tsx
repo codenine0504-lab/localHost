@@ -203,11 +203,11 @@ export default function ChatPage() {
       return member?.photoURL;
   }
   const getSenderFallback = (senderId: string) => {
-      if(senderId === 'bot') return 'BT';
-       if (senderId === user?.uid) return user.displayName?.substring(0,2).toUpperCase() || 'U';
-      const member = members.find(m => m.id === senderId);
-      return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
-  }
+    if(senderId === 'bot') return 'BT';
+    if (senderId === user?.uid) return user.displayName?.substring(0, 2).toUpperCase() || 'U';
+    const member = members.find(m => m.id === senderId);
+    return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
+  };
 
   return (
      <>
@@ -263,7 +263,7 @@ export default function ChatPage() {
                 disabled={isBotReplying || !user}
                 className="pr-12"
                 />
-                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8" disabled={isBotReplying || newMessage.trim() === '' || !user}>
+                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={isBotReplying || newMessage.trim() === '' || !user}>
                 <Send className="h-4 w-4" />
                 </Button>
             </div>
