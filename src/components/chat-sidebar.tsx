@@ -10,11 +10,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Upload, Loader2 } from 'lucide-react';
+import { Pencil, Upload, Loader2, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useRouter } from 'next/navigation';
+
 
 interface ProjectDetails {
     id: string;
@@ -46,8 +59,10 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [title, setTitle] = useState(project.title);
     const [description, setDescription] = useState(project.description);
     const [isUploading, setIsUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
 
 
     const isOwner = currentUser?.uid === project.owner;
@@ -81,6 +96,16 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
         setIsUploading(true);
         try {
+            if (project.imageUrl) {
+                try {
+                    const oldImageRef = ref(storage, project.imageUrl);
+                    await deleteObject(oldImageRef);
+                } catch (error) {
+                    // It's okay if the old image doesn't exist, maybe it was deleted manually.
+                    console.warn("Could not delete old project image:", error);
+                }
+            }
+
             const imageRef = ref(storage, `project/${project.id}/${file.name}`);
             await uploadBytes(imageRef, file);
             const downloadURL = await getDownloadURL(imageRef);
@@ -100,6 +125,37 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             setIsUploading(false);
         }
     };
+    
+    const handleDeleteProject = async () => {
+        if (!isOwner) return;
+        setIsDeleting(true);
+
+        try {
+            // Delete project image from storage
+            if (project.imageUrl) {
+                 try {
+                    const imageRef = ref(storage, project.imageUrl);
+                    await deleteObject(imageRef);
+                } catch(e) {
+                     console.warn("Could not delete project image:", e)
+                }
+            }
+
+            // Delete firestore documents
+            await deleteDoc(doc(db, 'projects', project.id));
+            await deleteDoc(doc(db, 'chatRooms', project.id));
+
+            toast({ title: "Success", description: "Project has been deleted." });
+            onOpenChange(false);
+            router.push('/projects');
+
+        } catch (error) {
+             console.error("Error deleting project:", error);
+             toast({ title: "Error", description: "Could not delete project.", variant: 'destructive' });
+        } finally {
+            setIsDeleting(false);
+        }
+    }
 
     const getInitials = (name: string | null | undefined) => {
         if (!name) return "U";
@@ -211,6 +267,40 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             ))}
                         </ul>
                     </div>
+
+                     {/* Delete Project */}
+                    {isOwner && (
+                        <div className="pt-6 border-t border-destructive/20">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" className="w-full">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Project
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your project,
+                                        chat room, and all associated data.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                        onClick={handleDeleteProject} 
+                                        disabled={isDeleting}
+                                        className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        {isDeleting ? 'Deleting...' : 'Delete'}
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    )}
                 </div>
             </SheetContent>
         </Sheet>

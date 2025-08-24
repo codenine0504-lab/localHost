@@ -104,7 +104,7 @@ export function HostProjectDialog() {
       const college = userDoc.exists() ? userDoc.data().college : "Unknown College";
 
       // Create project document first to get an ID
-      const projectRef = await addDoc(collection(db, 'projects'), {
+      const projectDocRef = await addDoc(collection(db, 'projects'), {
         ...data,
         createdAt: serverTimestamp(),
         college: college, 
@@ -114,15 +114,15 @@ export function HostProjectDialog() {
       
       let imageUrl = '';
       if (imageFile) {
-        const imageRef = ref(storage, `project/${projectRef.id}/${imageFile.name}`);
-        await uploadBytes(imageRef, imageFile);
-        imageUrl = await getDownloadURL(imageRef);
+        const imageRef = ref(storage, `project/${projectDocRef.id}/${imageFile.name}`);
+        const snapshot = await uploadBytes(imageRef, imageFile);
+        imageUrl = await getDownloadURL(snapshot.ref);
         
-        // Update project with image URL
-        await updateDoc(projectRef, { imageUrl: imageUrl });
+        // Update project with the full download URL
+        await updateDoc(projectDocRef, { imageUrl: imageUrl });
       }
 
-      await setDoc(doc(db, 'chatRooms', projectRef.id), {
+      await setDoc(doc(db, 'chatRooms', projectDocRef.id), {
         name: data.title,
         createdAt: serverTimestamp(),
         imageUrl: imageUrl,
