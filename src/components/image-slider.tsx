@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -21,22 +20,22 @@ interface SliderImage {
 
 const images: SliderImage[] = [
   {
-    src: '/slider/award.jpg',
+    src: '/award.jpg',
     alt: 'Award ceremony',
     hint: 'award ceremony',
   },
   {
-    src: '/slider/teamwork.jpg',
+    src: '/teamwork.jpg',
     alt: 'Team working together',
     hint: 'teamwork collaboration',
   },
   {
-    src: '/slider/electronics.png',
+    src: '/electronics.png',
     alt: 'Electronics project',
     hint: 'electronics hardware',
   },
   {
-    src: '/slider/startup.png',
+    src: '/startup.png',
     alt: 'Startup discussion',
     hint: 'startup meeting',
   },
