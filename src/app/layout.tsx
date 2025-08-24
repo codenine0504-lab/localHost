@@ -7,6 +7,7 @@ import { Footer } from '@/components/footer';
 export const metadata: Metadata = {
   title: 'LocalHost',
   description: 'Connect, Collaborate, Innovate. Your next great idea starts here!',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -24,6 +25,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap"
           rel="stylesheet"
         />
+        <meta name="theme-color" content="#34D399" />
       </head>
       <body className="font-body antialiased">
         <div className="relative flex min-h-screen flex-col bg-background">
