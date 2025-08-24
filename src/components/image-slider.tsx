@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -12,26 +13,32 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 
-const images = [
+interface SliderImage {
+  src: string;
+  alt: string;
+  hint: string;
+}
+
+const images: SliderImage[] = [
   {
-    src: '/slider/award.jpg',
+    src: 'https://placehold.co/1280x720.png',
     alt: 'Award ceremony',
-    hint: 'award ceremony'
+    hint: 'award ceremony',
   },
   {
-    src: '/slider/teamwork.jpg',
+    src: 'https://placehold.co/1280x720.png',
     alt: 'Team working together',
-    hint: 'teamwork collaboration'
+    hint: 'teamwork collaboration',
   },
   {
-    src: '/slider/electronics.png',
+    src: 'https://placehold.co/1280x720.png',
     alt: 'Electronics project',
-    hint: 'electronics hardware'
+    hint: 'electronics hardware',
   },
   {
-    src: '/slider/startup.png',
+    src: 'https://placehold.co/1280x720.png',
     alt: 'Startup discussion',
-    hint: 'startup meeting'
+    hint: 'startup meeting',
   },
 ];
 
