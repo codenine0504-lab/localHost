@@ -43,12 +43,6 @@ export default function ChatRoomPage() {
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
-      <div className="space-y-4 mb-8 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">Chat Rooms</h1>
-        <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl/relaxed">
-          Join a conversation and collaborate on projects.
-        </p>
-      </div>
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {chatRooms.length > 0 ? (
           chatRooms.map((room) => (
@@ -71,8 +65,7 @@ export default function ChatRoomPage() {
           ))
         ) : (
           <div className="col-span-full text-center text-muted-foreground py-10">
-            <p>No chat rooms available yet.</p>
-            <p>Host a project to start a new chat!</p>
+            <p>No chat rooms available yet. Host a project to start a new chat!</p>
           </div>
         )}
       </div>

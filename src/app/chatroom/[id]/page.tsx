@@ -30,7 +30,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -59,10 +59,7 @@ export default function ChatPage() {
   }, [projectId]);
 
   const scrollToBottom = () => {
-    // Logic to scroll to the bottom of the chat
-    if(scrollAreaRef.current) {
-        scrollAreaRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -115,8 +112,8 @@ export default function ChatPage() {
                     )}
                 </div>
                 ))}
+                <div ref={messagesEndRef} />
              </div>
-             <div ref={scrollAreaRef} />
           </ScrollArea>
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
