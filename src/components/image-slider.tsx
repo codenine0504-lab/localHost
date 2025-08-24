@@ -14,9 +14,10 @@ import {
 } from '@/components/ui/carousel';
 
 const sliderImages = [
-    { id: '1', title: 'Slider Image 1', imageUrl: '/slider/image1.png' },
-    { id: '2', title: 'Slider Image 2', imageUrl: '/slider/image2.png' },
-    { id: '3', title: 'Slider Image 3', imageUrl: '/slider/image3.png' },
+    { id: '1', title: 'Award', imageUrl: '/slider/award.jpg' },
+    { id: '2', title: 'Teamwork', imageUrl: '/slider/teamwork.jpg' },
+    { id: '3', title: 'Electronics', imageUrl: '/slider/electronics.png' },
+    { id: '4', title: 'Startup', imageUrl: '/slider/startup.png' },
 ]
 
 export function ImageSlider() {
