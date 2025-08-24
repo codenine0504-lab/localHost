@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
+
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -17,11 +21,42 @@ export default function ProfilePage() {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [colleges, setColleges] = useState<string[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<string>('');
+  const { toast } = useToast();
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
     setColleges(collegesByCity[city] || []);
     setSelectedCollege(''); // Reset college selection
+  };
+
+  const handleUpdate = async () => {
+    if (selectedCity && selectedCollege) {
+      try {
+        // Assuming a user with ID "user1" for now. You'll replace this with dynamic user auth later.
+        await setDoc(doc(db, "users", "user1"), {
+          city: selectedCity,
+          college: selectedCollege
+        }, { merge: true });
+
+        toast({
+          title: "Success!",
+          description: "Your university details have been updated.",
+        });
+      } catch (error) {
+        console.error("Error updating document: ", error);
+        toast({
+          title: "Error",
+          description: "Could not update your details. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+        toast({
+          title: "Incomplete Information",
+          description: "Please select both a city and a college.",
+          variant: "destructive",
+        });
+    }
   };
 
   return (
@@ -74,7 +109,7 @@ export default function ProfilePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full">Update</Button>
+              <Button className="w-full" onClick={handleUpdate}>Update</Button>
             </CardContent>
           </Card>
         </div>
