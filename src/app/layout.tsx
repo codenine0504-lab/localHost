@@ -27,7 +27,7 @@ export default function RootLayout({
         />
         <meta name="theme-color" content="#34D399" />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased overflow-x-hidden">
         <div className="relative flex min-h-screen flex-col bg-background">
           <main className="flex-1">{children}</main>
           <Footer />
