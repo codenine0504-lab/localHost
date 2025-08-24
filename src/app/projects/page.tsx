@@ -5,49 +5,34 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import Link from 'next/link';
 
-// Mock data for projects - replace with Firestore data fetching
-const mockProjects = [
-  {
-    id: '1',
-    title: 'AI-Powered Plant Care App',
-    description: 'An app that uses machine learning to identify plant diseases and provide care instructions.',
-    tags: ['React Native', 'Firebase', 'Machine Learning'],
-    college: 'NIT Raipur',
-  },
-  {
-    id: '2',
-    title: 'IoT Based Smart Home System',
-    description: 'A system to control home appliances remotely using a web dashboard and mobile app.',
-    tags: ['IoT', 'Raspberry Pi', 'Next.js'],
-    college: 'IIT Bhilai',
-  },
-  {
-    id: '3',
-    title: 'Decentralized Social Media Platform',
-    description: 'A social media platform built on blockchain technology to ensure user privacy and data ownership.',
-    tags: ['Blockchain', 'Solidity', 'React'],
-    college: 'GEC, Bilaspur',
-  },
-   {
-    id: '4',
-    title: 'E-commerce Website for Local Artisans',
-    description: 'A platform for local artisans to sell their products online and reach a wider audience.',
-    tags: ['Next.js', 'Stripe', 'PostgreSQL'],
-    college: 'Shankarcharya Group',
-  },
-];
-
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  theme: string;
+  college: string;
+}
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Here you would fetch data from Firestore
-    // For now, we're using mock data
-    setProjects(mockProjects);
-    setLoading(false);
+    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const projs: Project[] = [];
+      querySnapshot.forEach((doc) => {
+        projs.push({ id: doc.id, ...doc.data() } as Project);
+      });
+      setProjects(projs);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   if (loading) {
@@ -76,13 +61,15 @@ export default function ProjectsPage() {
             <CardContent className="flex-grow">
               <p className="text-sm text-muted-foreground mb-4">{project.description}</p>
               <div className="flex flex-wrap gap-2">
-                {project.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary">{tag}</Badge>
-                ))}
+                 <Badge variant="secondary">{project.theme}</Badge>
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full">View Details</Button>
+                <Button className="w-full" asChild>
+                    <Link href={`/chatroom/${project.id}`}>
+                        Join Chat
+                    </Link>
+                </Button>
             </CardFooter>
           </Card>
         ))}
