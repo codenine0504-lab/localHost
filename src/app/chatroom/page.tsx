@@ -65,13 +65,7 @@ export default function ChatRoomPage() {
                 className="block p-4 border rounded-lg hover:bg-muted/50 transition-all duration-300 cursor-pointer bg-background hover:shadow-primary/20 hover:shadow-[0_0_15px] focus:shadow-primary/20 focus:shadow-[0_0_15px] focus:outline-none"
             >
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 rounded-lg items-center justify-center bg-muted">
-                           <MessageSquare className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <h3 className="text-lg font-semibold">{room.name}</h3>
-                    </div>
-                    <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold">{room.name}</h3>
                 </div>
             </Link>
           ))
