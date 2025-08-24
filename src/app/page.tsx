@@ -11,6 +11,7 @@ import type { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Header } from '@/components/header';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -27,6 +28,7 @@ export default function Home() {
 
   return (
     <>
+      <Header />
       <section className="w-full py-20 md:py-24 lg:py-32">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center space-y-6 text-center">

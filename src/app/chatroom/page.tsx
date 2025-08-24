@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import { MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Header } from '@/components/header';
 
 
 interface ChatRoom {
@@ -42,7 +43,9 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="container mx-auto py-12 px-4 md:px-6">
+    <>
+      <Header />
+      <div className="container mx-auto py-12 px-4 md:px-6">
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {chatRooms.length > 0 ? (
           chatRooms.map((room) => (
@@ -69,6 +72,7 @@ export default function ChatRoomPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
