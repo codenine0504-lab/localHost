@@ -87,6 +87,15 @@ export default function ProfilePage() {
         });
     }
   };
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "U";
+    const nameParts = name.split(" ");
+    if (nameParts.length > 1) {
+      return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
   if (loading) {
     return <div className="container mx-auto py-12 px-4 md:px-6 text-center">Loading profile...</div>;
@@ -105,7 +114,7 @@ export default function ProfilePage() {
             <CardHeader className="flex flex-col items-center text-center p-6">
               <Avatar className="h-24 w-24 mb-4">
                 <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt="User avatar" data-ai-hint="user avatar" />
-                <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
               </Avatar>
               <CardTitle className="text-2xl">{user.displayName}</CardTitle>
               <CardDescription>{user.email}</CardDescription>
@@ -121,7 +130,7 @@ export default function ProfilePage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Select onValueChange={handleCityChange} value={selectedCity}>
+                <Select onValuechange={handleCityChange} value={selectedCity}>
                   <SelectTrigger id="city">
                     <SelectValue placeholder="Select a city" />
                   </SelectTrigger>

@@ -140,7 +140,7 @@ export default function ChatPage() {
                 {msg.senderId !== 'user1' && (
                 <Avatar className="h-8 w-8">
                     <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
-                    <AvatarFallback>{msg.senderId.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>BT</AvatarFallback>
                 </Avatar>
                 )}
                 <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === 'user1' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -149,7 +149,7 @@ export default function ChatPage() {
                  {msg.senderId === 'user1' && (
                 <Avatar className="h-8 w-8">
                     <AvatarImage src="https://placehold.co/32x32.png" alt="User avatar" data-ai-hint="user avatar" />
-                    <AvatarFallback>U</AvatarFallback>
+                    <AvatarFallback>U1</AvatarFallback>
                 </Avatar>
                 )}
             </div>
@@ -158,7 +158,7 @@ export default function ChatPage() {
                <div className="flex items-start gap-3">
                    <Avatar className="h-8 w-8">
                         <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
-                        <AvatarFallback>B</AvatarFallback>
+                        <AvatarFallback>BT</AvatarFallback>
                     </Avatar>
                     <div className="rounded-lg px-4 py-2 max-w-[70%] bg-muted">
                         <p className="text-sm italic">Bot is typing...</p>
