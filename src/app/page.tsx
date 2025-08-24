@@ -34,7 +34,7 @@ export default function Home() {
           <div className="flex flex-col items-center space-y-6 text-center">
             <div className="space-y-4">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none font-headline">
-                Welcome to <span className="text-primary">LocalHost</span>
+                Welcome to <span className="text-shine">LocalHost</span>
               </h1>
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                 Connect, Collaborate, Innovate. Your next great idea starts
