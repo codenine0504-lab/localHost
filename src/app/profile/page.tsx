@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
+import { Input } from "@/components/ui/input";
 
 
 const collegesByCity: Record<string, string[]> = {
@@ -22,6 +23,7 @@ const collegesByCity: Record<string, string[]> = {
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [displayName, setDisplayName] = useState('');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [colleges, setColleges] = useState<string[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<string>('');
@@ -31,8 +33,21 @@ export default function ProfilePage() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        setDisplayName(currentUser.displayName || '');
         // Fetch user's saved data from Firestore
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists()) {
+            // Create user document if it doesn't exist
+            await setDoc(userDocRef, {
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: currentUser.displayName,
+                photoURL: currentUser.photoURL,
+            }, { merge: true });
+        }
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
           if (userData.city) {
@@ -60,30 +75,30 @@ export default function ProfilePage() {
         toast({ title: "Not Logged In", description: "You must be logged in to update your profile.", variant: "destructive" });
         return;
     }
-    if (selectedCity && selectedCollege) {
-      try {
+
+    try {
+        // Update Firebase Auth profile
+        if(displayName !== user.displayName) {
+            await updateProfile(user, { displayName });
+        }
+        
+        // Update Firestore document
         await setDoc(doc(db, "users", user.uid), {
-          city: selectedCity,
-          college: selectedCollege
+            displayName: displayName,
+            city: selectedCity,
+            college: selectedCollege
         }, { merge: true });
 
         toast({
-          title: "Success!",
-          description: "Your university details have been updated.",
+        title: "Success!",
+        description: "Your details have been updated.",
         });
-      } catch (error) {
+    } catch (error) {
         console.error("Error updating document: ", error);
         toast({
-          title: "Error",
-          description: "Could not update your details. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } else {
-        toast({
-          title: "Incomplete Information",
-          description: "Please select both a city and a college.",
-          variant: "destructive",
+        title: "Error",
+        description: "Could not update your details. Please try again.",
+        variant: "destructive",
         });
     }
   };
@@ -91,7 +106,7 @@ export default function ProfilePage() {
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
     const nameParts = name.split(" ");
-    if (nameParts.length > 1) {
+    if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {
       return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
@@ -114,9 +129,9 @@ export default function ProfilePage() {
             <CardHeader className="flex flex-col items-center text-center p-6">
               <Avatar className="h-24 w-24 mb-4">
                 <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt="User avatar" data-ai-hint="user avatar" />
-                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>
-              <CardTitle className="text-2xl">{user.displayName}</CardTitle>
+              <CardTitle className="text-2xl">{displayName}</CardTitle>
               <CardDescription>{user.email}</CardDescription>
             </CardHeader>
           </Card>
@@ -124,13 +139,17 @@ export default function ProfilePage() {
         <div className="md:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>University Details</CardTitle>
-              <CardDescription>Select your city and university/college.</CardDescription>
+              <CardTitle>Profile Details</CardTitle>
+              <CardDescription>Update your personal and university information.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+               <div className="space-y-2">
+                <Label htmlFor="displayName">Display Name</Label>
+                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Select onValuechange={handleCityChange} value={selectedCity}>
+                <Select onValueChange={handleCityChange} value={selectedCity}>
                   <SelectTrigger id="city">
                     <SelectValue placeholder="Select a city" />
                   </SelectTrigger>
@@ -156,7 +175,7 @@ export default function ProfilePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" onClick={handleUpdate}>Update</Button>
+              <Button className="w-full" onClick={handleUpdate}>Update Profile</Button>
             </CardContent>
           </Card>
         </div>

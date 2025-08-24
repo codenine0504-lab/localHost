@@ -19,7 +19,11 @@ import { ArrowLeft, LogOut } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc } from 'firebase/firestore';
 
-export function Header() {
+interface HeaderProps {
+  onTitleClick?: () => void;
+}
+
+export function Header({ onTitleClick }: HeaderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [chatRoomName, setChatRoomName] = useState<string | null>(null);
   const pathname = usePathname();
@@ -68,6 +72,8 @@ export function Header() {
     }
   };
 
+  const TitleComponent = onTitleClick ? 'button' : 'span';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
@@ -77,7 +83,9 @@ export function Header() {
               <Button variant="ghost" size="icon" onClick={() => router.back()}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <span className="font-bold text-lg">{chatRoomName || 'Chat'}</span>
+               <TitleComponent onClick={onTitleClick} className="font-bold text-lg cursor-pointer">
+                {chatRoomName || 'Chat'}
+              </TitleComponent>
             </>
           ) : (
             <Link href="/" className="flex items-center gap-2 ml-4">
@@ -91,7 +99,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Avatar className="h-9 w-9 cursor-pointer">
                   <AvatarImage src={user.photoURL!} alt={user.displayName!} data-ai-hint="user avatar" />
-                  <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{user.displayName?.substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

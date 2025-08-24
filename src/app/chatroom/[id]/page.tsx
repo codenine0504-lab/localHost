@@ -1,16 +1,19 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, getDocs } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { chat } from '@/ai/flows/chat-flow';
+import { ChatSidebar } from '@/components/chat-sidebar';
+import { Header } from '@/components/header';
 
 interface Message {
   id: string;
@@ -24,48 +27,110 @@ interface ChatRoom {
     name: string;
 }
 
+interface ProjectDetails {
+    id: string;
+    title: string;
+    description: string;
+    imageUrl?: string;
+    owner: string;
+}
+
+interface Member {
+    id: string;
+    displayName: string | null;
+    photoURL: string | null;
+    isAdmin: boolean;
+}
+
 export default function ChatPage() {
   const params = useParams();
   const projectId = params.id as string;
+  const [user, setUser] = useState<User | null>(auth.currentUser);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
+  const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
   const [isBotReplying, setIsBotReplying] = useState(false);
   const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(setUser);
+    return () => unsubscribe();
+  }, []);
+
+  const fetchProjectAndMembers = useCallback(async () => {
+    if (!projectId) return;
+
+    // Fetch project details
+    const projectDoc = await getDoc(doc(db, "projects", projectId));
+    if (projectDoc.exists()) {
+        const projectData = projectDoc.data();
+        setProjectDetails({
+            id: projectDoc.id,
+            title: projectData.title,
+            description: projectData.description,
+            imageUrl: projectData.imageUrl,
+            owner: projectData.owner,
+        });
+    }
+
+    // Fetch chat room details
+    const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
+    if (chatRoomDoc.exists()) {
+        setChatRoom({ id: chatRoomDoc.id, ...chatRoomDoc.data() } as ChatRoom);
+    } 
+  }, [projectId]);
 
 
   useEffect(() => {
     if (!projectId) return;
+    fetchProjectAndMembers();
 
-    // Fetch chat room details
-    const getChatRoom = async () => {
-        const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
-        if (chatRoomDoc.exists()) {
-            setChatRoom({ id: chatRoomDoc.id, ...chatRoomDoc.data() } as ChatRoom);
-        } else {
-            setLoading(false);
-        }
-    };
-    getChatRoom();
-
-
-    // Listen for messages
     const q = query(collection(db, `Chat/${projectId}/Chats`), orderBy('createdAt', 'asc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const msgs: Message[] = [];
+      const senderIds = new Set<string>();
       querySnapshot.forEach((doc) => {
-        msgs.push({ id: doc.id, ...doc.data() } as Message);
+        const msg = { id: doc.id, ...doc.data() } as Message;
+        msgs.push(msg);
+        if (msg.senderId !== 'bot') {
+            senderIds.add(msg.senderId);
+        }
       });
       setMessages(msgs);
+
+       if (projectDetails) {
+            senderIds.add(projectDetails.owner);
+       }
+
+       const memberList: Member[] = [];
+       if(senderIds.size > 0) {
+            const userDocs = await getDocs(query(collection(db, "users")));
+            const allUsers = new Map(userDocs.docs.map(d => [d.id, d.data()]));
+
+            senderIds.forEach(id => {
+                const userData = allUsers.get(id);
+                 memberList.push({
+                    id: id,
+                    displayName: userData?.displayName || 'Unknown User',
+                    photoURL: userData?.photoURL || null,
+                    isAdmin: id === projectDetails?.owner
+                });
+            })
+       }
+       setMembers(memberList);
+
+
       if(loading){
         setLoading(false);
       }
     });
 
     return () => unsubscribe();
-  }, [projectId]);
+  }, [projectId, loading, fetchProjectAndMembers, projectDetails]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -83,7 +148,7 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !projectId || isBotReplying) return;
+    if (newMessage.trim() === '' || !projectId || isBotReplying || !user) return;
 
     const userMessage = newMessage;
     setNewMessage('');
@@ -92,7 +157,7 @@ export default function ChatPage() {
     await addDoc(collection(db, `Chat/${projectId}/Chats`), {
         text: userMessage,
         createdAt: serverTimestamp(),
-        senderId: 'user1', // Replace with dynamic user ID from auth
+        senderId: user.uid, 
     });
     
     setIsBotReplying(true);
@@ -126,64 +191,95 @@ export default function ChatPage() {
     return <div className="text-center p-8">Chat room not found.</div>
   }
 
+  const getSenderName = (senderId: string) => {
+      if (senderId === 'bot') return 'Bot';
+      if (senderId === user?.uid) return 'You';
+      const member = members.find(m => m.id === senderId);
+      return member?.displayName || 'A member';
+  }
+  const getSenderAvatar = (senderId: string) => {
+      if(senderId === 'bot') return "https://placehold.co/32x32.png";
+      const member = members.find(m => m.id === senderId);
+      return member?.photoURL;
+  }
+  const getSenderFallback = (senderId: string) => {
+      if(senderId === 'bot') return 'BT';
+       if (senderId === user?.uid) return user.displayName?.substring(0,2).toUpperCase() || 'U';
+      const member = members.find(m => m.id === senderId);
+      return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100vh_-_80px)] bg-background">
-      <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
-         <div className="space-y-4 max-w-4xl mx-auto w-full">
-            {messages.length === 0 && (
-               <div className="text-center text-muted-foreground py-10">
-                    <p>Welcome to the chat! Be the first to send a message.</p>
-               </div>
-            )}
-            {messages.map((msg) => (
-            <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === 'user1' ? 'justify-end' : ''}`}>
-                {msg.senderId !== 'user1' && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
-                    <AvatarFallback>BT</AvatarFallback>
-                </Avatar>
-                )}
-                <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === 'user1' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                <p className="text-sm">{msg.text}</p>
+     <>
+        <Header onTitleClick={() => setIsSidebarOpen(true)} />
+        <div className="flex flex-col h-[calc(100vh_-_80px)] bg-background">
+        <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
+            <div className="space-y-4 max-w-4xl mx-auto w-full">
+                {messages.length === 0 && (
+                <div className="text-center text-muted-foreground py-10">
+                        <p>Welcome to the chat! Be the first to send a message.</p>
                 </div>
-                 {msg.senderId === 'user1' && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://placehold.co/32x32.png" alt="User avatar" data-ai-hint="user avatar" />
-                    <AvatarFallback>U1</AvatarFallback>
-                </Avatar>
+                )}
+                {messages.map((msg) => (
+                <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
+                    {msg.senderId !== user?.uid && (
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
+                        <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                    </Avatar>
+                    )}
+                    <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                    <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
+                    <p className="text-sm">{msg.text}</p>
+                    </div>
+                    {msg.senderId === user?.uid && (
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
+                        <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                    </Avatar>
+                    )}
+                </div>
+                ))}
+                {isBotReplying && (
+                <div className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8">
+                            <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
+                            <AvatarFallback>BT</AvatarFallback>
+                        </Avatar>
+                        <div className="rounded-lg px-4 py-2 max-w-[70%] bg-muted">
+                            <p className="text-sm italic">Bot is typing...</p>
+                        </div>
+                </div>
                 )}
             </div>
-            ))}
-            {isBotReplying && (
-               <div className="flex items-start gap-3">
-                   <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
-                        <AvatarFallback>BT</AvatarFallback>
-                    </Avatar>
-                    <div className="rounded-lg px-4 py-2 max-w-[70%] bg-muted">
-                        <p className="text-sm italic">Bot is typing...</p>
-                    </div>
-               </div>
-            )}
-            <div ref={messagesEndRef} />
-         </div>
-      </ScrollArea>
-      <div className="p-4 bg-background border-t">
-        <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
-          <div className="relative">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              disabled={isBotReplying}
-              className="pr-12"
+        </ScrollArea>
+        <div className="p-4 bg-background border-t">
+            <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
+            <div className="relative">
+                <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                disabled={isBotReplying || !user}
+                className="pr-12"
+                />
+                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8" disabled={isBotReplying || newMessage.trim() === '' || !user}>
+                <Send className="h-4 w-4" />
+                </Button>
+            </div>
+            </form>
+        </div>
+        </div>
+        {projectDetails && (
+             <ChatSidebar 
+                isOpen={isSidebarOpen} 
+                onOpenChange={setIsSidebarOpen}
+                project={projectDetails}
+                members={members}
+                currentUser={user}
+                onProjectUpdate={fetchProjectAndMembers}
             />
-            <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8" disabled={isBotReplying || newMessage.trim() === ''}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        )}
+     </>
   );
 }
