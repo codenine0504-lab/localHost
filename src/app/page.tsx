@@ -58,10 +58,6 @@ export default function Home() {
               <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
                 Featured Projects
               </h2>
-              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                Get a glimpse of the innovative projects being built on our
-                platform.
-              </p>
             </div>
           </div>
           <div className="mx-auto max-w-5xl pt-12">
