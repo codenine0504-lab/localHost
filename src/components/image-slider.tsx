@@ -18,6 +18,7 @@ const sliderImages = [
     { id: '2', title: 'Teamwork', imageUrl: '/slider/teamwork.jpg' },
     { id: '3', title: 'Electronics', imageUrl: '/slider/electronics.png' },
     { id: '4', title: 'Startup', imageUrl: '/slider/startup.png' },
+    { id: '5', title: 'Meeting', imageUrl: '/slider/meeting.jpg' },
 ]
 
 export function ImageSlider() {
