@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { chat } from '@/ai/flows/chat-flow';
 
 interface Message {
   id: string;
@@ -30,6 +31,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
+  const [isBotReplying, setIsBotReplying] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -69,15 +71,32 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !projectId) return;
+    if (newMessage.trim() === '' || !projectId || isBotReplying) return;
 
-    await addDoc(collection(db, `Chat/${projectId}/Chats`), {
-      text: newMessage,
-      createdAt: serverTimestamp(),
-      senderId: 'user1', // Replace with dynamic user ID from auth
-    });
-
+    const userMessage = newMessage;
     setNewMessage('');
+    setIsBotReplying(true);
+
+    try {
+      await addDoc(collection(db, `Chat/${projectId}/Chats`), {
+        text: userMessage,
+        createdAt: serverTimestamp(),
+        senderId: 'user1', // Replace with dynamic user ID from auth
+      });
+
+      const aiResponse = await chat({ message: userMessage });
+
+      await addDoc(collection(db, `Chat/${projectId}/Chats`), {
+        text: aiResponse.response,
+        createdAt: serverTimestamp(),
+        senderId: 'bot', 
+      });
+
+    } catch(error) {
+        console.error("Error sending message or getting AI response:", error);
+    } finally {
+        setIsBotReplying(false);
+    }
   };
   
   if (!chatRoom) {
@@ -97,7 +116,7 @@ export default function ChatPage() {
                 <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === 'user1' ? 'justify-end' : ''}`}>
                     {msg.senderId !== 'user1' && (
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://placehold.co/32x32.png" alt="User avatar" data-ai-hint="user avatar" />
+                        <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
                         <AvatarFallback>{msg.senderId.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     )}
@@ -112,6 +131,17 @@ export default function ChatPage() {
                     )}
                 </div>
                 ))}
+                {isBotReplying && (
+                   <div className="flex items-start gap-3">
+                       <Avatar className="h-8 w-8">
+                            <AvatarImage src="https://placehold.co/32x32.png" alt="Bot avatar" data-ai-hint="bot avatar" />
+                            <AvatarFallback>B</AvatarFallback>
+                        </Avatar>
+                        <div className="rounded-lg px-4 py-2 max-w-[70%] bg-muted">
+                            <p className="text-sm italic">Bot is typing...</p>
+                        </div>
+                   </div>
+                )}
                 <div ref={messagesEndRef} />
              </div>
           </ScrollArea>
@@ -120,8 +150,9 @@ export default function ChatPage() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
+              disabled={isBotReplying}
             />
-            <Button type="submit" size="icon">
+            <Button type="submit" size="icon" disabled={isBotReplying}>
               <Send className="h-4 w-4" />
             </Button>
           </form>
