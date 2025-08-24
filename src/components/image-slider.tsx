@@ -37,7 +37,7 @@ export function ImageSlider() {
   }, [api]);
   
   return (
-    <div className="relative w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       <Carousel
         setApi={setApi}
         className="w-full"
