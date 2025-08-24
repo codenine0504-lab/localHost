@@ -32,6 +32,7 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState('');
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
   const [isBotReplying, setIsBotReplying] = useState(false);
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export default function ChatPage() {
         msgs.push({ id: doc.id, ...doc.data() } as Message);
       });
       setMessages(msgs);
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -112,6 +114,12 @@ export default function ChatPage() {
         <CardContent className="flex-grow flex flex-col">
           <ScrollArea className="flex-grow p-4 border rounded-lg mb-4">
              <div className="space-y-4">
+                {loading && <p className="text-center text-muted-foreground">Loading messages...</p>}
+                {!loading && messages.length === 0 && (
+                   <div className="text-center text-muted-foreground py-10">
+                        <p>Welcome to the chat! Be the first to send a message.</p>
+                   </div>
+                )}
                 {messages.map((msg) => (
                 <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === 'user1' ? 'justify-end' : ''}`}>
                     {msg.senderId !== 'user1' && (
