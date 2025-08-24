@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,6 @@ import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
-import { ImageSlider } from '@/components/image-slider';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -53,14 +51,6 @@ export default function Home() {
               </Button>
             </div>
           </div>
-        </div>
-      </section>
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
-        <div className="container px-4 md:px-6 space-y-8">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Featured Projects</h2>
-            </div>
-          <ImageSlider />
         </div>
       </section>
     </>
