@@ -55,7 +55,7 @@ export function ImageSlider() {
       <CarouselContent>
         {images.map((image, index) => (
           <CarouselItem key={index}>
-            <div className="p-1">
+            <div>
               <div className="relative aspect-video w-full overflow-hidden rounded-lg">
                 <Image
                   src={image.src}
