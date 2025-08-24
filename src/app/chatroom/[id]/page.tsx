@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, getDocs } from 'firebase/firestore';
+import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -147,17 +147,19 @@ export default function ChatPage() {
       const newSenderIds = Array.from(senderIds).filter(id => !memberCache.current.has(id));
 
       if (newSenderIds.length > 0) {
-        const userDocs = await getDocs(query(collection(db, "users")));
-        const allUsers = new Map(userDocs.docs.map(d => [d.id, d.data()]));
+        const fetchPromises = newSenderIds.map(id => getDoc(doc(db, 'users', id)));
+        const userDocs = await Promise.all(fetchPromises);
 
-        newSenderIds.forEach(id => {
-            const userData = allUsers.get(id);
-            memberCache.current.set(id, {
-                id: id,
-                displayName: userData?.displayName || 'Unknown User',
-                photoURL: userData?.photoURL || null,
-                isAdmin: id === projectDetails?.owner
-            });
+        userDocs.forEach(docSnapshot => {
+            if (docSnapshot.exists()) {
+                const userData = docSnapshot.data();
+                memberCache.current.set(docSnapshot.id, {
+                    id: docSnapshot.id,
+                    displayName: userData?.displayName || 'Unknown User',
+                    photoURL: userData?.photoURL || null,
+                    isAdmin: docSnapshot.id === projectDetails?.owner
+                });
+            }
         });
         setMembers(Array.from(memberCache.current.values()));
       }
