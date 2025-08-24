@@ -29,12 +29,7 @@ export default function Home() {
   return (
     <>
       <Header />
-      <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6">
-          <ImageSlider />
-        </div>
-      </section>
-      <section className="relative w-full pb-20 flex items-center justify-center overflow-hidden">
+      <section className="relative w-full py-20 flex items-center justify-center overflow-hidden">
          <div className="absolute inset-0 radial-gradient-background"></div>
          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary rounded-full blur-3xl opacity-20 pulse-glow"></div>
         <div className="container px-4 md:px-6 z-10">
@@ -58,6 +53,17 @@ export default function Home() {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+      <section className="w-full py-12 md:py-24 lg:py-32 bg-background">
+        <div className="container px-4 md:px-6 space-y-8">
+            <div className="text-center">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Featured Projects</h2>
+                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed">
+                    Check out some of the amazing projects hosted on our platform.
+                </p>
+            </div>
+          <ImageSlider />
         </div>
       </section>
     </>
