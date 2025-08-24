@@ -33,11 +33,6 @@ const images = [
     alt: 'Connecting people globally',
     hint: 'connecting people',
   },
-  {
-    src: '/startup.png',
-    alt: 'Startup project launch',
-    hint: 'startup launch',
-  },
 ];
 
 export function ImageSlider() {
