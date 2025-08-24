@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogIn, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
@@ -69,8 +69,7 @@ export function Header() {
             </DropdownMenu>
           ) : (
             <Button onClick={handleGoogleLogin} variant="outline" size="sm">
-              <LogIn className="mr-2 h-4 w-4" />
-              Login with Google
+              Login
             </Button>
           )}
         </div>
