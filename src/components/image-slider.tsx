@@ -21,22 +21,22 @@ interface SliderImage {
 
 const images: SliderImage[] = [
   {
-    src: 'https://placehold.co/1280x720.png',
+    src: '/slider/award.jpg',
     alt: 'Award ceremony',
     hint: 'award ceremony',
   },
   {
-    src: 'https://placehold.co/1280x720.png',
+    src: '/slider/teamwork.jpg',
     alt: 'Team working together',
     hint: 'teamwork collaboration',
   },
   {
-    src: 'https://placehold.co/1280x720.png',
+    src: '/slider/electronics.png',
     alt: 'Electronics project',
     hint: 'electronics hardware',
   },
   {
-    src: 'https://placehold.co/1280x720.png',
+    src: '/slider/startup.png',
     alt: 'Startup discussion',
     hint: 'startup meeting',
   },
