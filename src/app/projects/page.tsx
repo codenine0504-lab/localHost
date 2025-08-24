@@ -13,6 +13,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Project {
   id: string;
@@ -21,6 +22,24 @@ interface Project {
   theme: string;
   college: string;
   imageUrl?: string;
+}
+
+function ProjectCardSkeleton() {
+    return (
+        <Card className="flex flex-col overflow-hidden">
+            <Skeleton className="h-48 w-full" />
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-6 w-20" />
+            </CardContent>
+            <CardFooter>
+                <Skeleton className="h-10 w-full" />
+            </CardFooter>
+        </Card>
+    )
 }
 
 export default function ProjectsPage() {
@@ -66,13 +85,6 @@ export default function ProjectsPage() {
       router.push(`/chatroom/${projectId}`);
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-12 px-4 md:px-6 text-center">
-        <p>Loading projects...</p>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -85,33 +97,41 @@ export default function ProjectsPage() {
             </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-            <Card key={project.id} className="flex flex-col overflow-hidden">
-                <div className="relative h-48 w-full">
-                    <Image
-                        src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                        alt={`Image for ${project.title}`}
-                        layout="fill"
-                        objectFit="cover"
-                        data-ai-hint="project image"
-                    />
-                </div>
-                <CardHeader>
-                <CardTitle>{project.title}</CardTitle>
-                <CardDescription>{project.college}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{project.theme}</Badge>
-                </div>
-                </CardContent>
-                <CardFooter>
-                    <Button className="w-full" onClick={() => handleJoinChat(project.id)}>
-                        Join Chat
-                    </Button>
-                </CardFooter>
-            </Card>
-            ))}
+             {loading ? (
+                <>
+                    <ProjectCardSkeleton />
+                    <ProjectCardSkeleton />
+                    <ProjectCardSkeleton />
+                </>
+             ) : (
+                projects.map((project) => (
+                    <Card key={project.id} className="flex flex-col overflow-hidden">
+                        <div className="relative h-48 w-full">
+                            <Image
+                                src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                                alt={`Image for ${project.title}`}
+                                layout="fill"
+                                objectFit="cover"
+                                data-ai-hint="project image"
+                            />
+                        </div>
+                        <CardHeader>
+                        <CardTitle>{project.title}</CardTitle>
+                        <CardDescription>{project.college}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                        <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary">{project.theme}</Badge>
+                        </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button className="w-full" onClick={() => handleJoinChat(project.id)}>
+                                Join Chat
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                ))
+            )}
         </div>
         </div>
     </>

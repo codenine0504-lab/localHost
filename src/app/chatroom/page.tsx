@@ -8,11 +8,26 @@ import { MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { Header } from '@/components/header';
 import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 interface ChatRoom {
   id: string;
   name: string;
   imageUrl?: string;
+}
+
+function ChatRoomListSkeleton() {
+    return (
+        <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-6 w-1/2" />
+                </div>
+            ))}
+        </div>
+    );
 }
 
 export default function ChatRoomPage() {
@@ -46,20 +61,15 @@ export default function ChatRoomPage() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-12 px-4 md:px-6 text-center">
-        <p>Loading chat rooms...</p>
-      </div>
-    );
-  }
 
   return (
     <>
       <Header />
       <div className="container mx-auto py-12 px-4 md:px-6">
        <div className="space-y-4">
-        {chatRooms.length > 0 ? (
+        {loading ? (
+            <ChatRoomListSkeleton />
+        ) : chatRooms.length > 0 ? (
           chatRooms.map((room) => (
             <Link
                 href={`/chatroom/${room.id}`}

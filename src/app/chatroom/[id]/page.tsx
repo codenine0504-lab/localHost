@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { chat } from '@/ai/flows/chat-flow';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Header } from '@/components/header';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {
   id: string;
@@ -40,6 +41,41 @@ interface Member {
     displayName: string | null;
     photoURL: string | null;
     isAdmin: boolean;
+}
+
+function ChatSkeleton() {
+    return (
+        <div className="flex flex-col h-[calc(100vh_-_65px)] bg-background">
+            <div className="flex-grow p-4 space-y-6 max-w-4xl mx-auto w-full">
+                <div className="flex items-start gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-6 w-48" />
+                    </div>
+                </div>
+                <div className="flex items-start gap-3 justify-end">
+                    <div className="space-y-2 text-right">
+                        <Skeleton className="h-4 w-16 ml-auto" />
+                        <Skeleton className="h-6 w-40 ml-auto" />
+                    </div>
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+                <div className="flex items-start gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <div className="space-y-2">
+                         <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-6 w-32" />
+                    </div>
+                </div>
+            </div>
+            <div className="p-4 bg-background border-t">
+                 <div className="relative max-w-4xl mx-auto w-full">
+                     <Skeleton className="h-10 w-full rounded-md" />
+                 </div>
+            </div>
+        </div>
+    )
 }
 
 export default function ChatPage() {
@@ -184,7 +220,12 @@ export default function ChatPage() {
   };
   
   if (loading) {
-    return <div className="text-center p-8">Loading chat...</div>
+    return (
+        <>
+            <Header />
+            <ChatSkeleton />
+        </>
+    );
   }
   
   if (!chatRoom) {
