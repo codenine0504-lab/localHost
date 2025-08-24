@@ -55,18 +55,16 @@ export function ImageSlider() {
       <CarouselContent>
         {images.map((image, index) => (
           <CarouselItem key={index}>
-            <div>
-              <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  data-ai-hint={image.hint}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority={index === 0}
-                />
-              </div>
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+              <Image
+                src={image.src}
+                alt={image.alt}
+                fill
+                style={{ objectFit: 'cover' }}
+                data-ai-hint={image.hint}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority={index === 0}
+              />
             </div>
           </CarouselItem>
         ))}
