@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -19,26 +20,26 @@ interface SliderImage {
 }
 
 const images: SliderImage[] = [
-  {
-    src: '/award.jpg',
-    alt: 'Award ceremony',
-    hint: 'award ceremony',
-  },
-  {
-    src: '/teamwork.jpg',
-    alt: 'Team working together',
-    hint: 'teamwork collaboration',
-  },
-  {
-    src: '/electronics.png',
-    alt: 'Electronics project',
-    hint: 'electronics hardware',
-  },
-  {
-    src: '/startup.png',
-    alt: 'Startup discussion',
-    hint: 'startup meeting',
-  },
+    {
+        src: '/award.jpg',
+        alt: 'Award ceremony',
+        hint: 'award ceremony',
+    },
+    {
+        src: '/teamwork.jpg',
+        alt: 'Team working together',
+        hint: 'teamwork collaboration',
+    },
+    {
+        src: '/electronics.png',
+        alt: 'Electronics project',
+        hint: 'electronics hardware',
+    },
+    {
+        src: '/startup.png',
+        alt: 'Startup discussion',
+        hint: 'startup meeting',
+    },
 ];
 
 export function ImageSlider() {
