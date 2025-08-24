@@ -25,9 +25,8 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { db, auth, storage } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, auth } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -36,6 +35,7 @@ const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
   theme: z.enum(['software', 'hardware', 'event', 'design']),
   description: z.string().min(1, 'Description is required.'),
+  imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -43,7 +43,6 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 export function HostProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
   const {
     handleSubmit,
@@ -56,6 +55,7 @@ export function HostProjectDialog() {
       title: '',
       description: '',
       theme: 'software',
+      imageUrl: '',
     },
   });
 
@@ -68,7 +68,6 @@ export function HostProjectDialog() {
   
   const handleReset = () => {
     reset();
-    setImageFile(null);
   }
 
   const handleDialogOpen = (open: boolean) => {
@@ -86,13 +85,6 @@ export function HostProjectDialog() {
     setIsOpen(open);
   }
   
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-    }
-  };
-
   const onSubmit = async (data: ProjectFormValues) => {
     if (!user) {
         toast({ title: "Not Logged In", description: "You must be logged in to host a project.", variant: "destructive" });
@@ -103,29 +95,17 @@ export function HostProjectDialog() {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const college = userDoc.exists() ? userDoc.data().college : "Unknown College";
 
-      // Create project document first to get an ID
       const projectDocRef = await addDoc(collection(db, 'projects'), {
         ...data,
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
-        imageUrl: '', // temporary empty value
       });
-      
-      let imageUrl = '';
-      if (imageFile) {
-        const imageRef = ref(storage, `project/${projectDocRef.id}/${imageFile.name}`);
-        const snapshot = await uploadBytes(imageRef, imageFile);
-        imageUrl = await getDownloadURL(snapshot.ref);
-        
-        // Update project with the full download URL
-        await updateDoc(projectDocRef, { imageUrl: imageUrl });
-      }
 
       await setDoc(doc(db, 'chatRooms', projectDocRef.id), {
         name: data.title,
         createdAt: serverTimestamp(),
-        imageUrl: imageUrl,
+        imageUrl: data.imageUrl,
       });
 
       const audio = new Audio('/upload.mp3');
@@ -210,10 +190,17 @@ export function HostProjectDialog() {
               {errors.description && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.description.message}</p>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="upload" className="sm:text-right">
-                Image
+               <Label htmlFor="imageUrl" className="sm:text-right">
+                Image URL
               </Label>
-              <Input id="upload" type="file" className="col-span-1 sm:col-span-3" onChange={handleFileChange} accept="image/*" />
+               <Controller
+                name="imageUrl"
+                control={control}
+                render={({ field }) => (
+                  <Input id="imageUrl" type="url" placeholder="https://example.com/image.png" className="col-span-1 sm:col-span-3" {...field} />
+                )}
+              />
+              {errors.imageUrl && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.imageUrl.message}</p>}
             </div>
           </div>
           <DialogFooter>

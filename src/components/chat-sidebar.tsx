@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Upload, Loader2, Trash2 } from 'lucide-react';
+import { Pencil, Loader2, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,32 +56,35 @@ interface ChatSidebarProps {
 export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUser, onProjectUpdate }: ChatSidebarProps) {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [isEditingDesc, setIsEditingDesc] = useState(false);
+    const [isEditingImageUrl, setIsEditingImageUrl] = useState(false);
     const [title, setTitle] = useState(project.title);
     const [description, setDescription] = useState(project.description);
-    const [isUploading, setIsUploading] = useState(false);
+    const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
     const [isDeleting, setIsDeleting] = useState(false);
     const { toast } = useToast();
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
 
 
     const isOwner = currentUser?.uid === project.owner;
 
-    const handleUpdate = async (field: 'title' | 'description') => {
+    const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
         try {
             const projectRef = doc(db, 'projects', project.id);
+            const chatRoomRef = doc(db, 'chatRooms', project.id);
+
             if (field === 'title') {
                 await updateDoc(projectRef, { title });
+                await updateDoc(chatRoomRef, { name: title });
                 setIsEditingTitle(false);
-            } else {
+            } else if (field === 'description') {
                 await updateDoc(projectRef, { description });
                 setIsEditingDesc(false);
+            } else if (field === 'imageUrl') {
+                 await updateDoc(projectRef, { imageUrl });
+                 await updateDoc(chatRoomRef, { imageUrl });
+                 setIsEditingImageUrl(false);
             }
-            // Also update the chatRoom name if title is changed
-            if (field === 'title') {
-                const chatRoomRef = doc(db, 'chatRooms', project.id);
-                await updateDoc(chatRoomRef, { name: title });
-            }
+
             onProjectUpdate();
             toast({ title: "Success", description: `Project ${field} updated.` });
         } catch (error) {
@@ -90,49 +93,13 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
-     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !isOwner) return;
-
-        setIsUploading(true);
-        try {
-            if (project.imageUrl) {
-                try {
-                    const oldImageRef = ref(storage, project.imageUrl);
-                    await deleteObject(oldImageRef);
-                } catch (error) {
-                    // It's okay if the old image doesn't exist, maybe it was deleted manually.
-                    console.warn("Could not delete old project image:", error);
-                }
-            }
-
-            const imageRef = ref(storage, `project/${project.id}/${file.name}`);
-            await uploadBytes(imageRef, file);
-            const downloadURL = await getDownloadURL(imageRef);
-
-            const projectRef = doc(db, 'projects', project.id);
-            await updateDoc(projectRef, { imageUrl: downloadURL });
-
-            const chatRoomRef = doc(db, 'chatRooms', project.id);
-            await updateDoc(chatRoomRef, { imageUrl: downloadURL });
-
-            onProjectUpdate();
-            toast({ title: "Success", description: "Project image updated." });
-        } catch (error) {
-            console.error("Error uploading image:", error);
-            toast({ title: "Error", description: "Could not upload image.", variant: 'destructive' });
-        } finally {
-            setIsUploading(false);
-        }
-    };
-    
     const handleDeleteProject = async () => {
         if (!isOwner) return;
         setIsDeleting(true);
 
         try {
-            // Delete project image from storage
-            if (project.imageUrl) {
+            // Delete project image from storage if it's a firebase storage URL
+            if (project.imageUrl && project.imageUrl.includes('firebasestorage.googleapis.com')) {
                  try {
                     const imageRef = ref(storage, project.imageUrl);
                     await deleteObject(imageRef);
@@ -179,31 +146,29 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             objectFit="cover"
                             data-ai-hint="project image"
                         />
-                         {isOwner && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="bg-transparent border-white text-white hover:bg-white/20"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isUploading}
-                                >
-                                    {isUploading ? (
-                                        <Loader2 className="h-5 w-5 animate-spin" />
-                                    ) : (
-                                        <Upload className="h-5 w-5" />
-                                    )}
-                                </Button>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                    accept="image/*"
-                                />
-                            </div>
-                        )}
                     </div>
+                    
+                    {/* Image URL */}
+                     {isOwner && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Image URL</label>
+                            {isEditingImageUrl ? (
+                                <div className="flex items-center gap-2">
+                                    <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.png" />
+                                    <Button onClick={() => handleUpdate('imageUrl')}>Save</Button>
+                                    <Button variant="ghost" onClick={() => setIsEditingImageUrl(false)}>Cancel</Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm text-muted-foreground truncate">{project.imageUrl || 'No image URL set'}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsEditingImageUrl(true)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
 
                     {/* Project Title */}
                     <div className="space-y-2">
