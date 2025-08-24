@@ -212,7 +212,7 @@ export default function ChatPage() {
   return (
      <>
         <Header onTitleClick={() => setIsSidebarOpen(true)} />
-        <div className="flex flex-col h-[calc(100vh_-_80px)] bg-background">
+        <div className="flex flex-col h-[calc(100vh_-_65px)] bg-background">
         <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
             <div className="space-y-4 max-w-4xl mx-auto w-full">
                 {messages.length === 0 && (

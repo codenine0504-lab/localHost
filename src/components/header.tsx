@@ -127,7 +127,7 @@ export function Header({ onTitleClick }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={handleGoogleLogin} variant="outline" size="sm">
+            <Button onClick={handleGoogleLogin} variant="outline" size="sm" className="ml-auto">
               Login
             </Button>
           )}
