@@ -81,7 +81,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
         setIsUploading(true);
         try {
-            const imageRef = ref(storage, `project-images/${project.id}/${file.name}`);
+            const imageRef = ref(storage, `project/${project.id}/${file.name}`);
             await uploadBytes(imageRef, file);
             const downloadURL = await getDownloadURL(imageRef);
 

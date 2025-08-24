@@ -25,8 +25,9 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { db, auth } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc } from 'firebase/firestore';
+import { db, auth, storage } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -42,6 +43,7 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 export function HostProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
   const {
     handleSubmit,
@@ -63,6 +65,11 @@ export function HostProjectDialog() {
     });
     return () => unsubscribe();
   }, []);
+  
+  const handleReset = () => {
+    reset();
+    setImageFile(null);
+  }
 
   const handleDialogOpen = (open: boolean) => {
     if (open && !user) {
@@ -73,8 +80,18 @@ export function HostProjectDialog() {
         });
         return;
     }
+    if (!open) {
+       handleReset();
+    }
     setIsOpen(open);
   }
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+    }
+  };
 
   const onSubmit = async (data: ProjectFormValues) => {
     if (!user) {
@@ -86,16 +103,29 @@ export function HostProjectDialog() {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const college = userDoc.exists() ? userDoc.data().college : "Unknown College";
 
+      // Create project document first to get an ID
       const projectRef = await addDoc(collection(db, 'projects'), {
         ...data,
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
+        imageUrl: '', // temporary empty value
       });
+      
+      let imageUrl = '';
+      if (imageFile) {
+        const imageRef = ref(storage, `project/${projectRef.id}/${imageFile.name}`);
+        await uploadBytes(imageRef, imageFile);
+        imageUrl = await getDownloadURL(imageRef);
+        
+        // Update project with image URL
+        await updateDoc(projectRef, { imageUrl: imageUrl });
+      }
 
       await setDoc(doc(db, 'chatRooms', projectRef.id), {
         name: data.title,
         createdAt: serverTimestamp(),
+        imageUrl: imageUrl,
       });
 
       const audio = new Audio('/upload.mp3');
@@ -105,7 +135,7 @@ export function HostProjectDialog() {
         title: 'Project Hosted!',
         description: 'Your project and chat room have been created.',
       });
-      reset();
+      handleReset();
       setIsOpen(false);
     } catch (error) {
       console.error('Error hosting project: ', error);
@@ -183,7 +213,7 @@ export function HostProjectDialog() {
               <Label htmlFor="upload" className="sm:text-right">
                 Image
               </Label>
-              <Input id="upload" type="file" className="col-span-1 sm:col-span-3" />
+              <Input id="upload" type="file" className="col-span-1 sm:col-span-3" onChange={handleFileChange} accept="image/*" />
             </div>
           </div>
           <DialogFooter>
