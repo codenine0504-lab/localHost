@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -82,11 +82,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
-            <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle>Project Details</SheetTitle>
-                    <SheetDescription>Information about this project and its members.</SheetDescription>
-                </SheetHeader>
+            <SheetContent className="w-full sm:max-w-md overflow-y-auto pt-10">
                 <div className="py-6 space-y-6">
                     {/* Project Image */}
                     <div className="relative h-48 w-full rounded-lg overflow-hidden">
