@@ -14,27 +14,27 @@ import {
 
 const images = [
   {
-    src: 'https://placehold.co/1200x600.png',
+    src: '/award.jpg',
     alt: 'Collaboration in an office',
     hint: 'collaboration office',
   },
   {
-    src: 'https://placehold.co/1200x600.png',
+    src: '/teamwork.jpg',
     alt: 'Team brainstorming with sticky notes',
     hint: 'team brainstorming',
   },
   {
-    src: 'https://placehold.co/1200x600.png',
+    src: '/electronics.png',
     alt: 'Innovative technology design',
     hint: 'innovation technology',
   },
   {
-    src: 'https://placehold.co/1200x600.png',
+    src: '/startup.png',
     alt: 'Connecting people globally',
     hint: 'connecting people',
   },
   {
-    src: 'https://placehold.co/1200x600.png',
+    src: '/startup.png',
     alt: 'Startup project launch',
     hint: 'startup launch',
   },
