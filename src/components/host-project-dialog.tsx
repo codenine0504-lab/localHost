@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -25,7 +26,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -66,9 +67,8 @@ export function HostProjectDialog() {
         owner: 'user1',
       });
 
-      // Create a corresponding chat room
-      await addDoc(collection(db, 'chatRooms'), {
-        projectId: projectRef.id,
+      // Create a corresponding chat room document using the project ID
+      await setDoc(doc(db, 'chatRooms', projectRef.id), {
         name: data.title,
         createdAt: serverTimestamp(),
       });

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -60,7 +61,7 @@ export default function ChatRoomPage() {
                 <p className="text-xs text-muted-foreground mb-4">
                   Join the conversation for the {room.name} project.
                 </p>
-                <Button className="w-full asChild">
+                <Button className="w-full" asChild>
                   <Link href={`/chatroom/${room.id}`}>
                     Enter Chat
                   </Link>
