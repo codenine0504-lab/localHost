@@ -19,7 +19,7 @@ import type { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Share2 } from 'lucide-react';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Project {
   id: string;
@@ -180,7 +180,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:flex-row">
-        <div className="md:w-1/2 flex flex-col">
+        <div className="md:w-1/2 flex flex-col p-6">
             <div className="relative h-48 md:h-64 w-full">
                 <Image
                     src={project.imageUrl || 'https://placehold.co/600x400.png'}
@@ -190,7 +190,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                     data-ai-hint="project image landscape"
                 />
             </div>
-            <div className="p-6 flex-1">
+            <div className="pt-6 flex-1">
                 <DialogHeader className="text-left">
                     <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
                     <p className="text-base text-muted-foreground pt-1">{project.college}</p>
