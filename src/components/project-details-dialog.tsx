@@ -180,45 +180,14 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] md:h-[70vh] flex flex-col">
-        {/* For mobile: single scrollable area */}
-        <ScrollArea className="md:hidden flex-grow">
-          <div className="relative h-60 w-full">
-              <Image
-              src={project.imageUrl || 'https://placehold.co/600x400.png'}
-              alt={`Image for ${project.title}`}
-              layout="fill"
-              objectFit="cover"
-              data-ai-hint="project image"
-              />
-          </div>
-          <div className="p-6 space-y-4">
-              <DialogHeader className="text-left">
-                  <DialogTitle className="text-2xl font-bold">{project.title}</DialogTitle>
-                  <p className="text-base text-muted-foreground pt-1">{project.college}</p>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                      <Badge variant="secondary">{project.theme}</Badge>
-                      {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                  </div>
-              </DialogHeader>
-              <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-          </div>
-        </ScrollArea>
-        <DialogFooter className="p-6 border-t md:hidden">
-             <Button
-                className="w-full"
-                onClick={handleJoinOrRequest}
-                disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-            >
-                {getButtonText()}
-            </Button>
-        </DialogFooter>
-
-        {/* For desktop: two-column layout */}
-        <div className="hidden md:grid md:grid-cols-2 h-full overflow-hidden">
-            {/* Left Column (Image & Title) */}
+      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:h-[70vh]">
+        
+        {/* Combined Layout for Mobile and Desktop */}
+        <div className="md:grid md:grid-cols-2 md:h-full md:overflow-hidden flex-grow flex flex-col">
+            
+            {/* Left Column (Image & Title) - Stacks on top on mobile */}
             <div className="flex flex-col">
-                <div className="relative h-60 w-full">
+                <div className="relative h-48 md:h-60 w-full flex-shrink-0">
                     <Image
                         src={project.imageUrl || 'https://placehold.co/600x400.png'}
                         alt={`Image for ${project.title}`}
@@ -236,9 +205,9 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                         <Share2 className="h-4 w-4" />
                     </Button>
                 </div>
-                <div className="p-6">
+                <div className="p-6 md:p-6">
                     <DialogHeader className="text-left">
-                        <DialogTitle className="text-3xl font-bold">{project.title}</DialogTitle>
+                        <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
                         <p className="text-base text-muted-foreground pt-1">{project.college}</p>
                         <div className="flex flex-wrap gap-2 pt-2">
                             <Badge variant="secondary">{project.theme}</Badge>
@@ -248,9 +217,9 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                 </div>
             </div>
             
-            {/* Right Column (Description & Action) */}
-            <div className="flex flex-col h-full border-l">
-                <ScrollArea className="flex-grow p-6">
+            {/* Right Column (Description & Action) - Stacks below on mobile */}
+            <div className="flex flex-col md:border-l md:h-full flex-grow min-h-0">
+                <ScrollArea className="flex-grow p-6 pt-0 md:pt-6">
                     <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
                 </ScrollArea>
                 <DialogFooter className="p-6 border-t sm:justify-start">
@@ -263,6 +232,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                     </Button>
                 </DialogFooter>
             </div>
+
         </div>
       </DialogContent>
     </Dialog>
