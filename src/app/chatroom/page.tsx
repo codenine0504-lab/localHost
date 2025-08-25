@@ -35,6 +35,10 @@ export default function ChatRoomPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Clear notification when user visits the main chat page
+    localStorage.setItem('lastVisitedChats', Date.now().toString());
+    window.dispatchEvent(new Event('storage'));
+
     const q = query(collection(db, 'chatRooms'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const rooms: ChatRoom[] = [];
@@ -98,3 +102,5 @@ export default function ChatRoomPage() {
     </>
   );
 }
+
+    

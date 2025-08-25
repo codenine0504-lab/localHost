@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface Message {
   id: string;
   text: string;
-  createdAt: any;
+  createdAt: Timestamp;
   senderId: string;
 }
 
@@ -95,6 +95,7 @@ export default function ChatPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
+  const initialLoadHandled = useRef(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -196,12 +197,31 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    if (!projectId || !hasAccess) return;
+    if (!projectId || !hasAccess || !user) return;
 
     const q = query(collection(db, `Chat/${projectId}/Chats`), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs);
+
+      if (initialLoadHandled.current && msgs.length > 0) {
+        const lastMessage = msgs[msgs.length - 1];
+        if (lastMessage.senderId !== user.uid) {
+            if(document.hidden) {
+                const audio = new Audio('/chatnotify.mp3');
+                audio.play().catch(e => console.error("Audio play failed:", e));
+
+                // Update localStorage to indicate a new message
+                const lastTimestamp = lastMessage.createdAt.toMillis();
+                localStorage.setItem('lastMessageTimestamp', lastTimestamp.toString());
+                window.dispatchEvent(new Event('storage')); // Notify other components
+            }
+        }
+      }
+      
+      if(!initialLoadHandled.current && msgs.length > 0) {
+          initialLoadHandled.current = true;
+      }
 
       const senderIds = new Set(msgs.map(msg => msg.senderId));
       const newSenderIds = Array.from(senderIds).filter(id => !memberCache.current.has(id));
@@ -229,7 +249,7 @@ export default function ChatPage() {
     });
 
     return () => unsubscribe();
-  }, [projectId, hasAccess, projectDetails]);
+  }, [projectId, hasAccess, user, projectDetails]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -373,5 +393,7 @@ export default function ChatPage() {
      </>
   );
 }
+
+    
 
     

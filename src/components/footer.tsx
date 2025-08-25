@@ -5,15 +5,38 @@ import Link from 'next/link';
 import { Home, MessageSquare, Compass, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 export function Footer() {
   const pathname = usePathname();
+  const [hasNewMessage, setHasNewMessage] = useState(false);
+
+  useEffect(() => {
+    const checkNewMessages = () => {
+      const lastMessageTimestamp = localStorage.getItem('lastMessageTimestamp');
+      const lastVisitedChats = localStorage.getItem('lastVisitedChats');
+      
+      if (lastMessageTimestamp && (!lastVisitedChats || lastMessageTimestamp > lastVisitedChats)) {
+        setHasNewMessage(true);
+      } else {
+        setHasNewMessage(false);
+      }
+    };
+
+    checkNewMessages();
+
+    window.addEventListener('storage', checkNewMessages);
+
+    return () => {
+      window.removeEventListener('storage', checkNewMessages);
+    };
+  }, []);
 
   const isChatPage = pathname.startsWith('/chatroom/');
 
   const navItems = [
     { href: '/', icon: Home, label: 'Home' },
-    { href: '/chatroom', icon: MessageSquare, label: 'Chats' },
+    { href: '/chatroom', icon: MessageSquare, label: 'Chats', notification: hasNewMessage },
     { href: '/profile', icon: User, label: 'Profile' },
   ];
 
@@ -31,7 +54,7 @@ export function Footer() {
               key={item.href}
               href={item.href}
               className={cn(
-                'group inline-flex flex-col items-center justify-center px-5 focus:outline-none transition-colors',
+                'group relative inline-flex flex-col items-center justify-center px-5 focus:outline-none transition-colors',
                 pathname === item.href
                   ? 'text-primary'
                   : 'text-muted-foreground'
@@ -41,6 +64,9 @@ export function Footer() {
                  pathname === item.href ? 'text-primary' : 'text-muted-foreground'
               )} />
               <span className="text-xs font-medium">{item.label}</span>
+              {item.notification && (
+                <span className="absolute top-2 right-6 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-background"></span>
+              )}
             </Link>
           ))}
         </nav>
@@ -59,3 +85,5 @@ export function Footer() {
     </>
   );
 }
+
+    
