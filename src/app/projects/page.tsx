@@ -92,10 +92,7 @@ export default function ProjectsPage() {
         <Header />
         <div className="container mx-auto py-12 px-4 md:px-6">
         <div className="space-y-4 mb-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">Explore Projects</h1>
-            <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl/relaxed">
-            Find interesting projects to join and collaborate with talented individuals.
-            </p>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tighter">Join Project and Events across different colleges/universities</h1>
         </div>
         <div className="flex justify-end mb-6">
              <DropdownMenu>
