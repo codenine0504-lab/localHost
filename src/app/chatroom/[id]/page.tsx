@@ -33,6 +33,7 @@ interface ProjectDetails {
     description: string;
     imageUrl?: string;
     owner: string;
+    isPrivate: boolean;
 }
 
 interface Member {
@@ -101,8 +102,22 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-        const projectDoc = await getDoc(doc(db, "projects", projectId));
-        if (projectDoc.exists()) {
+        // Check both collections for the project
+        const publicProjectDoc = await getDoc(doc(db, "projects", projectId));
+        const privateProjectDoc = await getDoc(doc(db, "privateProjects", projectId));
+        
+        let projectDoc;
+        let isPrivate = false;
+
+        if (publicProjectDoc.exists()) {
+            projectDoc = publicProjectDoc;
+            isPrivate = false;
+        } else if (privateProjectDoc.exists()) {
+            projectDoc = privateProjectDoc;
+            isPrivate = true;
+        }
+
+        if (projectDoc?.exists()) {
             const projectData = projectDoc.data();
             const projDetails = {
                 id: projectDoc.id,
@@ -110,6 +125,7 @@ export default function ChatPage() {
                 description: projectData.description,
                 imageUrl: projectData.imageUrl,
                 owner: projectData.owner,
+                isPrivate: isPrivate
             };
             setProjectDetails(projDetails);
         }

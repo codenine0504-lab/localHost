@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
@@ -27,6 +27,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useRouter } from 'next/navigation';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
 
 
 interface ProjectDetails {
@@ -35,6 +37,7 @@ interface ProjectDetails {
     description: string;
     imageUrl?: string;
     owner: string;
+    isPrivate: boolean;
 }
 
 interface Member {
@@ -61,6 +64,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [description, setDescription] = useState(project.description);
     const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
 
@@ -69,7 +73,8 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
     const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
         try {
-            const projectRef = doc(db, 'projects', project.id);
+            const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
+            const projectRef = doc(db, projectCollection, project.id);
             const chatRoomRef = doc(db, 'chatRooms', project.id);
 
             if (field === 'title') {
@@ -93,6 +98,43 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
+    const handlePrivacyToggle = async (isPrivate: boolean) => {
+        if (!isOwner) return;
+        setIsTogglingPrivacy(true);
+
+        const fromCollection = isPrivate ? 'projects' : 'privateProjects';
+        const toCollection = isPrivate ? 'privateProjects' : 'projects';
+
+        try {
+            const projectDocRef = doc(db, fromCollection, project.id);
+            const projectDoc = await getDoc(projectDocRef);
+
+            if (!projectDoc.exists()) {
+                throw new Error("Project document not found.");
+            }
+
+            const projectData = projectDoc.data();
+
+            // Create new doc in the target collection
+            await setDoc(doc(db, toCollection, project.id), projectData);
+
+            // Delete doc from the source collection
+            await deleteDoc(projectDocRef);
+
+            // Update chatRoom
+            await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate });
+
+            onProjectUpdate();
+            toast({ title: "Success", description: `Project visibility updated to ${isPrivate ? 'Private' : 'Public'}.` });
+
+        } catch (error) {
+            console.error("Error toggling project privacy:", error);
+            toast({ title: "Error", description: "Could not update project visibility.", variant: 'destructive' });
+        } finally {
+            setIsTogglingPrivacy(false);
+        }
+    };
+
     const handleDeleteProject = async () => {
         if (!isOwner) return;
         setIsDeleting(true);
@@ -109,8 +151,11 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             }
 
             // Delete firestore documents
-            await deleteDoc(doc(db, 'projects', project.id));
+            const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
+            await deleteDoc(doc(db, projectCollection, project.id));
             await deleteDoc(doc(db, 'chatRooms', project.id));
+            // Note: Deleting chat messages would require a recursive delete, which is complex for clients.
+            // This can be handled with a Firebase Function or left as is.
 
             toast({ title: "Success", description: "Project has been deleted." });
             onOpenChange(false);
@@ -213,6 +258,27 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             </div>
                         )}
                     </div>
+
+                     {/* Project Visibility */}
+                    {isOwner && (
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium">Project Visibility</Label>
+                             <div className="flex items-center space-x-2">
+                                <Switch
+                                    id="isPrivate"
+                                    checked={project.isPrivate}
+                                    onCheckedChange={handlePrivacyToggle}
+                                    disabled={isTogglingPrivacy}
+                                />
+                                <Label htmlFor="isPrivate">{project.isPrivate ? 'Private' : 'Public'}</Label>
+                                {isTogglingPrivacy && <Loader2 className="h-4 w-4 animate-spin" />}
+                             </div>
+                             <p className="text-xs text-muted-foreground">
+                                {project.isPrivate ? "Only members can see this project." : "This project is visible to everyone."}
+                            </p>
+                        </div>
+                    )}
+
 
                     {/* Members List */}
                     <div className="space-y-4">
