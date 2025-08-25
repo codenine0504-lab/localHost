@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -180,9 +181,9 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:flex-row">
-        {/* Left Column (Image & meta) */}
-        <div className="w-full md:w-1/2 flex flex-col">
-            <div className="relative h-60 md:h-80 w-full flex-shrink-0">
+        {/* Left Column (Image) */}
+        <div className="w-full md:w-1/2 flex-shrink-0">
+            <div className="relative h-60 md:h-full w-full">
                 <Image
                 src={project.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={`Image for ${project.title}`}
@@ -201,19 +202,19 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>
-            <div className="p-6">
-                <DialogTitle className="text-2xl">{project.title}</DialogTitle>
-                <p className="text-sm text-muted-foreground">{project.college}</p>
-                 <div className="flex flex-wrap gap-2 mt-4">
-                    <Badge variant="secondary">{project.theme}</Badge>
-                    {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                </div>
-            </div>
         </div>
 
-        {/* Right Column (Description & action) */}
+        {/* Right Column (Content & Action) */}
         <div className="w-full md:w-1/2 flex flex-col">
             <ScrollArea className="flex-grow p-6">
+                <DialogHeader className="pb-4">
+                    <DialogTitle className="text-2xl">{project.title}</DialogTitle>
+                    <p className="text-sm text-muted-foreground">{project.college}</p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                        <Badge variant="secondary">{project.theme}</Badge>
+                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                    </div>
+                </DialogHeader>
                 <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
             </ScrollArea>
              <DialogFooter className="p-6 pt-4 border-t mt-auto">
