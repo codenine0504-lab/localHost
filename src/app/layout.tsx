@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: 'LocalHost',
   description: 'Connect, Collaborate, Innovate. Your next great idea starts here!',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/icon-192x192.png',
+  },
 };
 
 export default function RootLayout({
