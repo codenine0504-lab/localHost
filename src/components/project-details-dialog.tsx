@@ -183,30 +183,14 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
       <DialogContent className="max-w-4xl p-0">
         <div className="grid grid-cols-1 md:grid-cols-2 md:max-h-[70vh]">
           {/* Left Column */}
-          <div className="p-6 flex flex-col">
-            <ScrollArea className="flex-grow pr-4 -mr-4">
-              <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-            </ScrollArea>
-            <DialogFooter className="mt-6 pt-6 border-t">
-              <Button
-                className="w-full"
-                onClick={handleJoinOrRequest}
-                disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-              >
-                {getButtonText()}
-              </Button>
-            </DialogFooter>
-          </div>
-
-          {/* Right Column */}
-          <div className="flex flex-col relative md:border-l">
+          <div className="flex flex-col relative order-last md:order-first">
             <div className="relative h-60 w-full md:h-auto md:flex-grow">
               <Image
                 src={project.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={`Image for ${project.title}`}
                 layout="fill"
                 objectFit="cover"
-                className="md:rounded-r-lg"
+                className="md:rounded-l-lg"
                 data-ai-hint="project image"
               />
               <Button
@@ -219,7 +203,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                   <Share2 className="h-4 w-4" />
               </Button>
             </div>
-            <div className="p-6 bg-background rounded-b-lg">
+            <div className="p-6 bg-background rounded-b-lg md:rounded-bl-lg">
                 <DialogTitle className="text-2xl">{project.title}</DialogTitle>
                 <DialogDescription>{project.college}</DialogDescription>
                  <div className="flex flex-wrap gap-2 mt-4">
@@ -227,6 +211,22 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                     {project.isPrivate && <Badge variant="outline">Private</Badge>}
                 </div>
             </div>
+          </div>
+          
+          {/* Right Column */}
+          <div className="p-6 flex flex-col md:border-l">
+            <ScrollArea className="flex-grow pr-4 -mr-4">
+              <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+            </ScrollArea>
+            <DialogFooter className="mt-6 pt-6 border-t">
+              <Button
+                className="w-full"
+                onClick={handleJoinOrRequest}
+                disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+              >
+                {getButtonText()}
+              </Button>
+            </DialogFooter>
           </div>
         </div>
       </DialogContent>
