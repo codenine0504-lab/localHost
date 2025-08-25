@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { addDoc, collection, doc, getDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
 
 interface Project {
   id: string;
@@ -85,10 +85,25 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     }
   };
 
-  const handleJoinPublicProject = () => {
-    const audio = new Audio('/join.mp3');
-    audio.play();
-    router.push(`/chatroom/${project.id}`);
+  const handleJoinPublicProject = async () => {
+    if (!user) return;
+    try {
+        const projectRef = doc(db, 'projects', project.id);
+        await updateDoc(projectRef, {
+            members: arrayUnion(user.uid)
+        });
+
+        const audio = new Audio('/join.mp3');
+        audio.play();
+        router.push(`/chatroom/${project.id}`);
+    } catch (error) {
+        console.error("Error joining public project:", error);
+        toast({
+            title: 'Error',
+            description: 'Could not join the project. Please try again.',
+            variant: 'destructive'
+        });
+    }
   }
 
   const handleRequestToJoin = async () => {
@@ -173,3 +188,5 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     </Dialog>
   );
 }
+
+    
