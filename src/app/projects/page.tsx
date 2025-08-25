@@ -17,7 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Filter } from 'lucide-react';
+import { Filter, Share2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface Project {
@@ -52,6 +53,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [themeFilter, setThemeFilter] = useState<Project['theme'] | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
@@ -68,6 +70,36 @@ export default function ProjectsPage() {
         unsubscribeProjects();
     };
   }, []);
+  
+  const handleShare = async (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation(); // Prevent dialog from opening
+    const shareUrl = `${window.location.origin}/chatroom/${project.id}`;
+    const shareData = {
+        title: `Join my project: ${project.title}`,
+        text: `Join "${project.title}" on LocalHost!`,
+        url: shareUrl,
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            await navigator.clipboard.writeText(shareUrl);
+            toast({
+                title: 'Link Copied',
+                description: 'Project invitation link copied to clipboard.',
+            });
+        }
+    } catch (error) {
+        console.error('Error sharing:', error);
+        toast({
+            title: 'Error',
+            description: 'Could not share the project link.',
+            variant: 'destructive',
+        });
+    }
+  };
+
 
   const filteredProjects = useMemo(() => {
     if (!themeFilter) {
@@ -120,9 +152,9 @@ export default function ProjectsPage() {
                 </>
              ) : filteredProjects.length > 0 ? (
                 filteredProjects.map((project) => (
-                    <ProjectDetailsDialog project={project} key={project.id}>
-                        <Card className="flex flex-col overflow-hidden h-full cursor-pointer hover:border-primary transition-colors duration-300">
-                            <div className="relative h-48 w-full">
+                    <Card key={project.id} className="flex flex-col overflow-hidden h-full transition-colors duration-300">
+                        <ProjectDetailsDialog project={project}>
+                           <div className="relative h-48 w-full cursor-pointer">
                                 <Image
                                     src={project.imageUrl || 'https://placehold.co/600x400.png'}
                                     alt={`Image for ${project.title}`}
@@ -131,22 +163,27 @@ export default function ProjectsPage() {
                                     data-ai-hint="project image"
                                 />
                             </div>
-                            <CardHeader>
-                            <CardTitle>{project.title}</CardTitle>
-                            <CardDescription>{project.college}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow">
-                            <div className="flex flex-wrap gap-2">
-                                <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
-                            </div>
-                            </CardContent>
-                            <CardFooter>
+                        </ProjectDetailsDialog>
+                        <CardHeader>
+                        <CardTitle>{project.title}</CardTitle>
+                        <CardDescription>{project.college}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                        <div className="flex flex-wrap gap-2">
+                            <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
+                        </div>
+                        </CardContent>
+                        <CardFooter className="flex gap-2">
+                            <ProjectDetailsDialog project={project}>
                                 <Button className="w-full" variant="outline">
                                     View Details
                                 </Button>
-                            </CardFooter>
-                        </Card>
-                    </ProjectDetailsDialog>
+                             </ProjectDetailsDialog>
+                            <Button size="icon" variant="ghost" onClick={(e) => handleShare(e, project)}>
+                                <Share2 className="h-4 w-4" />
+                            </Button>
+                        </CardFooter>
+                    </Card>
                 ))
             ) : (
                  <div className="text-center text-muted-foreground py-10 col-span-full">

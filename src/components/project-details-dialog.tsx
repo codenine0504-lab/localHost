@@ -211,13 +211,16 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
               <ScrollArea className="flex-grow pr-2 -mr-2">
                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
               </ScrollArea>
-              <DialogFooter className="pt-6 border-t mt-auto flex-shrink-0">
+              <DialogFooter className="pt-6 border-t mt-auto flex-shrink-0 flex-row gap-2">
                 <Button
                   className="w-full"
                   onClick={handleJoinOrRequest}
                   disabled={requestStatus === 'pending' || requestStatus === 'sent'}
                 >
                   {getButtonText()}
+                </Button>
+                 <Button size="icon" variant="outline" onClick={handleShare}>
+                    <Share2 className="h-4 w-4" />
                 </Button>
               </DialogFooter>
           </div>
