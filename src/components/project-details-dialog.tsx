@@ -179,43 +179,47 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col">
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="relative h-48 md:h-64 w-full">
-            <Image
-              src={project.imageUrl || 'https://placehold.co/600x400.png'}
-              alt={`Image for ${project.title}`}
-              layout="fill"
-              objectFit="cover"
-              data-ai-hint="project image landscape"
-            />
-          </div>
-          <div className="p-6">
-            <DialogHeader className="text-left">
-              <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
-              <p className="text-base text-muted-foreground pt-1">{project.college}</p>
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Badge variant="secondary">{project.theme}</Badge>
-                {project.isPrivate && <Badge variant="outline">Private</Badge>}
-              </div>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap pt-4">
-                {project.description}
-            </p>
-          </div>
-        </ScrollArea>
-        <DialogFooter className="p-6 border-t flex-shrink-0 flex-row gap-2 !justify-end">
-            <Button
-            className="w-full sm:w-auto"
-            onClick={handleJoinOrRequest}
-            disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-            >
-            {getButtonText()}
-            </Button>
-            <Button size="icon" variant="outline" onClick={handleShare}>
-                <Share2 className="h-4 w-4" />
-            </Button>
-        </DialogFooter>
+      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:flex-row">
+        <div className="md:w-1/2 flex flex-col">
+            <div className="relative h-48 md:h-64 w-full">
+                <Image
+                    src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                    alt={`Image for ${project.title}`}
+                    layout="fill"
+                    objectFit="cover"
+                    data-ai-hint="project image landscape"
+                />
+            </div>
+            <div className="p-6 flex-1">
+                <DialogHeader className="text-left">
+                    <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
+                    <p className="text-base text-muted-foreground pt-1">{project.college}</p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                        <Badge variant="secondary">{project.theme}</Badge>
+                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                    </div>
+                </DialogHeader>
+            </div>
+        </div>
+        <div className="md:w-1/2 flex flex-col p-6">
+            <ScrollArea className="flex-1 min-h-0">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {project.description}
+                </p>
+            </ScrollArea>
+            <DialogFooter className="pt-6 flex-shrink-0 flex-row gap-2 !justify-end">
+                <Button
+                    className="w-full sm:w-auto"
+                    onClick={handleJoinOrRequest}
+                    disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+                >
+                    {getButtonText()}
+                </Button>
+                <Button size="icon" variant="outline" onClick={handleShare}>
+                    <Share2 className="h-4 w-4" />
+                </Button>
+            </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
