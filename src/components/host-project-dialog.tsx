@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -30,11 +31,16 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
   theme: z.enum(['software', 'hardware', 'event', 'design']),
-  description: z.string().min(1, 'Description is required.'),
+  description: z.string()
+    .min(1, 'Description is required.')
+    .refine(value => value.split(/\s+/).filter(Boolean).length <= 50, {
+      message: 'Description must be 50 words or less.'
+    }),
   imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
   isPrivate: z.boolean().default(false),
 });
@@ -49,6 +55,7 @@ export function HostProjectDialog() {
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -60,6 +67,9 @@ export function HostProjectDialog() {
       isPrivate: false,
     },
   });
+
+  const descriptionValue = watch('description');
+  const wordCount = descriptionValue.split(/\s+/).filter(Boolean).length;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -194,14 +204,19 @@ export function HostProjectDialog() {
               <Label htmlFor="description" className="sm:text-right">
                 Description
               </Label>
-               <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <Textarea id="description" placeholder="Describe your project" className="col-span-1 sm:col-span-3" {...field} />
-                )}
-              />
-              {errors.description && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.description.message}</p>}
+               <div className="col-span-1 sm:col-span-3 space-y-2">
+                 <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea id="description" placeholder="Describe your project" className="w-full" {...field} />
+                  )}
+                />
+                 <div className="text-xs text-muted-foreground text-right">
+                  <span className={cn(wordCount > 50 ? 'text-red-500' : '')}>{wordCount}</span>/50 words
+                </div>
+               </div>
+              {errors.description && <p className="col-span-1 sm:col-start-2 sm:col-span-3 text-red-500 text-xs">{errors.description.message}</p>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
                <Label htmlFor="imageUrl" className="sm:text-right">
