@@ -13,7 +13,7 @@ import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, on
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical } from 'lucide-react';
+import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -256,6 +256,26 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
+    const handleRemoveMember = async (memberId: string) => {
+        if (!isCurrentUserAdmin || memberId === project.owner) return; // Owner cannot be removed
+
+        const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
+        const projectRef = doc(db, projectCollection, project.id);
+
+        try {
+            // Atomically remove from both members and admins arrays
+            await updateDoc(projectRef, { 
+                members: arrayRemove(memberId),
+                admins: arrayRemove(memberId) 
+            });
+            toast({ title: "Success", description: "Member has been removed from the project." });
+            onProjectUpdate();
+        } catch(error) {
+            console.error("Error removing member:", error);
+            toast({ title: "Error", description: "Could not remove member.", variant: "destructive" });
+        }
+    };
+
 
     const getInitials = (name: string | null | undefined) => {
         if (!name) return "U";
@@ -437,14 +457,65 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                                             <DropdownMenuContent align="end">
                                                 {member.isAdmin ? (
                                                      member.id !== project.owner && (
-                                                        <DropdownMenuItem onClick={() => handleAdminToggle(member.id, false)}>
-                                                            Remove as Admin
-                                                        </DropdownMenuItem>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <Shield className="mr-2 h-4 w-4" />
+                                                                    Remove as Admin
+                                                                </DropdownMenuItem>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Remove Admin Privileges?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>Are you sure you want to remove admin privileges for this member?</AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleAdminToggle(member.id, false)}>Confirm</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
                                                     )
                                                 ) : (
-                                                    <DropdownMenuItem onClick={() => handleAdminToggle(member.id, true)}>
-                                                        Make Admin
-                                                    </DropdownMenuItem>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                <Shield className="mr-2 h-4 w-4" />
+                                                                Make Admin
+                                                            </DropdownMenuItem>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Make Member an Admin?</AlertDialogTitle>
+                                                                <AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                )}
+
+                                                {member.id !== project.owner && (
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-500/10 focus:text-red-600">
+                                                                <UserX className="mr-2 h-4 w-4" />
+                                                                Remove Member
+                                                            </DropdownMenuItem>
+                                                        </AlertDialogTrigger>
+                                                         <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Remove Member?</AlertDialogTitle>
+                                                                <AlertDialogDescription>This will permanently remove the member from the project. This action cannot be undone.</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
