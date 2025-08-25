@@ -180,9 +180,10 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:grid md:grid-cols-2">
-        {/* Left Column (Image & Title on Desktop) */}
-        <div className="relative h-48 md:h-full w-full">
+      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:flex-row">
+        {/* Left Column */}
+        <div className="w-full md:w-1/2 flex-shrink-0">
+          <div className="relative h-48 md:h-full w-full">
             <Image
                 src={project.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={`Image for ${project.title}`}
@@ -199,32 +200,33 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
             >
                 <Share2 className="h-4 w-4" />
             </Button>
+          </div>
         </div>
 
-        {/* Right Column (Details on Desktop) / Main content on mobile */}
-        <div className="flex flex-col flex-grow min-h-0">
-            <ScrollArea className="flex-grow">
-                <div className="p-6">
-                    <DialogHeader className="text-left">
-                        <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
-                        <p className="text-base text-muted-foreground pt-1">{project.college}</p>
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            <Badge variant="secondary">{project.theme}</Badge>
-                            {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                        </div>
-                    </DialogHeader>
-                    <p className="text-muted-foreground whitespace-pre-wrap mt-4">{project.description}</p>
+        {/* Right Column */}
+        <div className="w-full md:w-1/2 flex flex-col min-h-0">
+          <div className="p-6 pb-0">
+            <DialogHeader className="text-left">
+                <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
+                <p className="text-base text-muted-foreground pt-1">{project.college}</p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                    <Badge variant="secondary">{project.theme}</Badge>
+                    {project.isPrivate && <Badge variant="outline">Private</Badge>}
                 </div>
-            </ScrollArea>
-            <DialogFooter className="p-6 border-t mt-auto sm:justify-start">
-                <Button
-                    className="w-full"
-                    onClick={handleJoinOrRequest}
-                    disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-                >
-                    {getButtonText()}
-                </Button>
-            </DialogFooter>
+            </DialogHeader>
+          </div>
+          <ScrollArea className="flex-grow p-6">
+            <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+          </ScrollArea>
+          <DialogFooter className="p-6 border-t sm:justify-start">
+            <Button
+              className="w-full"
+              onClick={handleJoinOrRequest}
+              disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+            >
+              {getButtonText()}
+            </Button>
+          </DialogFooter>
         </div>
       </DialogContent>
     </Dialog>
