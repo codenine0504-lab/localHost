@@ -50,30 +50,10 @@ export function Footer() {
 
       {/* Desktop Footer */}
       <footer className="hidden md:block w-full border-t bg-background">
-        <div className="container py-8 flex flex-col md:flex-row items-center justify-between">
-          <p className="text-sm text-muted-foreground mt-4 md:mt-0">
-            © {new Date().getFullYear()} LocalHost. All rights reserved.
+        <div className="container py-8 flex flex-col md:flex-row items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            © 2025 LocalHost. All rights reserved.
           </p>
-          <nav className="flex items-center gap-6 mt-4 md:mt-0 text-sm text-muted-foreground">
-            <Link
-              href="/"
-              className="hover:text-primary transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              href="/chatroom"
-              className="hover:text-primary transition-colors"
-            >
-              ChatRoom
-            </Link>
-            <Link
-              href="/profile"
-              className="hover:text-primary transition-colors"
-            >
-              Profile
-            </Link>
-          </nav>
         </div>
       </footer>
     </>
