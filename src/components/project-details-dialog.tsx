@@ -3,7 +3,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -17,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { addDoc, collection, doc, getDoc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
+import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Share2 } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 
@@ -180,63 +179,53 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl p-0 max-h-[90vh] md:max-h-[70vh] flex flex-col">
-        <ScrollArea className="flex-grow">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              {/* Left Column (Image and Title) */}
-              <div className="flex flex-col relative order-first">
-                <div className="relative h-60 w-full md:h-full">
-                  <Image
-                    src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                    alt={`Image for ${project.title}`}
-                    layout="fill"
-                    objectFit="cover"
-                    className="md:rounded-l-lg"
-                    data-ai-hint="project image"
-                  />
-                  <Button
-                      variant="outline"
-                      size="icon"
-                      className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
-                      onClick={handleShare}
-                      aria-label="Share project"
-                  >
-                      <Share2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="p-6 bg-background rounded-b-lg md:hidden">
-                    <DialogTitle className="text-2xl">{project.title}</DialogTitle>
-                    <DialogDescription>{project.college}</DialogDescription>
-                     <div className="flex flex-wrap gap-2 mt-4">
-                        <Badge variant="secondary">{project.theme}</Badge>
-                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                    </div>
-                </div>
-              </div>
-              
-              {/* Right Column (Description and Join button) */}
-              <div className="p-6 flex flex-col">
-                 <div className="hidden md:block mb-6">
-                    <DialogTitle className="text-2xl">{project.title}</DialogTitle>
-                    <DialogDescription>{project.college}</DialogDescription>
-                     <div className="flex flex-wrap gap-2 mt-4">
-                        <Badge variant="secondary">{project.theme}</Badge>
-                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                    </div>
-                </div>
-                 <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-              </div>
+      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:flex-row">
+        {/* Left Column (Image & meta) */}
+        <div className="w-full md:w-1/2 flex flex-col">
+            <div className="relative h-60 md:h-80 w-full flex-shrink-0">
+                <Image
+                src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                alt={`Image for ${project.title}`}
+                layout="fill"
+                objectFit="cover"
+                className="md:rounded-l-lg"
+                data-ai-hint="project image"
+                />
+                 <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
+                    onClick={handleShare}
+                    aria-label="Share project"
+                >
+                    <Share2 className="h-4 w-4" />
+                </Button>
             </div>
-        </ScrollArea>
-        <DialogFooter className="p-6 pt-0 border-t">
-          <Button
-            className="w-full"
-            onClick={handleJoinOrRequest}
-            disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-          >
-            {getButtonText()}
-          </Button>
-        </DialogFooter>
+            <div className="p-6">
+                <DialogTitle className="text-2xl">{project.title}</DialogTitle>
+                <p className="text-sm text-muted-foreground">{project.college}</p>
+                 <div className="flex flex-wrap gap-2 mt-4">
+                    <Badge variant="secondary">{project.theme}</Badge>
+                    {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                </div>
+            </div>
+        </div>
+
+        {/* Right Column (Description & action) */}
+        <div className="w-full md:w-1/2 flex flex-col">
+            <ScrollArea className="flex-grow p-6">
+                <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+            </ScrollArea>
+             <DialogFooter className="p-6 pt-4 border-t mt-auto">
+                <Button
+                    className="w-full"
+                    onClick={handleJoinOrRequest}
+                    disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+                >
+                    {getButtonText()}
+                </Button>
+            </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
