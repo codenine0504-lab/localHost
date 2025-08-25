@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, MessageCircle, User } from 'lucide-react';
+import { Home, MessageSquare, Compass, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +13,8 @@ export function Footer() {
 
   const navItems = [
     { href: '/', icon: Home, label: 'Home' },
-    { href: '/chatroom', icon: MessageCircle, label: 'ChatRoom' },
+    { href: '/projects', icon: Compass, label: 'Explore' },
+    { href: '/chatroom', icon: MessageSquare, label: 'Chats' },
     { href: '/profile', icon: User, label: 'Profile' },
   ];
 
@@ -25,7 +26,7 @@ export function Footer() {
     <>
       {/* Mobile Footer */}
       <footer className="fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur-sm md:hidden">
-        <nav className="grid h-16 grid-cols-3">
+        <nav className="grid h-16 grid-cols-4">
           {navItems.map((item) => (
             <Link
               key={item.href}

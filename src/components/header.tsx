@@ -15,9 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, LogOut, Settings } from 'lucide-react';
+import { ArrowLeft, LogOut, Settings, Home, MessageCircle, User as UserIcon } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
+
 
 interface HeaderProps {
   onTitleClick?: () => void;
@@ -30,6 +32,12 @@ export function Header({ onTitleClick }: HeaderProps) {
   const params = useParams();
   const router = useRouter();
   const isChatPage = pathname.startsWith('/chatroom/');
+
+  const navItems = [
+    { href: '/', label: 'Home' },
+    { href: '/projects', label: 'Projects' },
+    { href: '/profile', label: 'Profile' },
+  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -103,11 +111,21 @@ export function Header({ onTitleClick }: HeaderProps) {
               </TitleComponent>
             </>
           ) : (
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 mr-6">
               <span className="font-bold text-lg text-primary">LocalHost</span>
             </Link>
           )}
         </div>
+
+        {/* Desktop Navigation */}
+        {!isChatPage && (
+            <nav className="hidden md:flex flex-grow items-center gap-6">
+                 <Link href="/" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/" ? "text-primary" : "text-muted-foreground")}>Home</Link>
+                 <Link href="/projects" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/projects" ? "text-primary" : "text-muted-foreground")}>Explore</Link>
+                 <Link href="/chatroom" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/chatroom" ? "text-primary" : "text-muted-foreground")}>Chats</Link>
+            </nav>
+        )}
+
         <div className="flex items-center gap-4">
           {user ? (
             <DropdownMenu>
@@ -120,6 +138,12 @@ export function Header({ onTitleClick }: HeaderProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user.displayName}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <Link href="/profile">
+                  <DropdownMenuItem className="cursor-pointer">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                </Link>
                  <Link href="/settings">
                   <DropdownMenuItem className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
