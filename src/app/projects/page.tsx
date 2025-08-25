@@ -15,8 +15,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Filter } from 'lucide-react';
@@ -108,14 +106,11 @@ export default function ProjectsPage() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                    <DropdownMenuLabel>Select a Theme</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setThemeFilter(null)}>All</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setThemeFilter('software')}>Software</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setThemeFilter('hardware')}>Hardware</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setThemeFilter('event')}>Event</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setThemeFilter('design')}>Design</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setThemeFilter(null)}>Clear Filter</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
