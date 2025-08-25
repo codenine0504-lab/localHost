@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -19,6 +18,7 @@ import { auth, db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { addDoc, collection, doc, getDoc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
+import { Share2 } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -89,7 +89,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     if (!user) return;
     try {
         const projectRef = doc(db, 'projects', project.id);
-        await updateDoc(projectRef, {
+         await updateDoc(projectRef, {
             members: arrayUnion(user.uid)
         });
 
@@ -134,6 +134,35 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
         });
     }
   };
+  
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/chatroom/${project.id}`;
+    const shareData = {
+        title: `Join my project: ${project.title}`,
+        text: `Join "${project.title}" on LocalHost!`,
+        url: shareUrl,
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+             // Fallback for browsers that don't support Web Share API
+            await navigator.clipboard.writeText(shareUrl);
+            toast({
+                title: 'Link Copied',
+                description: 'Project invitation link copied to clipboard.',
+            });
+        }
+    } catch (error) {
+        console.error('Error sharing:', error);
+        toast({
+            title: 'Error',
+            description: 'Could not share the project link.',
+            variant: 'destructive',
+        });
+    }
+  };
 
   const getButtonText = () => {
     if (project.isPrivate) {
@@ -160,6 +189,15 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                 objectFit="cover"
                 data-ai-hint="project image"
             />
+             <Button
+                variant="outline"
+                size="icon"
+                className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
+                onClick={handleShare}
+                aria-label="Share project"
+             >
+                <Share2 className="h-4 w-4" />
+            </Button>
           </div>
           <div className="flex justify-between items-start">
             <div>
@@ -188,5 +226,3 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     </Dialog>
   );
 }
-
-    

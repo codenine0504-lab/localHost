@@ -13,7 +13,7 @@ import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, on
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX } from 'lucide-react';
+import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX, Link2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -275,6 +275,35 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             toast({ title: "Error", description: "Could not remove member.", variant: "destructive" });
         }
     };
+    
+     const handleShare = async () => {
+        const shareUrl = `${window.location.origin}/chatroom/${project.id}`;
+        const shareData = {
+            title: `Join my project: ${project.title}`,
+            text: `Join "${project.title}" on LocalHost!`,
+            url: shareUrl,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                 // Fallback for browsers that don't support Web Share API
+                await navigator.clipboard.writeText(shareUrl);
+                toast({
+                    title: 'Link Copied',
+                    description: 'Project invitation link copied to clipboard.',
+                });
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            toast({
+                title: 'Error',
+                description: 'Could not share the project link.',
+                variant: 'destructive',
+            });
+        }
+    };
 
 
     const getInitials = (name: string | null | undefined) => {
@@ -366,6 +395,16 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             </div>
                         )}
                     </div>
+                    
+                     {/* Actions */}
+                     <div className="space-y-2 pt-4 border-t">
+                         <Label className="text-sm font-medium">Actions</Label>
+                         <Button variant="outline" className="w-full" onClick={handleShare}>
+                            <Link2 className="mr-2 h-4 w-4" />
+                            Invite Members
+                         </Button>
+                     </div>
+
 
                      {/* Project Visibility */}
                     {isCurrentUserAdmin && (
