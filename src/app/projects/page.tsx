@@ -6,14 +6,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
-import Link from 'next/link';
+import { db } from '@/lib/firebase';
 import Image from 'next/image';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProjectDetailsDialog } from '@/components/project-details-dialog';
 
 interface Project {
   id: string;
@@ -45,16 +42,8 @@ function ProjectCardSkeleton() {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const { toast } = useToast();
-  const router = useRouter();
-
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-    });
-
     const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
     const unsubscribeProjects = onSnapshot(q, (querySnapshot) => {
       const projs: Project[] = [];
@@ -66,25 +55,9 @@ export default function ProjectsPage() {
     });
 
     return () => {
-        unsubscribeAuth();
         unsubscribeProjects();
     };
   }, []);
-
-  const handleJoinChat = (projectId: string) => {
-      if (!user) {
-          toast({
-              title: "Authentication Required",
-              description: "Please log in to join the chat.",
-              variant: "destructive"
-          });
-          return;
-      }
-      const audio = new Audio('/join.mp3');
-      audio.play();
-      router.push(`/chatroom/${projectId}`);
-  }
-
 
   return (
     <>
@@ -105,31 +78,33 @@ export default function ProjectsPage() {
                 </>
              ) : (
                 projects.map((project) => (
-                    <Card key={project.id} className="flex flex-col overflow-hidden">
-                        <div className="relative h-48 w-full">
-                            <Image
-                                src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                                alt={`Image for ${project.title}`}
-                                layout="fill"
-                                objectFit="cover"
-                                data-ai-hint="project image"
-                            />
-                        </div>
-                        <CardHeader>
-                        <CardTitle>{project.title}</CardTitle>
-                        <CardDescription>{project.college}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                        <div className="flex flex-wrap gap-2">
-                            <Badge variant="secondary">{project.theme}</Badge>
-                        </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button className="w-full" onClick={() => handleJoinChat(project.id)}>
-                                Join Chat
-                            </Button>
-                        </CardFooter>
-                    </Card>
+                    <ProjectDetailsDialog project={project} key={project.id}>
+                        <Card className="flex flex-col overflow-hidden h-full cursor-pointer hover:border-primary transition-colors duration-300">
+                            <div className="relative h-48 w-full">
+                                <Image
+                                    src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                                    alt={`Image for ${project.title}`}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    data-ai-hint="project image"
+                                />
+                            </div>
+                            <CardHeader>
+                            <CardTitle>{project.title}</CardTitle>
+                            <CardDescription>{project.college}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                            <div className="flex flex-wrap gap-2">
+                                <Badge variant="secondary">{project.theme}</Badge>
+                            </div>
+                            </CardContent>
+                            <CardFooter>
+                                <Button className="w-full" variant="outline">
+                                    View Details
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </ProjectDetailsDialog>
                 ))
             )}
         </div>
