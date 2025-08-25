@@ -30,12 +30,14 @@ import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc } from 'fireba
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import { Switch } from '@/components/ui/switch';
 
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
   theme: z.enum(['software', 'hardware', 'event', 'design']),
   description: z.string().min(1, 'Description is required.'),
   imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
+  isPrivate: z.boolean().default(false),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -56,6 +58,7 @@ export function HostProjectDialog() {
       description: '',
       theme: 'software',
       imageUrl: '',
+      isPrivate: false,
     },
   });
 
@@ -95,8 +98,12 @@ export function HostProjectDialog() {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const college = userDoc.exists() ? userDoc.data().college : "Unknown College";
 
-      const projectDocRef = await addDoc(collection(db, 'projects'), {
-        ...data,
+      const collectionName = data.isPrivate ? 'privateProjects' : 'projects';
+      
+      const { isPrivate, ...projectData } = data;
+
+      const projectDocRef = await addDoc(collection(db, collectionName), {
+        ...projectData,
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
@@ -106,6 +113,7 @@ export function HostProjectDialog() {
         name: data.title,
         createdAt: serverTimestamp(),
         imageUrl: data.imageUrl,
+        isPrivate: data.isPrivate,
       });
 
       const audio = new Audio('/upload.mp3');
@@ -201,6 +209,27 @@ export function HostProjectDialog() {
                 )}
               />
               {errors.imageUrl && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.imageUrl.message}</p>}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="isPrivate" className="sm:text-right">
+                Visibility
+              </Label>
+                <div className="col-span-1 sm:col-span-3 flex items-center space-x-2">
+                    <Controller
+                        name="isPrivate"
+                        control={control}
+                        render={({ field }) => (
+                            <>
+                                <Switch
+                                id="isPrivate"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                                <Label htmlFor="isPrivate">{field.value ? 'Private' : 'Public'}</Label>
+                            </>
+                        )}
+                    />
+                </div>
             </div>
           </div>
           <DialogFooter>
