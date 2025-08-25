@@ -13,7 +13,6 @@ export function Footer() {
 
   const navItems = [
     { href: '/', icon: Home, label: 'Home' },
-    { href: '/projects', icon: Compass, label: 'Explore' },
     { href: '/chatroom', icon: MessageSquare, label: 'Chats' },
     { href: '/profile', icon: User, label: 'Profile' },
   ];
@@ -26,7 +25,7 @@ export function Footer() {
     <>
       {/* Mobile Footer */}
       <footer className="fixed bottom-0 left-0 z-40 w-full border-t bg-background/95 backdrop-blur-sm md:hidden">
-        <nav className="grid h-16 grid-cols-4">
+        <nav className="grid h-16 grid-cols-3">
           {navItems.map((item) => (
             <Link
               key={item.href}
