@@ -180,55 +180,63 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl p-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 md:max-h-[70vh]">
-          {/* Left Column */}
-          <div className="flex flex-col relative order-last md:order-first">
-            <div className="relative h-60 w-full md:h-auto md:flex-grow">
-              <Image
-                src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                alt={`Image for ${project.title}`}
-                layout="fill"
-                objectFit="cover"
-                className="md:rounded-l-lg"
-                data-ai-hint="project image"
-              />
-              <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
-                  onClick={handleShare}
-                  aria-label="Share project"
-              >
-                  <Share2 className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="p-6 bg-background rounded-b-lg md:rounded-bl-lg">
-                <DialogTitle className="text-2xl">{project.title}</DialogTitle>
-                <DialogDescription>{project.college}</DialogDescription>
-                 <div className="flex flex-wrap gap-2 mt-4">
-                    <Badge variant="secondary">{project.theme}</Badge>
-                    {project.isPrivate && <Badge variant="outline">Private</Badge>}
+      <DialogContent className="max-w-4xl p-0 max-h-[90vh] md:max-h-[70vh] flex flex-col">
+        <ScrollArea className="flex-grow">
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {/* Left Column (Image and Title) */}
+              <div className="flex flex-col relative order-first">
+                <div className="relative h-60 w-full md:h-full">
+                  <Image
+                    src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                    alt={`Image for ${project.title}`}
+                    layout="fill"
+                    objectFit="cover"
+                    className="md:rounded-l-lg"
+                    data-ai-hint="project image"
+                  />
+                  <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
+                      onClick={handleShare}
+                      aria-label="Share project"
+                  >
+                      <Share2 className="h-4 w-4" />
+                  </Button>
                 </div>
+                <div className="p-6 bg-background rounded-b-lg md:hidden">
+                    <DialogTitle className="text-2xl">{project.title}</DialogTitle>
+                    <DialogDescription>{project.college}</DialogDescription>
+                     <div className="flex flex-wrap gap-2 mt-4">
+                        <Badge variant="secondary">{project.theme}</Badge>
+                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                    </div>
+                </div>
+              </div>
+              
+              {/* Right Column (Description and Join button) */}
+              <div className="p-6 flex flex-col">
+                 <div className="hidden md:block mb-6">
+                    <DialogTitle className="text-2xl">{project.title}</DialogTitle>
+                    <DialogDescription>{project.college}</DialogDescription>
+                     <div className="flex flex-wrap gap-2 mt-4">
+                        <Badge variant="secondary">{project.theme}</Badge>
+                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                    </div>
+                </div>
+                 <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+              </div>
             </div>
-          </div>
-          
-          {/* Right Column */}
-          <div className="p-6 flex flex-col md:border-l">
-            <ScrollArea className="flex-grow pr-4 -mr-4">
-              <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-            </ScrollArea>
-            <DialogFooter className="mt-6 pt-6 border-t">
-              <Button
-                className="w-full"
-                onClick={handleJoinOrRequest}
-                disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-              >
-                {getButtonText()}
-              </Button>
-            </DialogFooter>
-          </div>
-        </div>
+        </ScrollArea>
+        <DialogFooter className="p-6 pt-0 border-t">
+          <Button
+            className="w-full"
+            onClick={handleJoinOrRequest}
+            disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+          >
+            {getButtonText()}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
