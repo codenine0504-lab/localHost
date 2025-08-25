@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,11 +10,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Loader2, Trash2 } from 'lucide-react';
+import { Pencil, Loader2, Trash2, UserPlus, Check, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +29,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { Separator } from './ui/separator';
 
 
 interface ProjectDetails {
@@ -45,6 +46,13 @@ interface Member {
     displayName: string | null;
     photoURL: string | null;
     isAdmin: boolean;
+}
+
+interface JoinRequest {
+    id: string;
+    userId: string;
+    userDisplayName: string | null;
+    userPhotoURL: string | null;
 }
 
 interface ChatSidebarProps {
@@ -65,11 +73,30 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
     const [isDeleting, setIsDeleting] = useState(false);
     const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
+    const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+    const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
 
 
     const isOwner = currentUser?.uid === project.owner;
+
+    useEffect(() => {
+        if (!isOwner || !project.id) return;
+
+        const q = query(
+            collection(db, 'joinRequests'),
+            where('projectId', '==', project.id),
+            where('status', '==', 'pending')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
+            setJoinRequests(requests);
+        });
+
+        return () => unsubscribe();
+    }, [isOwner, project.id]);
 
     const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
         try {
@@ -98,6 +125,33 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
+    const handleRequestAction = async (requestId: string, userId: string, action: 'approve' | 'decline') => {
+        if (!isOwner) return;
+        setProcessingRequestId(requestId);
+
+        const requestRef = doc(db, 'joinRequests', requestId);
+
+        try {
+            if (action === 'approve') {
+                const projectRef = doc(db, 'privateProjects', project.id);
+                await updateDoc(projectRef, {
+                    members: arrayUnion(userId)
+                });
+                await updateDoc(requestRef, { status: 'approved' });
+                toast({ title: 'User Approved', description: 'The user has been added to the project.' });
+            } else {
+                await updateDoc(requestRef, { status: 'declined' });
+                toast({ title: 'User Declined', description: 'The join request has been declined.' });
+            }
+            onProjectUpdate(); // Re-fetch project members
+        } catch(error) {
+            console.error(`Error ${action === 'approve' ? 'approving' : 'declining'} request:`, error);
+            toast({ title: "Error", description: "Could not process the request.", variant: 'destructive' });
+        } finally {
+            setProcessingRequestId(null);
+        }
+    };
+
     const handlePrivacyToggle = async (isPrivate: boolean) => {
         if (!isOwner) return;
         setIsTogglingPrivacy(true);
@@ -114,6 +168,12 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             }
 
             const projectData = projectDoc.data();
+            
+            // Add owner to members list when making a project private for the first time
+            if (isPrivate && !projectData.members) {
+                projectData.members = [project.owner];
+            }
+
 
             // Create new doc in the target collection
             await setDoc(doc(db, toCollection, project.id), projectData);
@@ -274,14 +334,57 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                                 {isTogglingPrivacy && <Loader2 className="h-4 w-4 animate-spin" />}
                              </div>
                              <p className="text-xs text-muted-foreground">
-                                {project.isPrivate ? "Only members can see this project." : "This project is visible to everyone."}
+                                {project.isPrivate ? "Only approved members can join this project." : "This project is visible to everyone."}
                             </p>
+                        </div>
+                    )}
+                    
+                     {/* Join Requests */}
+                    {isOwner && project.isPrivate && joinRequests.length > 0 && (
+                        <div className="space-y-4 pt-4 border-t">
+                            <h3 className="text-lg font-medium flex items-center">
+                                <UserPlus className="mr-2 h-5 w-5" />
+                                Join Requests ({joinRequests.length})
+                            </h3>
+                            <ul className="space-y-3">
+                                {joinRequests.map(req => (
+                                    <li key={req.id} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-9 w-9">
+                                                <AvatarImage src={req.userPhotoURL || undefined} alt="User avatar" />
+                                                <AvatarFallback>{getInitials(req.userDisplayName)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="text-sm font-medium">{req.userDisplayName}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                size="icon"
+                                                variant="outline"
+                                                className="h-8 w-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                                                onClick={() => handleRequestAction(req.id, req.userId, 'approve')}
+                                                disabled={processingRequestId === req.id}
+                                            >
+                                                {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                            </Button>
+                                             <Button
+                                                size="icon"
+                                                variant="outline"
+                                                className="h-8 w-8 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                                                onClick={() => handleRequestAction(req.id, req.userId, 'decline')}
+                                                disabled={processingRequestId === req.id}
+                                            >
+                                                {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     )}
 
 
                     {/* Members List */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 pt-4 border-t">
                         <h3 className="text-lg font-medium">Members ({members.length})</h3>
                         <ul className="space-y-3">
                             {members.map(member => (

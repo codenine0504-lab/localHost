@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send } from 'lucide-react';
+import { Send, Ban } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Header } from '@/components/header';
@@ -34,6 +34,7 @@ interface ProjectDetails {
     imageUrl?: string;
     owner: string;
     isPrivate: boolean;
+    members?: string[];
 }
 
 interface Member {
@@ -80,6 +81,7 @@ function ChatSkeleton() {
 
 export default function ChatPage() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params.id as string;
   const [user, setUser] = useState<User | null>(auth.currentUser);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -88,21 +90,26 @@ export default function ChatPage() {
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(setUser);
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+        setUser(currentUser);
+        if (!currentUser) {
+            setLoading(false);
+        }
+    });
     return () => unsubscribe();
   }, []);
 
   const fetchProjectAndMembers = useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId || !user) return;
     setLoading(true);
 
     try {
-        // Check both collections for the project
         const publicProjectDoc = await getDoc(doc(db, "projects", projectId));
         const privateProjectDoc = await getDoc(doc(db, "privateProjects", projectId));
         
@@ -115,78 +122,112 @@ export default function ChatPage() {
         } else if (privateProjectDoc.exists()) {
             projectDoc = privateProjectDoc;
             isPrivate = true;
+        } else {
+             setLoading(false);
+             setHasAccess(false);
+             return;
         }
 
-        if (projectDoc?.exists()) {
-            const projectData = projectDoc.data();
-            const projDetails = {
-                id: projectDoc.id,
-                title: projectData.title,
-                description: projectData.description,
-                imageUrl: projectData.imageUrl,
-                owner: projectData.owner,
-                isPrivate: isPrivate
-            };
-            setProjectDetails(projDetails);
+        const projectData = projectDoc.data();
+        const projDetails = {
+            id: projectDoc.id,
+            title: projectData.title,
+            description: projectData.description,
+            imageUrl: projectData.imageUrl,
+            owner: projectData.owner,
+            isPrivate: isPrivate,
+            members: projectData.members || [],
+        };
+        setProjectDetails(projDetails);
+
+        // Access control
+        const canView = !isPrivate || user.uid === projDetails.owner || (projDetails.members && projDetails.members.includes(user.uid));
+        setHasAccess(canView);
+
+        if(!canView) {
+            setLoading(false);
+            return;
         }
 
         const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
         if (chatRoomDoc.exists()) {
             setChatRoom({ id: chatRoomDoc.id, ...chatRoomDoc.data() } as ChatRoom);
         }
+
+        // Fetch member details
+        const memberIds = new Set(projDetails.members);
+        memberIds.add(projDetails.owner);
+        const uniqueMemberIds = Array.from(memberIds);
+        
+        const fetchPromises = uniqueMemberIds.map(id => getDoc(doc(db, 'users', id)));
+        const userDocs = await Promise.all(fetchPromises);
+
+        const fetchedMembers: Member[] = [];
+        userDocs.forEach(docSnapshot => {
+            if (docSnapshot.exists()) {
+                const userData = docSnapshot.data();
+                const member = {
+                    id: docSnapshot.id,
+                    displayName: userData?.displayName || 'Unknown User',
+                    photoURL: userData?.photoURL || null,
+                    isAdmin: docSnapshot.id === projDetails.owner
+                };
+                fetchedMembers.push(member);
+                memberCache.current.set(docSnapshot.id, member);
+            }
+        });
+        setMembers(fetchedMembers);
+
     } catch(error) {
         console.error("Error fetching project details:", error);
     } finally {
         setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, user]);
 
 
   useEffect(() => {
-    fetchProjectAndMembers();
-  }, [fetchProjectAndMembers]);
+    if (user) {
+        fetchProjectAndMembers();
+    }
+  }, [user, fetchProjectAndMembers]);
 
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !hasAccess) return;
 
     const q = query(collection(db, `Chat/${projectId}/Chats`), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs);
 
-      const senderIds = new Set(msgs.map(msg => msg.senderId).filter(id => id !== 'bot'));
-      if (projectDetails) {
-          senderIds.add(projectDetails.owner);
-      }
-      
+      const senderIds = new Set(msgs.map(msg => msg.senderId));
       const newSenderIds = Array.from(senderIds).filter(id => !memberCache.current.has(id));
 
       if (newSenderIds.length > 0) {
         const fetchPromises = newSenderIds.map(id => getDoc(doc(db, 'users', id)));
         const userDocs = await Promise.all(fetchPromises);
+        const currentMembers = Array.from(memberCache.current.values());
 
         userDocs.forEach(docSnapshot => {
             if (docSnapshot.exists()) {
                 const userData = docSnapshot.data();
-                memberCache.current.set(docSnapshot.id, {
+                const newMember = {
                     id: docSnapshot.id,
                     displayName: userData?.displayName || 'Unknown User',
                     photoURL: userData?.photoURL || null,
                     isAdmin: docSnapshot.id === projectDetails?.owner
-                });
+                };
+                memberCache.current.set(docSnapshot.id, newMember);
+                currentMembers.push(newMember);
             }
         });
-        setMembers(Array.from(memberCache.current.values()));
-      }
-      
-      if (loading) {
-          setLoading(false);
+        setMembers(currentMembers);
       }
     });
 
     return () => unsubscribe();
-  }, [projectId, projectDetails, loading]);
+  }, [projectId, hasAccess, projectDetails]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -229,23 +270,39 @@ export default function ChatPage() {
     );
   }
   
+  if (!user) {
+     router.push('/projects');
+     return null;
+  }
+  
+  if (!hasAccess) {
+    return (
+      <>
+        <Header />
+        <div className="flex flex-col items-center justify-center h-[calc(100vh_-_65px)] text-center p-4">
+            <Ban className="h-16 w-16 text-destructive mb-4" />
+            <h1 className="text-2xl font-bold">Access Denied</h1>
+            <p className="text-muted-foreground max-w-md">You do not have permission to view this chat. If this is a private project, ask the admin for an invitation.</p>
+            <Button onClick={() => router.push('/projects')} className="mt-6">Back to Projects</Button>
+        </div>
+      </>
+    )
+  }
+  
   if (!chatRoom) {
     return <div className="text-center p-8">Chat room not found.</div>
   }
 
   const getSenderName = (senderId: string) => {
-      if (senderId === 'bot') return 'Bot';
       if (senderId === user?.uid) return 'You';
       const member = memberCache.current.get(senderId);
       return member?.displayName || 'A member';
   }
   const getSenderAvatar = (senderId: string) => {
-      if(senderId === 'bot') return "https://placehold.co/32x32.png";
       const member = memberCache.current.get(senderId);
       return member?.photoURL;
   }
   const getSenderFallback = (senderId: string) => {
-    if(senderId === 'bot') return 'BT';
     if (senderId === user?.uid) return user.displayName?.substring(0, 2).toUpperCase() || 'U';
     const member = memberCache.current.get(senderId);
     return member?.displayName?.substring(0, 2).toUpperCase() || 'M';

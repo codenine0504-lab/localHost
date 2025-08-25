@@ -19,6 +19,7 @@ interface Project {
   theme: string;
   college: string;
   imageUrl?: string;
+  isPrivate?: boolean;
 }
 
 function ProjectCardSkeleton() {
@@ -48,7 +49,7 @@ export default function ProjectsPage() {
     const unsubscribeProjects = onSnapshot(q, (querySnapshot) => {
       const projs: Project[] = [];
       querySnapshot.forEach((doc) => {
-        projs.push({ id: doc.id, ...doc.data() } as Project);
+        projs.push({ id: doc.id, ...doc.data(), isPrivate: false } as Project);
       });
       setProjects(projs);
       setLoading(false);

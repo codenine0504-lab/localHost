@@ -102,12 +102,18 @@ export function HostProjectDialog() {
       
       const { isPrivate, ...projectData } = data;
 
-      const projectDocRef = await addDoc(collection(db, collectionName), {
+      const projectPayload: any = {
         ...projectData,
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
-      });
+      }
+
+      if (data.isPrivate) {
+          projectPayload.members = [user.uid]; // Owner is automatically a member
+      }
+
+      const projectDocRef = await addDoc(collection(db, collectionName), projectPayload);
 
       await setDoc(doc(db, 'chatRooms', projectDocRef.id), {
         name: data.title,
