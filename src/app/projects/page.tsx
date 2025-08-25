@@ -92,7 +92,7 @@ export default function ProjectsPage() {
         <Header />
         <div className="container mx-auto py-12 px-4 md:px-6">
         <div className="space-y-4 mb-8 text-center">
-            <h1 className="text-xl md:text-2xl font-normal">Join Project and Events across different colleges/universities</h1>
+            <h1 className="text-base text-muted-foreground">Join Project and Events across different colleges/universities</h1>
         </div>
         <div className="flex justify-end mb-6">
              <DropdownMenu>
