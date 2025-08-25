@@ -47,7 +47,7 @@ interface Member {
 
 function ChatSkeleton() {
     return (
-        <div className="flex flex-col h-[calc(100vh_-_65px)] bg-background">
+        <div className="flex flex-col h-full bg-background">
             <div className="flex-grow p-4 space-y-6 max-w-4xl mx-auto w-full">
                 <div className="flex items-start gap-3">
                     <Skeleton className="h-8 w-8 rounded-full" />
@@ -285,10 +285,10 @@ export default function ChatPage() {
   
   if (loading) {
     return (
-        <>
+        <div className="h-screen flex flex-col">
             <Header />
             <ChatSkeleton />
-        </>
+        </div>
     );
   }
   
@@ -331,54 +331,54 @@ export default function ChatPage() {
   };
 
   return (
-     <>
+     <div className="h-screen flex flex-col bg-background">
         <Header onTitleClick={() => setIsSidebarOpen(true)} />
-        <div className="flex flex-col h-[calc(100vh_-_65px)] bg-background">
-        <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
-            <div className="space-y-4 max-w-4xl mx-auto w-full">
-                {messages.length === 0 && (
-                <div className="text-center text-muted-foreground py-10">
-                        <p>Discuss Your project here</p>
-                </div>
-                )}
-                {messages.map((msg) => (
-                <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
-                    {msg.senderId !== user?.uid && (
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
-                        <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
-                    </Avatar>
-                    )}
-                    <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                    <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
-                    <p className="text-sm">{msg.text}</p>
+        <div className="flex-1 flex flex-col min-h-0">
+            <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
+                <div className="space-y-4 max-w-4xl mx-auto w-full">
+                    {messages.length === 0 && (
+                    <div className="text-center text-muted-foreground py-10">
+                            <p>Discuss Your project here</p>
                     </div>
-                    {msg.senderId === user?.uid && (
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
-                        <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
-                    </Avatar>
                     )}
+                    {messages.map((msg) => (
+                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
+                        {msg.senderId !== user?.uid && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
+                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                        </Avatar>
+                        )}
+                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                        <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
+                        <p className="text-sm">{msg.text}</p>
+                        </div>
+                        {msg.senderId === user?.uid && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
+                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                        </Avatar>
+                        )}
+                    </div>
+                    ))}
                 </div>
-                ))}
+            </ScrollArea>
+            <div className="p-4 bg-background border-t">
+                <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
+                <div className="relative">
+                    <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    disabled={!user}
+                    className="pr-12"
+                    />
+                    <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user}>
+                    <Send className="h-4 w-4" />
+                    </Button>
+                </div>
+                </form>
             </div>
-        </ScrollArea>
-        <div className="p-4 bg-background border-t">
-            <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
-            <div className="relative">
-                <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                disabled={!user}
-                className="pr-12"
-                />
-                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user}>
-                <Send className="h-4 w-4" />
-                </Button>
-            </div>
-            </form>
-        </div>
         </div>
         {projectDetails && (
              <ChatSidebar 
@@ -390,10 +390,6 @@ export default function ChatPage() {
                 onProjectUpdate={fetchProjectAndMembers}
             />
         )}
-     </>
+     </div>
   );
 }
-
-    
-
-    
