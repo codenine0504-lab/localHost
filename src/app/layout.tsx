@@ -30,7 +30,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap"
           rel="stylesheet"
         />
-        <meta name="theme-color" content="#38A3A5" />
+        <meta name="theme-color" content="#16A34A" />
       </head>
       <body className="font-body antialiased overflow-x-hidden">
          <ThemeProvider
