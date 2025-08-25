@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -107,6 +106,7 @@ export function HostProjectDialog() {
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
+        admins: [user.uid], // Owner is automatically an admin
       }
 
       if (data.isPrivate) {

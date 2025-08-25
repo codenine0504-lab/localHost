@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,11 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Loader2, Trash2, UserPlus, Check, X } from 'lucide-react';
+import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +29,12 @@ import { useRouter } from 'next/navigation';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 
 interface ProjectDetails {
@@ -39,6 +44,7 @@ interface ProjectDetails {
     imageUrl?: string;
     owner: string;
     isPrivate: boolean;
+    admins?: string[];
 }
 
 interface Member {
@@ -79,10 +85,10 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const router = useRouter();
 
 
-    const isOwner = currentUser?.uid === project.owner;
+    const isCurrentUserAdmin = currentUser ? project.admins?.includes(currentUser.uid) ?? false : false;
 
     useEffect(() => {
-        if (!isOwner || !project.id) return;
+        if (!isCurrentUserAdmin || !project.id) return;
 
         const q = query(
             collection(db, 'joinRequests'),
@@ -96,7 +102,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         });
 
         return () => unsubscribe();
-    }, [isOwner, project.id]);
+    }, [isCurrentUserAdmin, project.id]);
 
     const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
         try {
@@ -126,7 +132,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
 
     const handleRequestAction = async (requestId: string, userId: string, action: 'approve' | 'decline') => {
-        if (!isOwner) return;
+        if (!isCurrentUserAdmin) return;
         setProcessingRequestId(requestId);
 
         const requestRef = doc(db, 'joinRequests', requestId);
@@ -153,7 +159,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
 
     const handlePrivacyToggle = async (isPrivate: boolean) => {
-        if (!isOwner) return;
+        if (!isCurrentUserAdmin) return;
         setIsTogglingPrivacy(true);
 
         const fromCollection = isPrivate ? 'projects' : 'privateProjects';
@@ -196,7 +202,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
 
     const handleDeleteProject = async () => {
-        if (!isOwner) return;
+        if (!isCurrentUserAdmin) return;
         setIsDeleting(true);
 
         try {
@@ -228,6 +234,28 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             setIsDeleting(false);
         }
     }
+    
+     const handleAdminToggle = async (memberId: string, shouldBeAdmin: boolean) => {
+        if (!isCurrentUserAdmin || memberId === project.owner) return; // Owner cannot be demoted
+
+        const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
+        const projectRef = doc(db, projectCollection, project.id);
+
+        try {
+            if (shouldBeAdmin) {
+                await updateDoc(projectRef, { admins: arrayUnion(memberId) });
+                toast({ title: "Success", description: "Member promoted to admin." });
+            } else {
+                await updateDoc(projectRef, { admins: arrayRemove(memberId) });
+                toast({ title: "Success", description: "Admin status revoked." });
+            }
+            onProjectUpdate();
+        } catch (error) {
+            console.error("Error updating admin status:", error);
+            toast({ title: "Error", description: "Could not update admin status.", variant: "destructive" });
+        }
+    };
+
 
     const getInitials = (name: string | null | undefined) => {
         if (!name) return "U";
@@ -254,7 +282,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                     </div>
                     
                     {/* Image URL */}
-                     {isOwner && (
+                     {isCurrentUserAdmin && (
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Image URL</label>
                             {isEditingImageUrl ? (
@@ -278,7 +306,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                     {/* Project Title */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Title</label>
-                        {isEditingTitle && isOwner ? (
+                        {isEditingTitle && isCurrentUserAdmin ? (
                             <div className="flex items-center gap-2">
                                 <Input value={title} onChange={(e) => setTitle(e.target.value)} />
                                 <Button onClick={() => handleUpdate('title')}>Save</Button>
@@ -287,7 +315,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                         ) : (
                             <div className="flex items-center justify-between">
                                 <p className="text-lg font-semibold">{project.title}</p>
-                                {isOwner && (
+                                {isCurrentUserAdmin && (
                                     <Button variant="ghost" size="icon" onClick={() => setIsEditingTitle(true)}>
                                         <Pencil className="h-4 w-4" />
                                     </Button>
@@ -299,7 +327,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                     {/* Project Description */}
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Description</label>
-                        {isEditingDesc && isOwner ? (
+                        {isEditingDesc && isCurrentUserAdmin ? (
                             <div className="flex flex-col gap-2">
                                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} />
                                 <div className="flex items-center gap-2">
@@ -310,7 +338,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                         ) : (
                              <div className="flex items-start justify-between">
                                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-                                 {isOwner && (
+                                 {isCurrentUserAdmin && (
                                     <Button variant="ghost" size="icon" onClick={() => setIsEditingDesc(true)}>
                                         <Pencil className="h-4 w-4" />
                                     </Button>
@@ -320,7 +348,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                     </div>
 
                      {/* Project Visibility */}
-                    {isOwner && (
+                    {isCurrentUserAdmin && (
                         <div className="space-y-2">
                             <Label className="text-sm font-medium">Project Visibility</Label>
                              <div className="flex items-center space-x-2">
@@ -340,7 +368,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                     )}
                     
                      {/* Join Requests */}
-                    {isOwner && project.isPrivate && joinRequests.length > 0 && (
+                    {isCurrentUserAdmin && project.isPrivate && joinRequests.length > 0 && (
                         <div className="space-y-4 pt-4 border-t">
                             <h3 className="text-lg font-medium flex items-center">
                                 <UserPlus className="mr-2 h-5 w-5" />
@@ -387,23 +415,47 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                     <div className="space-y-4 pt-4 border-t">
                         <h3 className="text-lg font-medium">Members ({members.length})</h3>
                         <ul className="space-y-3">
-                            {members.map(member => (
-                                <li key={member.id} className="flex items-center justify-between">
+                             {members.map(member => (
+                                <li key={member.id} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9">
                                             <AvatarImage src={member.photoURL || undefined} alt="Member avatar" />
                                             <AvatarFallback>{getInitials(member.displayName)}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm font-medium">{member.displayName}</span>
+                                        {member.id === project.owner && <Badge variant="secondary">Owner</Badge>}
+                                        {member.isAdmin && member.id !== project.owner && <Badge>Admin</Badge>}
                                     </div>
-                                    {member.isAdmin && <Badge>Admin</Badge>}
+                                    
+                                     {isCurrentUserAdmin && currentUser?.uid !== member.id && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {member.isAdmin ? (
+                                                     member.id !== project.owner && (
+                                                        <DropdownMenuItem onClick={() => handleAdminToggle(member.id, false)}>
+                                                            Remove as Admin
+                                                        </DropdownMenuItem>
+                                                    )
+                                                ) : (
+                                                    <DropdownMenuItem onClick={() => handleAdminToggle(member.id, true)}>
+                                                        Make Admin
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </li>
                             ))}
                         </ul>
                     </div>
 
                      {/* Delete Project */}
-                    {isOwner && (
+                    {isCurrentUserAdmin && (
                         <div className="pt-6 border-t border-destructive/20">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>

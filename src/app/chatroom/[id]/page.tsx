@@ -35,6 +35,7 @@ interface ProjectDetails {
     owner: string;
     isPrivate: boolean;
     members?: string[];
+    admins?: string[];
 }
 
 interface Member {
@@ -129,7 +130,7 @@ export default function ChatPage() {
         }
 
         const projectData = projectDoc.data();
-        const projDetails = {
+        const projDetails: ProjectDetails = {
             id: projectDoc.id,
             title: projectData.title,
             description: projectData.description,
@@ -137,11 +138,12 @@ export default function ChatPage() {
             owner: projectData.owner,
             isPrivate: isPrivate,
             members: projectData.members || [],
+            admins: projectData.admins || [projectData.owner],
         };
         setProjectDetails(projDetails);
 
         // Access control
-        const canView = !isPrivate || user.uid === projDetails.owner || (projDetails.members && projDetails.members.includes(user.uid));
+        const canView = !isPrivate || projDetails.admins?.includes(user.uid) || (projDetails.members && projDetails.members.includes(user.uid));
         setHasAccess(canView);
 
         if(!canView) {
@@ -170,7 +172,7 @@ export default function ChatPage() {
                     id: docSnapshot.id,
                     displayName: userData?.displayName || 'Unknown User',
                     photoURL: userData?.photoURL || null,
-                    isAdmin: docSnapshot.id === projDetails.owner
+                    isAdmin: projDetails.admins?.includes(docSnapshot.id) ?? false
                 };
                 fetchedMembers.push(member);
                 memberCache.current.set(docSnapshot.id, member);
@@ -216,7 +218,7 @@ export default function ChatPage() {
                     id: docSnapshot.id,
                     displayName: userData?.displayName || 'Unknown User',
                     photoURL: userData?.photoURL || null,
-                    isAdmin: docSnapshot.id === projectDetails?.owner
+                    isAdmin: projectDetails?.admins?.includes(docSnapshot.id) ?? false,
                 };
                 memberCache.current.set(docSnapshot.id, newMember);
                 currentMembers.push(newMember);
