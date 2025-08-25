@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,12 +11,22 @@ import Image from 'next/image';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectDetailsDialog } from '@/components/project-details-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Filter } from 'lucide-react';
+
 
 interface Project {
   id: string;
   title: string;
   description: string;
-  theme: string;
+  theme: 'software' | 'hardware' | 'event' | 'design';
   college: string;
   imageUrl?: string;
   isPrivate?: boolean;
@@ -43,6 +53,7 @@ function ProjectCardSkeleton() {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [themeFilter, setThemeFilter] = useState<Project['theme'] | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
@@ -60,6 +71,24 @@ export default function ProjectsPage() {
     };
   }, []);
 
+  const filteredProjects = useMemo(() => {
+    if (!themeFilter) {
+      return projects;
+    }
+    return projects.filter(project => project.theme === themeFilter);
+  }, [projects, themeFilter]);
+
+  const getThemeBadgeVariant = (theme: Project['theme']): 'software' | 'hardware' | 'event' | 'design' | 'secondary' => {
+    const themeMap = {
+        software: 'software',
+        hardware: 'hardware',
+        event: 'event',
+        design: 'design',
+    };
+    return themeMap[theme] || 'secondary';
+  }
+
+
   return (
     <>
         <Header />
@@ -70,6 +99,26 @@ export default function ProjectsPage() {
             Find interesting projects to join and collaborate with talented individuals.
             </p>
         </div>
+        <div className="flex justify-end mb-6">
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                        <Filter className="mr-2 h-4 w-4" />
+                        Filter by theme
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>Select a Theme</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setThemeFilter('software')}>Software</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setThemeFilter('hardware')}>Hardware</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setThemeFilter('event')}>Event</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setThemeFilter('design')}>Design</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setThemeFilter(null)}>Clear Filter</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
              {loading ? (
                 <>
@@ -77,8 +126,8 @@ export default function ProjectsPage() {
                     <ProjectCardSkeleton />
                     <ProjectCardSkeleton />
                 </>
-             ) : (
-                projects.map((project) => (
+             ) : filteredProjects.length > 0 ? (
+                filteredProjects.map((project) => (
                     <ProjectDetailsDialog project={project} key={project.id}>
                         <Card className="flex flex-col overflow-hidden h-full cursor-pointer hover:border-primary transition-colors duration-300">
                             <div className="relative h-48 w-full">
@@ -96,7 +145,7 @@ export default function ProjectsPage() {
                             </CardHeader>
                             <CardContent className="flex-grow">
                             <div className="flex flex-wrap gap-2">
-                                <Badge variant="secondary">{project.theme}</Badge>
+                                <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
                             </div>
                             </CardContent>
                             <CardFooter>
@@ -107,6 +156,10 @@ export default function ProjectsPage() {
                         </Card>
                     </ProjectDetailsDialog>
                 ))
+            ) : (
+                 <div className="text-center text-muted-foreground py-10 col-span-full">
+                    <p>No projects found for the selected theme.</p>
+                </div>
             )}
         </div>
         </div>
