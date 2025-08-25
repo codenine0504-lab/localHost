@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -7,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -180,92 +180,46 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col">
-        {/* Mobile view */}
-        <div className="md:hidden flex flex-col h-full">
-            <ScrollArea className="flex-grow">
-                <div className="relative h-48 w-full">
-                    <Image
-                        src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                        alt={`Image for ${project.title}`}
-                        layout="fill"
-                        objectFit="cover"
-                        data-ai-hint="project image"
-                    />
-                </div>
-                <div className="p-6">
-                    <DialogHeader className="text-left">
-                        <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
-                        <p className="text-base text-muted-foreground pt-1">{project.college}</p>
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            <Badge variant="secondary">{project.theme}</Badge>
-                            {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                        </div>
-                    </DialogHeader>
-                    <p className="text-muted-foreground whitespace-pre-wrap mt-4">{project.description}</p>
-                </div>
-            </ScrollArea>
-             <DialogFooter className="p-6 border-t sm:justify-start flex-shrink-0">
-                <Button
-                className="w-full"
-                onClick={handleJoinOrRequest}
-                disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-                >
-                {getButtonText()}
-                </Button>
-            </DialogFooter>
-        </div>
-
-
-        {/* Desktop view */}
-        <div className="hidden md:flex h-[60vh] max-h-[600px]">
-          {/* Left Column */}
-          <div className="w-1/2 flex-shrink-0 flex flex-col border-r">
-             <div className="relative h-48 w-full flex-shrink-0">
-               <Image
+        {/* Unified Layout */}
+        <div className="md:grid md:grid-cols-2 h-full min-h-0">
+          
+          {/* Left Column (Image & Details) */}
+          <div className="relative md:flex md:flex-col">
+            <div className="relative h-48 md:h-64 w-full flex-shrink-0">
+              <Image
                   src={project.imageUrl || 'https://placehold.co/600x400.png'}
                   alt={`Image for ${project.title}`}
                   layout="fill"
                   objectFit="cover"
                   data-ai-hint="project image"
               />
-               <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute top-4 right-4 bg-background/70 hover:bg-background/90"
-                  onClick={handleShare}
-                  aria-label="Share project"
-              >
-                  <Share2 className="h-4 w-4" />
-              </Button>
             </div>
-            <div className="p-6 flex flex-col flex-grow">
-               <DialogHeader className="text-left">
-                  <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
-                  <p className="text-base text-muted-foreground pt-1">{project.college}</p>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                      <Badge variant="secondary">{project.theme}</Badge>
-                      {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                  </div>
-              </DialogHeader>
+            <div className="p-6">
+                <DialogHeader className="text-left">
+                    <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
+                    <p className="text-base text-muted-foreground pt-1">{project.college}</p>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                        <Badge variant="secondary">{project.theme}</Badge>
+                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                    </div>
+                </DialogHeader>
             </div>
           </div>
-
-          {/* Right Column */}
-          <div className="w-1/2 flex flex-col">
-            <div className="p-6 flex-grow min-h-0">
-                <ScrollArea className="h-full pr-4">
-                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-                </ScrollArea>
-            </div>
-            <DialogFooter className="p-6 border-t sm:justify-start flex-shrink-0">
-              <Button
-                className="w-full"
-                onClick={handleJoinOrRequest}
-                disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-              >
-                {getButtonText()}
-              </Button>
-            </DialogFooter>
+          
+          {/* Right Column (Description & Action) */}
+          <div className="flex flex-col p-6 min-h-0">
+              <ScrollArea className="flex-grow pr-2 -mr-2">
+                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+              </ScrollArea>
+              <DialogFooter className="pt-6 border-t mt-auto flex-shrink-0">
+                <Button
+                  className="w-full"
+                  onClick={handleJoinOrRequest}
+                  disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+                >
+                  {getButtonText()}
+                </Button>
+              </DialogFooter>
           </div>
         </div>
       </DialogContent>
