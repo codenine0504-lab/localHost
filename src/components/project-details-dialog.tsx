@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -175,27 +176,23 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     return 'Join Project';
   }
 
-
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col">
-        {/* Unified Layout */}
-        <div className="md:grid md:grid-cols-2 h-full min-h-0">
-          
-          {/* Left Column (Image & Details) */}
-          <div className="relative md:flex md:flex-col">
-            <div className="relative h-48 md:h-64 w-full flex-shrink-0">
-              <Image
-                  src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                  alt={`Image for ${project.title}`}
-                  layout="fill"
-                  objectFit="cover"
-                  data-ai-hint="project image"
-              />
-            </div>
-            <div className="p-6">
-                <DialogHeader className="text-left">
+        <div className="relative h-48 md:h-64 w-full flex-shrink-0">
+          <Image
+              src={project.imageUrl || 'https://placehold.co/600x400.png'}
+              alt={`Image for ${project.title}`}
+              layout="fill"
+              objectFit="cover"
+              data-ai-hint="project image"
+          />
+        </div>
+        <div className="md:grid md:grid-cols-2 p-6 gap-6 flex-1 min-h-0">
+            {/* Left Column */}
+            <div className="flex flex-col gap-4">
+                 <DialogHeader className="text-left">
                     <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
                     <p className="text-base text-muted-foreground pt-1">{project.college}</p>
                     <div className="flex flex-wrap gap-2 pt-2">
@@ -204,26 +201,25 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                     </div>
                 </DialogHeader>
             </div>
-          </div>
-          
-          {/* Right Column (Description & Action) */}
-          <div className="flex flex-col p-6 min-h-0">
-              <ScrollArea className="flex-grow pr-2 -mr-2">
-                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-              </ScrollArea>
-              <DialogFooter className="pt-6 border-t mt-auto flex-shrink-0 flex-row gap-2">
-                <Button
-                  className="w-full"
-                  onClick={handleJoinOrRequest}
-                  disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-                >
-                  {getButtonText()}
-                </Button>
-                 <Button size="icon" variant="outline" onClick={handleShare}>
-                    <Share2 className="h-4 w-4" />
-                </Button>
-              </DialogFooter>
-          </div>
+
+             {/* Right Column */}
+            <div className="flex flex-col gap-4 min-h-0 mt-4 md:mt-0">
+                 <ScrollArea className="flex-grow pr-2 -mr-2">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+                 </ScrollArea>
+                  <DialogFooter className="pt-6 border-t mt-auto flex-shrink-0 flex-row gap-2 !justify-end">
+                    <Button
+                      className="w-full sm:w-auto"
+                      onClick={handleJoinOrRequest}
+                      disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+                    >
+                      {getButtonText()}
+                    </Button>
+                     <Button size="icon" variant="outline" onClick={handleShare}>
+                        <Share2 className="h-4 w-4" />
+                    </Button>
+                  </DialogFooter>
+            </div>
         </div>
       </DialogContent>
     </Dialog>
