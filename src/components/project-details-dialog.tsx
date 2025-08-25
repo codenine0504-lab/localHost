@@ -180,54 +180,57 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:flex-row">
-        {/* Left Column (Image) */}
-        <div className="w-full md:w-1/2 flex-shrink-0">
-            <div className="relative h-60 md:h-full w-full">
+      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col">
+        <ScrollArea className="flex-grow">
+            <div className="relative h-60 md:h-80 w-full">
                 <Image
                 src={project.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={`Image for ${project.title}`}
                 layout="fill"
                 objectFit="cover"
-                className="md:rounded-l-lg"
                 data-ai-hint="project image"
                 />
                  <Button
                     variant="outline"
                     size="icon"
-                    className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
+                    className="absolute top-4 right-4 bg-background/70 hover:bg-background/90"
                     onClick={handleShare}
                     aria-label="Share project"
                 >
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>
-        </div>
-
-        {/* Right Column (Content & Action) */}
-        <div className="w-full md:w-1/2 flex flex-col">
-            <ScrollArea className="flex-grow p-6">
-                <DialogHeader className="pb-4">
-                    <DialogTitle className="text-2xl">{project.title}</DialogTitle>
-                    <p className="text-sm text-muted-foreground">{project.college}</p>
-                    <div className="flex flex-wrap gap-2 pt-2">
-                        <Badge variant="secondary">{project.theme}</Badge>
-                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                    </div>
-                </DialogHeader>
-                <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-            </ScrollArea>
-             <DialogFooter className="p-6 pt-4 border-t mt-auto">
-                <Button
-                    className="w-full"
-                    onClick={handleJoinOrRequest}
-                    disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-                >
-                    {getButtonText()}
-                </Button>
-            </DialogFooter>
-        </div>
+            
+            <div className="p-6 grid md:grid-cols-2 md:gap-8">
+                {/* Left Column (Title & Meta) */}
+                <div>
+                     <DialogHeader className="text-left">
+                        <DialogTitle className="text-3xl font-bold">{project.title}</DialogTitle>
+                        <p className="text-base text-muted-foreground pt-1">{project.college}</p>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                            <Badge variant="secondary">{project.theme}</Badge>
+                            {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                        </div>
+                    </DialogHeader>
+                </div>
+                
+                {/* Right Column (Description & Action) */}
+                <div className="flex flex-col space-y-4 mt-6 md:mt-0">
+                    <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+                    <DialogFooter className="p-0 pt-4 mt-auto sm:justify-start">
+                        <Button
+                            className="w-full"
+                            onClick={handleJoinOrRequest}
+                            disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+                        >
+                            {getButtonText()}
+                        </Button>
+                    </DialogFooter>
+                </div>
+            </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 }
+
