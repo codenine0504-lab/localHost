@@ -19,6 +19,7 @@ import type { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { addDoc, collection, doc, getDoc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Share2 } from 'lucide-react';
+import { ScrollArea } from './ui/scroll-area';
 
 interface Project {
   id: string;
@@ -135,7 +136,8 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     }
   };
   
-  const handleShare = async () => {
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     const shareUrl = `${window.location.origin}/chatroom/${project.id}`;
     const shareData = {
         title: `Join my project: ${project.title}`,
@@ -147,7 +149,6 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
         if (navigator.share) {
             await navigator.share(shareData);
         } else {
-             // Fallback for browsers that don't support Web Share API
             await navigator.clipboard.writeText(shareUrl);
             toast({
                 title: 'Link Copied',
@@ -179,49 +180,55 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <div className="relative h-60 w-full mb-4 rounded-lg overflow-hidden">
-             <Image
+      <DialogContent className="max-w-4xl p-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:max-h-[70vh]">
+          {/* Left Column */}
+          <div className="p-6 flex flex-col">
+            <ScrollArea className="flex-grow pr-4 -mr-4">
+              <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+            </ScrollArea>
+            <DialogFooter className="mt-6 pt-6 border-t">
+              <Button
+                className="w-full"
+                onClick={handleJoinOrRequest}
+                disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+              >
+                {getButtonText()}
+              </Button>
+            </DialogFooter>
+          </div>
+
+          {/* Right Column */}
+          <div className="flex flex-col relative md:border-l">
+            <div className="relative h-60 w-full md:h-auto md:flex-grow">
+              <Image
                 src={project.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={`Image for ${project.title}`}
                 layout="fill"
                 objectFit="cover"
+                className="md:rounded-r-lg"
                 data-ai-hint="project image"
-            />
-             <Button
-                variant="outline"
-                size="icon"
-                className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
-                onClick={handleShare}
-                aria-label="Share project"
-             >
-                <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex justify-between items-start">
-            <div>
-              <DialogTitle className="text-2xl">{project.title}</DialogTitle>
-              <DialogDescription>{project.college}</DialogDescription>
+              />
+              <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute top-2 right-2 bg-background/70 hover:bg-background/90"
+                  onClick={handleShare}
+                  aria-label="Share project"
+              >
+                  <Share2 className="h-4 w-4" />
+              </Button>
             </div>
-            {project.isPrivate && <Badge variant="secondary">Private</Badge>}
-          </div>
-        </DialogHeader>
-        <div className="py-4 space-y-4">
-            <p className="text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-             <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{project.theme}</Badge>
+            <div className="p-6 bg-background rounded-b-lg">
+                <DialogTitle className="text-2xl">{project.title}</DialogTitle>
+                <DialogDescription>{project.college}</DialogDescription>
+                 <div className="flex flex-wrap gap-2 mt-4">
+                    <Badge variant="secondary">{project.theme}</Badge>
+                    {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                </div>
             </div>
+          </div>
         </div>
-        <DialogFooter>
-          <Button 
-            className="w-full" 
-            onClick={handleJoinOrRequest}
-            disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-            >
-            {getButtonText()}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
