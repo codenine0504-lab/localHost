@@ -19,6 +19,7 @@ import { ArrowLeft, LogOut, Settings, Home, MessageCircle, User as UserIcon } fr
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
+import { InstallPwaButton } from './install-pwa-button';
 
 
 interface HeaderProps {
@@ -127,6 +128,7 @@ export function Header({ onTitleClick }: HeaderProps) {
         )}
 
         <div className="flex items-center gap-4">
+          <InstallPwaButton />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
