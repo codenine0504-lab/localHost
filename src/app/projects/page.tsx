@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Filter, Share2 } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -71,35 +71,6 @@ export default function ProjectsPage() {
     };
   }, []);
   
-  const handleShare = async (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation(); // Prevent dialog from opening
-    const shareUrl = `${window.location.origin}/chatroom/${project.id}`;
-    const shareData = {
-        title: `Join my project: ${project.title}`,
-        text: `Join "${project.title}" on LocalHost!`,
-        url: shareUrl,
-    };
-
-    try {
-        if (navigator.share) {
-            await navigator.share(shareData);
-        } else {
-            await navigator.clipboard.writeText(shareUrl);
-            toast({
-                title: 'Link Copied',
-                description: 'Project invitation link copied to clipboard.',
-            });
-        }
-    } catch (error) {
-        console.error('Error sharing:', error);
-        toast({
-            title: 'Error',
-            description: 'Could not share the project link.',
-            variant: 'destructive',
-        });
-    }
-  };
-
 
   const filteredProjects = useMemo(() => {
     if (!themeFilter) {
@@ -173,15 +144,12 @@ export default function ProjectsPage() {
                             <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
                         </div>
                         </CardContent>
-                        <CardFooter className="flex gap-2">
+                        <CardFooter>
                             <ProjectDetailsDialog project={project}>
                                 <Button className="w-full" variant="outline">
                                     View Details
                                 </Button>
                              </ProjectDetailsDialog>
-                            <Button size="icon" variant="ghost" onClick={(e) => handleShare(e, project)}>
-                                <Share2 className="h-4 w-4" />
-                            </Button>
                         </CardFooter>
                     </Card>
                 ))
