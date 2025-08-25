@@ -18,7 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Filter } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 
 interface Project {
@@ -53,7 +52,6 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [themeFilter, setThemeFilter] = useState<Project['theme'] | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
@@ -70,7 +68,6 @@ export default function ProjectsPage() {
         unsubscribeProjects();
     };
   }, []);
-  
 
   const filteredProjects = useMemo(() => {
     if (!themeFilter) {
