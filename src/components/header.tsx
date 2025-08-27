@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, LogOut, Settings, Home, MessageCircle, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, LogOut, Settings, User as UserIcon } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
@@ -33,12 +33,6 @@ export function Header({ onTitleClick }: HeaderProps) {
   const params = useParams();
   const router = useRouter();
   const isChatPage = pathname.startsWith('/chatroom/');
-
-  const navItems = [
-    { href: '/', label: 'Home' },
-    { href: '/projects', label: 'Projects' },
-    { href: '/profile', label: 'Profile' },
-  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -70,7 +64,6 @@ export function Header({ onTitleClick }: HeaderProps) {
       const result = await signInWithPopup(auth, provider);
       const loggedInUser = result.user;
       
-      // Check if user exists in Firestore, if not create a document
       const userDocRef = doc(db, "users", loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -113,12 +106,11 @@ export function Header({ onTitleClick }: HeaderProps) {
             </>
           ) : (
             <Link href="/" className="flex items-center gap-2 mr-6">
-              <span className="font-bold text-lg text-primary">LocalHost</span>
+              <span className="font-bold text-lg text-primary" style={{color: 'green'}}>LocalHost</span>
             </Link>
           )}
         </div>
 
-        {/* Desktop Navigation */}
         {!isChatPage && (
             <nav className="hidden md:flex flex-grow items-center gap-6">
                  <Link href="/" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/" ? "text-primary" : "text-muted-foreground")}>Home</Link>

@@ -2,7 +2,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { Footer } from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
@@ -37,8 +36,7 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <div className="relative flex min-h-screen flex-col bg-background">
-            <main className="flex-1">{children}</main>
-            <Footer />
+              <main className="flex-1">{children}</main>
             </div>
             <Toaster />
         </ThemeProvider>
