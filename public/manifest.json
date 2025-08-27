@@ -4,8 +4,8 @@
   "description": "Connect, Collaborate, Innovate. Your next great idea starts here!",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#10b981",
+  "background_color": "#F0F8FF",
+  "theme_color": "#38A3A5",
   "icons": [
     {
       "src": "localHost.png",
