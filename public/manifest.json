@@ -1,11 +1,11 @@
 {
   "name": "LocalHost",
   "short_name": "LocalHost",
+  "description": "Connect, Collaborate, Innovate. Your next great idea starts here!",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#10B981",
-  "description": "Connect, Collaborate, Innovate. Your next great idea starts here!",
+  "theme_color": "#10b981",
   "icons": [
     {
       "src": "localHost.png",
@@ -14,7 +14,7 @@
       "purpose": "any"
     },
     {
-      "src": "localHost.png",
+      "src": "whitetheme.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
