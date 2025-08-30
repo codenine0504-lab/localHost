@@ -166,7 +166,7 @@ function LoggedOutView() {
                         </CardHeader>
                         <CardContent>
                            <p className="text-muted-foreground">Engage in discussions, share knowledge, and grow with a community of like-minded peers.</p>
-                        </CardContent>
+                        </Content>
                     </Card>
                 </div>
             </div>
@@ -174,5 +174,3 @@ function LoggedOutView() {
       </section>
   );
 }
-
-    
