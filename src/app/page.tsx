@@ -146,17 +146,6 @@ function LoggedOutView() {
                             <p className="text-muted-foreground">Easily find team members from various disciplines and colleges to bring your ideas to life.</p>
                         </CardContent>
                     </Card>
-                     <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <div className="bg-primary/10 p-3 rounded-full">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary"><path d="M15.5 2.894a.5.5 0 0 0 .309.905l.363.12a1 1 0 0 1 .524 1.342l-.373.647a.5.5 0 0 0 .22.68l.42.242a1 1 0 0 1 .524 1.342l-.373.647a.5.5 0 0 0 .22.68l.42.243a1 1 0 0 1 .524 1.342l-.373.647a.5.5 0 0 0 .22.68l.42.242a1 1 0 0 1 .524 1.342l-1.5 2.6A.5.5 0 0 0 20 18.291V21.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5v-3.209a.5.5 0 0 0-.191-.397l-1.5-2.6a1 1 0 0 1 .524-1.342l.42-.242a.5.5 0 0 0 .22-.68l-.373-.647a1 1 0 0 1 .524-1.342l.42-.243a.5.5 0 0 0 .22-.68l-.373-.647a1 1 0 0 1 .524-1.342l.363-.12a.5.5 0 0 0 .309-.905L6.5 2.5l4 4L12.5 5l4-4Z"/></svg>
-                            </div>
-                            <CardTitle>Innovation</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">Showcase your projects, participate in events, and get recognized for your innovative solutions.</p>
-                        </CardContent>
-                    </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center gap-4">
                            <div className="bg-primary/10 p-3 rounded-full">
