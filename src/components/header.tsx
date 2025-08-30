@@ -106,18 +106,10 @@ export function Header({ onTitleClick }: HeaderProps) {
             </>
           ) : (
             <Link href="/" className="flex items-center gap-2 mr-6">
-              <span className="font-bold text-lg text-primary" style={{color: 'green'}}>LocalHost</span>
+              <span className="font-bold text-lg" style={{color: 'green'}}>LocalHost</span>
             </Link>
           )}
         </div>
-
-        {!isChatPage && (
-            <nav className="hidden md:flex flex-grow items-center gap-6">
-                 <Link href="/" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/" ? "text-primary" : "text-muted-foreground")}>Home</Link>
-                 <Link href="/projects" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/projects" ? "text-primary" : "text-muted-foreground")}>Explore</Link>
-                 <Link href="/chatroom" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/chatroom" ? "text-primary" : "text-muted-foreground")}>Chats</Link>
-            </nav>
-        )}
 
         <div className="flex items-center gap-4">
           <InstallPwaButton />
