@@ -11,7 +11,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCKWf4kyQAXYY--WWjxHJVNEZ7nmKEYWfI",
   authDomain: "localhost-16v7h.firebaseapp.com",
   projectId: "localhost-16v7h",
-  storageBucket: "localhost-16v7h.appspot.com",
+  storageBucket: "localhost-16v7h.firebasestorage.app",
   messagingSenderId: "588349054039",
   appId: "1:588349054039:web:76f7a3a8e5650bb0791712"
 };
