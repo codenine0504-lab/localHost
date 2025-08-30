@@ -8,7 +8,6 @@ import { Header } from '@/components/header';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { HostProjectDialog } from '@/components/host-project-dialog';
-import { ImageSlider } from '@/components/image-slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, MessageSquare, Users } from 'lucide-react';
 
@@ -43,7 +42,9 @@ export default function Home() {
           {user ? (
             <LoggedInView />
           ) : (
-            <LoggedOutView />
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Please log in to continue.</p>
+            </div>
           )}
         </main>
       </div>
@@ -104,62 +105,4 @@ function LoggedInView() {
             </div>
         </section>
     );
-}
-
-
-function LoggedOutView() {
-  return (
-      <section className="w-full py-12 md:py-16 lg:py-20">
-          <div className="container px-4 md:px-6">
-              <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
-                  <div className="space-y-4">
-                      <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-6xl/none">
-                          Welcome to LocalHost
-                      </h1>
-                      <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                          Connect, Collaborate, Innovate. Your next great idea starts here. Find projects, build teams, and create amazing things together.
-                      </p>
-                       <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                          <Link href="/projects" passHref>
-                            <Button size="lg">Get Started</Button>
-                          </Link>
-                      </div>
-                  </div>
-                  <div className="w-full">
-                     <ImageSlider />
-                  </div>
-              </div>
-               <div className="mt-20 lg:mt-28">
-                <div className="text-center space-y-4 mb-12">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Why LocalHost?</h2>
-                    <p className="max-w-3xl mx-auto text-muted-foreground md:text-xl/relaxed">A platform built for students, by students, to foster innovation right from the college grounds.</p>
-                </div>
-                <div className="grid gap-8 md:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <div className="bg-primary/10 p-3 rounded-full">
-                                <Users className="h-6 w-6 text-primary" />
-                            </div>
-                            <CardTitle>Collaboration</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">Easily find team members from various disciplines and colleges to bring your ideas to life.</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center gap-4">
-                           <div className="bg-primary/10 p-3 rounded-full">
-                                <MessageSquare className="h-6 w-6 text-primary" />
-                            </div>
-                            <CardTitle>Community</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                           <p className="text-muted-foreground">Engage in discussions, share knowledge, and grow with a community of like-minded peers.</p>
-                        </Content>
-                    </Card>
-                </div>
-            </div>
-          </div>
-      </section>
-  );
 }
