@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { HostProjectDialog } from '@/components/host-project-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, MessageSquare, Users } from 'lucide-react';
+import { ArrowRight, MessageSquare } from 'lucide-react';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -39,13 +39,7 @@ export default function Home() {
       <Header />
       <div className="flex flex-col min-h-[calc(100vh_-_65px)]">
         <main className="flex-1">
-          {user ? (
-            <LoggedInView />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">Please log in to continue.</p>
-            </div>
-          )}
+           <LoggedInView />
         </main>
       </div>
     </>
@@ -59,10 +53,10 @@ function LoggedInView() {
             <div className="container px-4 md:px-6">
                 <div className="flex flex-col justify-center space-y-4 text-center mb-12">
                      <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                        Welcome back!
+                        Welcome to LocalHost
                     </h1>
                     <p className="max-w-[600px] text-muted-foreground md:text-xl mx-auto">
-                        What would you like to do today?
+                        Connect, Collaborate, Innovate
                     </p>
                 </div>
                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
