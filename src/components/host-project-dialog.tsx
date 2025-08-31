@@ -122,17 +122,14 @@ export function HostProjectDialog() {
       
       const projectPayload: any = {
         ...data,
-        budget: null,
-        requiresRequestToJoin: data.isPrivate, // Private projects always require a request
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
         admins: [user.uid],
+        members: [user.uid], // Owner is always a member
+        budget: null,
+        requiresRequestToJoin: data.isPrivate,
       };
-
-      if (data.isPrivate) {
-          projectPayload.members = [user.uid];
-      }
 
       const projectDocRef = await addDoc(collection(db, collectionName), projectPayload);
 
@@ -212,8 +209,8 @@ export function HostProjectDialog() {
                 )}
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="sm:text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-4">
+              <Label htmlFor="description" className="sm:text-right pt-2">
                 Description
               </Label>
                <div className="col-span-1 sm:col-span-3 space-y-2">
