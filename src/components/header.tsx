@@ -106,7 +106,7 @@ export function Header({ onTitleClick }: HeaderProps) {
             </>
           ) : (
             <Link href="/" className="flex items-center gap-2 mr-6">
-              <span className="font-bold text-lg" style={{color: 'green'}}>LocalHost</span>
+              <span className="font-bold text-lg text-primary">LocalHost</span>
             </Link>
           )}
         </div>
