@@ -1,4 +1,15 @@
+
 import type {NextConfig} from 'next';
+
+import type {NextConfig} from 'next';
+import withPWA from 'next-pwa';
+
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+});
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -22,8 +33,19 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+
+        hostname: 'firebasestorage.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.postimg.cc',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
 
 export default nextConfig;
+
+export default pwaConfig(nextConfig);
