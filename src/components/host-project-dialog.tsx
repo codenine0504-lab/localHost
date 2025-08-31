@@ -32,6 +32,7 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -104,21 +105,29 @@ export function HostProjectDialog() {
     }
 
     try {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const college = userDoc.exists() ? userDoc.data().college : "Unknown College";
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (!userDoc.exists() || !userDoc.data()?.college) {
+        toast({
+          title: "Profile Incomplete",
+          description: "Please set your college on your profile page before hosting a project.",
+          variant: "destructive"
+        });
+        return;
+      }
+      const college = userDoc.data().college;
 
       const collectionName = data.isPrivate ? 'privateProjects' : 'projects';
       
-      const { ...projectData } = data;
-
       const projectPayload: any = {
-        ...projectData,
+        ...data,
         budget: null,
-        requiresRequestToJoin: data.isPrivate, 
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
         admins: [user.uid],
+        requiresRequestToJoin: data.isPrivate,
       };
 
       if (data.isPrivate) {
@@ -145,9 +154,10 @@ export function HostProjectDialog() {
       setIsOpen(false);
     } catch (error) {
       console.error('Error hosting project: ', error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
       toast({
-        title: 'Error',
-        description: 'Could not host your project. Please try again.',
+        title: 'Error Hosting Project',
+        description: `Could not host your project. Please try again. Error: ${errorMessage}`,
         variant: 'destructive',
       });
     }
@@ -257,9 +267,10 @@ export function HostProjectDialog() {
           </div>
           <DialogFooter>
              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" type="button">Cancel</Button>
             </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Hosting...' : 'Host Project'}
             </Button>
           </DialogFooter>
