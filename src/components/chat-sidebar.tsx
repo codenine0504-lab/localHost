@@ -82,7 +82,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [title, setTitle] = useState(project.title);
     const [description, setDescription] = useState(project.description);
     const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
-    const [budget, setBudget] = useState<number | null | undefined>(project.budget);
+    const [budget, setBudget] = useState(project.budget);
     const [isDeleting, setIsDeleting] = useState(false);
     const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
     const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
@@ -95,8 +95,19 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const isCurrentUserAdmin = currentUser ? project.admins?.includes(currentUser.uid) ?? false : false;
 
     useEffect(() => {
-        if (!isCurrentUserAdmin || (!project.isPrivate && !project.requiresRequestToJoin)) {
-            setJoinRequests([]); // Clear requests if user is not admin or not applicable
+        setTitle(project.title);
+        setDescription(project.description);
+        setImageUrl(project.imageUrl || '');
+        setBudget(project.budget);
+    }, [project]);
+
+    useEffect(() => {
+        if (!isCurrentUserAdmin || !project.id) return;
+        
+        const shouldFetchRequests = project.isPrivate || project.requiresRequestToJoin;
+
+        if (!shouldFetchRequests) {
+            setJoinRequests([]); // Clear requests if not applicable
             return;
         }
 
