@@ -82,10 +82,10 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         budget: false,
     });
     const [formState, setFormState] = useState({
-        title: '',
-        description: '',
-        imageUrl: '',
-        budget: undefined as number | undefined,
+        title: project.title,
+        description: project.description,
+        imageUrl: project.imageUrl || '',
+        budget: project.budget,
     });
     
     const [isDeleting, setIsDeleting] = useState(false);
@@ -137,6 +137,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
 
     const handleUpdate = async (field: keyof typeof formState) => {
+        setIsEditing(prev => ({...prev, [field]: false}))
         try {
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             const projectRef = doc(db, projectCollection, project.id);
@@ -162,8 +163,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         } catch (error) {
             console.error("Error updating project:", error);
             toast({ title: "Error", description: `Could not update project ${field}.`, variant: 'destructive' });
-        } finally {
-             setIsEditing(prev => ({...prev, [field]: false}))
         }
     };
     
@@ -305,7 +304,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 toast({ title: "Success", description: "Admin status revoked." });
             }
             onProjectUpdate();
-        } catch (error) {
+        } catch (error) => {
             console.error("Error updating admin status:", error);
             toast({ title: "Error", description: "Could not update admin status.", variant: "destructive" });
         }
