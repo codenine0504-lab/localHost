@@ -14,7 +14,7 @@ import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, on
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX, Link2, Settings, Users } from 'lucide-react';
+import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX, Link2, Settings, Users, IndianRupee } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,11 +77,12 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [isEditingImageUrl, setIsEditingImageUrl] = useState(false);
+    const [isEditingBudget, setIsEditingBudget] = useState(false);
     const [title, setTitle] = useState(project.title);
     const [description, setDescription] = useState(project.description);
     const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
+    const [budget, setBudget] = useState<number | undefined>(project.budget);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
     const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
     const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -109,24 +110,30 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         return () => unsubscribe();
     }, [isCurrentUserAdmin, project.id, project.isPrivate, project.requiresRequestToJoin]);
 
-    const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
+    const handleUpdate = async (field: 'title' | 'description' | 'imageUrl' | 'budget') => {
         try {
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             const projectRef = doc(db, projectCollection, project.id);
             const chatRoomRef = doc(db, 'chatRooms', project.id);
 
+            let updateData: any = {};
             if (field === 'title') {
-                await updateDoc(projectRef, { title });
+                updateData = { title };
                 await updateDoc(chatRoomRef, { name: title });
                 setIsEditingTitle(false);
             } else if (field === 'description') {
-                await updateDoc(projectRef, { description });
+                updateData = { description };
                 setIsEditingDesc(false);
             } else if (field === 'imageUrl') {
-                 await updateDoc(projectRef, { imageUrl });
-                 await updateDoc(chatRoomRef, { imageUrl });
-                 setIsEditingImageUrl(false);
+                updateData = { imageUrl };
+                await updateDoc(chatRoomRef, { imageUrl });
+                setIsEditingImageUrl(false);
+            } else if (field === 'budget') {
+                updateData = { budget: budget || null };
+                setIsEditingBudget(false);
             }
+            
+            await updateDoc(projectRef, updateData);
 
             onProjectUpdate();
             toast({ title: "Success", description: `Project ${field} updated.` });
@@ -169,29 +176,37 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         setIsProcessing(true);
 
         try {
+            const currentCollection = project.isPrivate ? 'privateProjects' : 'projects';
+            const projectRef = doc(db, currentCollection, project.id);
+
             if (setting === 'isPrivate') {
                 const fromCollection = value ? 'projects' : 'privateProjects';
                 const toCollection = value ? 'privateProjects' : 'projects';
+                
+                if (fromCollection === toCollection) { // No change needed
+                    setIsProcessing(false);
+                    return;
+                }
+
                 const projectDocRef = doc(db, fromCollection, project.id);
                 const projectDoc = await getDoc(projectDocRef);
 
                 if (!projectDoc.exists()) throw new Error("Project document not found.");
 
                 const projectData = projectDoc.data();
+                projectData.isPrivate = value;
+                projectData.requiresRequestToJoin = value ? true : projectData.requiresRequestToJoin || false;
                 
                 if (value && !projectData.members) {
                     projectData.members = [project.owner];
                 }
-                
-                projectData.requiresRequestToJoin = value ? true : projectData.requiresRequestToJoin || false;
 
                 await setDoc(doc(db, toCollection, project.id), projectData);
                 await deleteDoc(projectDocRef);
                 await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate: value });
 
                 toast({ title: "Success", description: `Project visibility updated to ${value ? 'Private' : 'Public'}.` });
-            } else {
-                 const projectRef = doc(db, 'projects', project.id);
+            } else { // requiresRequestToJoin
                  await updateDoc(projectRef, { requiresRequestToJoin: value });
                  toast({ title: "Success", description: `Join requests are now ${value ? 'required' : 'not required'}.` });
             }
@@ -384,27 +399,59 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                                 )}
                             </div>
 
+                             {/* Budget */}
+                            <div className="space-y-2">
+                                <Label>Budget</Label>
+                                {isEditingBudget ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative flex-grow">
+                                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                type="number" 
+                                                value={budget ?? ''} 
+                                                onChange={(e) => setBudget(e.target.value ? Number(e.target.value) : undefined)} 
+                                                placeholder="e.g. 5000"
+                                                className="pl-8"
+                                            />
+                                        </div>
+                                        <Button onClick={() => handleUpdate('budget')} size="sm">Save</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setIsEditingBudget(false)}>Cancel</Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between group">
+                                        <p className="text-sm text-muted-foreground">
+                                            {project.budget ? `₹${project.budget.toLocaleString()}` : 'Not set'}
+                                        </p>
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingBudget(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
                             <Separator />
 
                              {/* Privacy and Join Settings */}
-                            <div className="space-y-2">
-                                <div className="flex items-center space-x-2">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="isPrivate" className="flex flex-col gap-1">
+                                        <span>Project Visibility</span>
+                                        <span className="text-xs font-normal text-muted-foreground">
+                                             {project.isPrivate ? "Only approved members can join." : "Visible to everyone."}
+                                        </span>
+                                    </Label>
                                     <Switch id="isPrivate" checked={project.isPrivate} onCheckedChange={(val) => handleSettingToggle('isPrivate', val)} disabled={isProcessing} />
-                                    <Label htmlFor="isPrivate">{project.isPrivate ? 'Private' : 'Public'}</Label>
-                                    {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
                                 </div>
-                                <p className="text-xs text-muted-foreground pl-8">
-                                    {project.isPrivate ? "Only approved members can join." : "Visible to everyone."}
-                                </p>
-                            </div>
-                             <div className={`space-y-2 ${project.isPrivate ? 'opacity-50' : ''}`}>
-                                <div className="flex items-center space-x-2">
+                                <div className={`flex items-center justify-between ${project.isPrivate ? 'opacity-50' : ''}`}>
+                                    <Label htmlFor="requiresRequest" className="flex flex-col gap-1">
+                                        <span>Require Requests to Join</span>
+                                         <span className="text-xs font-normal text-muted-foreground">
+                                            Users must request to join.
+                                        </span>
+                                    </Label>
                                     <Switch id="requiresRequest" checked={project.requiresRequestToJoin} onCheckedChange={(val) => handleSettingToggle('requiresRequestToJoin', val)} disabled={isProcessing || project.isPrivate} />
-                                    <Label htmlFor="requiresRequest">Require Requests to Join</Label>
                                 </div>
-                                <p className="text-xs text-muted-foreground pl-8">
-                                    If enabled, users must request to join this public project.
-                                </p>
+                                 {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
                             </div>
 
                         </div>

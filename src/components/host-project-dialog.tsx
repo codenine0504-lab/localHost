@@ -43,7 +43,12 @@ const projectSchema = z.object({
       message: 'Description must be 50 words or less.'
     }),
   imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
+  budget: z.preprocess(
+    (val) => (val === "" ? null : Number(val)),
+    z.number().positive("Budget must be a positive number.").nullable().optional()
+  ),
   isPrivate: z.boolean().default(false),
+  requiresRequestToJoin: z.boolean().default(false),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -65,11 +70,14 @@ export function HostProjectDialog() {
       description: '',
       theme: 'software',
       imageUrl: '',
+      budget: null,
       isPrivate: false,
+      requiresRequestToJoin: false,
     },
   });
 
   const descriptionValue = watch('description');
+  const isPrivateValue = watch('isPrivate');
   const wordCount = descriptionValue.split(/\s+/).filter(Boolean).length;
 
   useEffect(() => {
@@ -122,12 +130,13 @@ export function HostProjectDialog() {
       
       const projectPayload: any = {
         ...data,
-        budget: null,
+        budget: data.budget || null,
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
         admins: [user.uid],
-        requiresRequestToJoin: data.isPrivate,
+        // If project is private, it always requires a request. Otherwise, respect the form value.
+        requiresRequestToJoin: data.isPrivate || data.requiresRequestToJoin,
       };
 
       if (data.isPrivate) {
@@ -243,6 +252,19 @@ export function HostProjectDialog() {
               />
               {errors.imageUrl && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.imageUrl.message}</p>}
             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+              <Label htmlFor="budget" className="sm:text-right">
+                Budget (₹)
+              </Label>
+              <Controller
+                name="budget"
+                control={control}
+                render={({ field }) => (
+                  <Input id="budget" type="number" placeholder="e.g., 5000" className="col-span-1 sm:col-span-3" {...field} value={field.value ?? ''} />
+                )}
+              />
+              {errors.budget && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.budget.message}</p>}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
               <Label htmlFor="isPrivate" className="sm:text-right">
                 Visibility
@@ -259,6 +281,28 @@ export function HostProjectDialog() {
                                 onCheckedChange={field.onChange}
                                 />
                                 <Label htmlFor="isPrivate">{field.value ? 'Private' : 'Public'}</Label>
+                            </>
+                        )}
+                    />
+                </div>
+            </div>
+             <div className={`grid grid-cols-1 sm:grid-cols-4 items-center gap-4 ${isPrivateValue ? 'hidden' : ''}`}>
+              <Label htmlFor="requiresRequestToJoin" className="sm:text-right">
+                Join Method
+              </Label>
+                <div className="col-span-1 sm:col-span-3 flex items-center space-x-2">
+                    <Controller
+                        name="requiresRequestToJoin"
+                        control={control}
+                        render={({ field }) => (
+                            <>
+                                <Switch
+                                id="requiresRequestToJoin"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={isPrivateValue}
+                                />
+                                <Label htmlFor="requiresRequestToJoin">{field.value ? 'Request to Join' : 'Join Directly'}</Label>
                             </>
                         )}
                     />
