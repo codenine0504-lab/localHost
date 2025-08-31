@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, LogOut, Settings, User as UserIcon, Home, Compass, UserCircle } from 'lucide-react';
+import { ArrowLeft, LogOut, Settings, User as UserIcon, Home, Compass, UserCircle, MessageSquare } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ interface HeaderProps {
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/projects', label: 'Explore', icon: Compass },
+  { href: '/chatroom', label: 'Chat', icon: MessageSquare },
   { href: '/profile', label: 'Profile', icon: UserCircle },
 ];
 
