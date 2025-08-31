@@ -81,7 +81,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [title, setTitle] = useState(project.title);
     const [description, setDescription] = useState(project.description);
     const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
-    const [budget, setBudget] = useState<number | undefined>(project.budget);
+    const [budget, setBudget] = useState<number | null | undefined>(project.budget);
     const [isDeleting, setIsDeleting] = useState(false);
     const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
     const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
@@ -135,7 +135,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 await updateDoc(chatRoomRef, { imageUrl });
                 setIsEditingImageUrl(false);
             } else if (field === 'budget') {
-                updateData = { budget: budget || null };
+                updateData = { budget: budget === undefined ? null : budget };
                 setIsEditingBudget(false);
             }
             
@@ -415,7 +415,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                                             <Input 
                                                 type="number" 
                                                 value={budget ?? ''} 
-                                                onChange={(e) => setBudget(e.target.value ? Number(e.target.value) : undefined)} 
+                                                onChange={(e) => setBudget(e.target.value === '' ? undefined : Number(e.target.value))}
                                                 placeholder="e.g. 5000"
                                                 className="pl-8"
                                             />
