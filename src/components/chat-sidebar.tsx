@@ -109,7 +109,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     }, [project]);
     
     useEffect(() => {
-        if (!isCurrentUserAdmin || !project.id || !project.requiresRequestToJoin) {
+        if (!isCurrentUserAdmin || !project.id) {
             setJoinRequests([]);
             return;
         }
@@ -129,7 +129,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, project.id, project.requiresRequestToJoin, toast]);
+    }, [isCurrentUserAdmin, project.id, toast]);
 
 
     const handleInputChange = (field: keyof typeof formState, value: string | number | undefined) => {
