@@ -1,9 +1,5 @@
 import type {Config} from 'tailwindcss';
-<<<<<<< HEAD
-=======
 import colors from 'tailwindcss/colors';
-
->>>>>>> 4af85c7374d71d0fa93206cb12bbd6a9259d36f7
 
 export default {
   darkMode: ['class'],
@@ -20,11 +16,8 @@ export default {
         code: ['monospace'],
       },
       colors: {
-<<<<<<< HEAD
-=======
         sky: colors.sky,
         gray: colors.gray,
->>>>>>> 4af85c7374d71d0fa93206cb12bbd6a9259d36f7
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -65,19 +58,6 @@ export default {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
-<<<<<<< HEAD
-        sidebar: {
-          DEFAULT: 'hsl(var(--sidebar-background))',
-          foreground: 'hsl(var(--sidebar-foreground))',
-          primary: 'hsl(var(--sidebar-primary))',
-          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-          accent: 'hsl(var(--sidebar-accent))',
-          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-          border: 'hsl(var(--sidebar-border))',
-          ring: 'hsl(var(--sidebar-ring))',
-        },
-=======
->>>>>>> 4af85c7374d71d0fa93206cb12bbd6a9259d36f7
       },
       borderRadius: {
         lg: 'var(--radius)',

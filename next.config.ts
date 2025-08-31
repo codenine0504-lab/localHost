@@ -1,7 +1,5 @@
 
 import type {NextConfig} from 'next';
-
-import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
 
 const pwaConfig = withPWA({
@@ -33,7 +31,8 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-
+      {
+        protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
       },
       {
@@ -45,7 +44,5 @@ const nextConfig: NextConfig = {
     ],
   },
 };
-
-export default nextConfig;
 
 export default pwaConfig(nextConfig);
