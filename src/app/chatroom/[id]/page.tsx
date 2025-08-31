@@ -106,6 +106,14 @@ export default function ChatPage() {
     });
     return () => unsubscribe();
   }, []);
+  
+  // Mark chat as read when component mounts
+  useEffect(() => {
+    if(projectId) {
+        localStorage.setItem(`lastRead_${projectId}`, Date.now().toString());
+        window.dispatchEvent(new Event('storage')); // Notify other components
+    }
+  }, [projectId]);
 
   const fetchProjectAndMembers = useCallback(async () => {
     if (!projectId || !user) return;
@@ -207,14 +215,14 @@ export default function ChatPage() {
       if (initialLoadHandled.current && msgs.length > 0) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.senderId !== user.uid) {
+            // Update localStorage with the timestamp of the last message for this specific chat
+            const lastTimestamp = lastMessage.createdAt.toMillis();
+            localStorage.setItem(`lastMessageTimestamp_${projectId}`, lastTimestamp.toString());
+            window.dispatchEvent(new Event('storage')); // Notify other components
+
             if(document.hidden) {
                 const audio = new Audio('/chatnotify.mp3');
                 audio.play().catch(e => console.error("Audio play failed:", e));
-
-                // Update localStorage to indicate a new message
-                const lastTimestamp = lastMessage.createdAt.toMillis();
-                localStorage.setItem('lastMessageTimestamp', lastTimestamp.toString());
-                window.dispatchEvent(new Event('storage')); // Notify other components
             }
         }
       }

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, collectionGroup, onSnapshot, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import Link from 'next/link';
 import { Header } from '@/components/header';
@@ -16,6 +16,7 @@ interface ChatRoom {
   id: string;
   name: string;
   imageUrl?: string;
+  hasNotification?: boolean;
 }
 
 function ChatRoomListSkeleton() {
@@ -47,11 +48,27 @@ export default function ChatRoomPage() {
     return () => unsubscribeAuth();
   }, []);
 
+  const checkNotifications = (rooms: ChatRoom[]): ChatRoom[] => {
+      return rooms.map(room => {
+          const lastMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}`);
+          const lastReadTimestampStr = localStorage.getItem(`lastRead_${room.id}`);
+
+          const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
+          const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : Date.now();
+
+          return {
+              ...room,
+              hasNotification: lastMessageTimestamp > lastReadTimestamp,
+          };
+      });
+  };
+
   useEffect(() => {
     if (!user) return;
 
-    // Clear notification when user visits the main chat page
+    // Clear the global "last visited" timestamp, but keep per-chat timestamps
     localStorage.setItem('lastVisitedChats', Date.now().toString());
+    // Also clear the general join request flag as the user is on the chat page
     localStorage.removeItem('hasNewJoinRequests');
     window.dispatchEvent(new Event('storage'));
 
@@ -99,8 +116,6 @@ export default function ChatRoomPage() {
 
         const chatRoomRefs = projectIds.map(id => doc(db, "chatRooms", id));
         
-        // Firestore doesn't have a direct `onSnapshot` for multiple documents not in a collection.
-        // We set up individual listeners. This is not ideal for a very large number of projects.
         const unsubscribers = chatRoomRefs.map(ref => {
             return onSnapshot(ref, (doc) => {
                 if (doc.exists()) {
@@ -112,16 +127,17 @@ export default function ChatRoomPage() {
                     };
 
                     setChatRooms(prevRooms => {
+                        let updatedRooms: ChatRoom[];
                         const existingIndex = prevRooms.findIndex(r => r.id === newRoom.id);
                         if (existingIndex > -1) {
-                            // Update existing room
-                            const updatedRooms = [...prevRooms];
-                            updatedRooms[existingIndex] = newRoom;
-                            return updatedRooms;
+                            const updatedRoom = { ...prevRooms[existingIndex], ...newRoom };
+                            updatedRooms = [...prevRooms];
+                            updatedRooms[existingIndex] = updatedRoom;
                         } else {
-                            // Add new room
-                            return [...prevRooms, newRoom];
+                            updatedRooms = [...prevRooms, newRoom];
                         }
+                        // Check notifications for all rooms whenever one updates
+                        return checkNotifications(updatedRooms);
                     });
                 }
             });
@@ -137,7 +153,15 @@ export default function ChatRoomPage() {
        unsubscribe = setupChatRoomsListener(projectIds);
     });
 
-    return () => unsubscribe();
+    const handleStorageChange = () => {
+        setChatRooms(prevRooms => checkNotifications(prevRooms));
+    }
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [user]);
 
 
@@ -171,7 +195,13 @@ export default function ChatRoomPage() {
                             <MessageSquare className="h-5 w-5 text-muted-foreground" />
                         </div>
                     )}
-                    <h3 className="text-lg font-semibold truncate">{room.name}</h3>
+                    <h3 className="text-lg font-semibold truncate flex-1">{room.name}</h3>
+                    {room.hasNotification && (
+                        <div className="h-3 w-3 relative">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                        </div>
+                    )}
                 </div>
             </Link>
           ))

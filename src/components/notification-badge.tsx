@@ -12,17 +12,33 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
     useEffect(() => {
         const checkNotifications = () => {
-             // Chat notifications
-            const lastTimestampStr = localStorage.getItem('lastMessageTimestamp');
-            const lastVisitedChatsStr = localStorage.getItem('lastVisitedChats');
-            const lastTimestamp = lastTimestampStr ? parseInt(lastTimestampStr, 10) : 0;
-            const lastVisitedChats = lastVisitedChatsStr ? parseInt(lastVisitedChatsStr, 10) : Date.now();
-            const hasNewMessage = lastTimestamp > lastVisitedChats;
-
-            // Join request notifications
+             // Check for new join requests
             const hasNewJoinRequests = localStorage.getItem('hasNewJoinRequests') === 'true';
+            if (hasNewJoinRequests) {
+                setHasNotification(true);
+                return;
+            }
 
-            setHasNotification(hasNewMessage || hasNewJoinRequests);
+            // Check for new messages in any chat
+            let hasNewMessage = false;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('lastMessageTimestamp_')) {
+                    const roomId = key.substring('lastMessageTimestamp_'.length);
+                    const lastMessageTimestampStr = localStorage.getItem(key);
+                    const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}`);
+                    
+                    const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
+                    const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : Date.now();
+                    
+                    if (lastMessageTimestamp > lastReadTimestamp) {
+                        hasNewMessage = true;
+                        break; 
+                    }
+                }
+            }
+
+            setHasNotification(hasNewMessage);
         };
 
         checkNotifications();
@@ -33,8 +49,12 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
         window.addEventListener('storage', handleStorageChange);
 
+        // Also check when the document becomes visible
+        document.addEventListener('visibilitychange', checkNotifications);
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
+            document.removeEventListener('visibilitychange', checkNotifications);
         };
     }, []);
 
