@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, LogOut, Settings, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, LogOut, Settings, User as UserIcon, Home, Compass, UserCircle } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,12 @@ import { InstallPwaButton } from './install-pwa-button';
 interface HeaderProps {
   onTitleClick?: () => void;
 }
+
+const navItems = [
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/projects', label: 'Explore', icon: Compass },
+  { href: '/profile', label: 'Profile', icon: UserCircle },
+];
 
 export function Header({ onTitleClick }: HeaderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -110,6 +116,26 @@ export function Header({ onTitleClick }: HeaderProps) {
             </Link>
           )}
         </div>
+
+        {!isChatPage && (
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+                 {navItems.map((item) => {
+                    const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                                'transition-colors hover:text-primary',
+                                isActive ? 'text-primary' : 'text-muted-foreground'
+                            )}
+                        >
+                            {item.label}
+                        </Link>
+                    )
+                 })}
+            </nav>
+        )}
 
         <div className="flex items-center gap-4">
           <InstallPwaButton />
