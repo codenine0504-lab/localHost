@@ -28,6 +28,7 @@ interface Project {
   college: string;
   imageUrl?: string;
   isPrivate?: boolean;
+  budget?: number;
 }
 
 function ProjectCardSkeleton() {
@@ -139,6 +140,11 @@ export default function ProjectsPage() {
                         <CardContent className="flex-grow">
                         <div className="flex flex-wrap gap-2">
                             <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
+                            {project.budget && (
+                                <Badge variant="secondary">
+                                    Budget: ₹{project.budget.toLocaleString()}
+                                </Badge>
+                            )}
                         </div>
                         </CardContent>
                         <CardFooter>

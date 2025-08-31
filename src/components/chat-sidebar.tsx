@@ -47,6 +47,7 @@ interface ProjectDetails {
     isPrivate: boolean;
     admins?: string[];
     requiresRequestToJoin?: boolean;
+    budget?: number;
 }
 
 interface Member {
@@ -76,9 +77,11 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [isEditingImageUrl, setIsEditingImageUrl] = useState(false);
+    const [isEditingBudget, setIsEditingBudget] = useState(false);
     const [title, setTitle] = useState(project.title);
     const [description, setDescription] = useState(project.description);
     const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
+    const [budget, setBudget] = useState(project.budget || '');
     const [isDeleting, setIsDeleting] = useState(false);
     const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
     const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
@@ -108,7 +111,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         return () => unsubscribe();
     }, [isCurrentUserAdmin, project.id, project.isPrivate, project.requiresRequestToJoin]);
 
-    const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
+    const handleUpdate = async (field: 'title' | 'description' | 'imageUrl' | 'budget') => {
         try {
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             const projectRef = doc(db, projectCollection, project.id);
@@ -125,6 +128,15 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                  await updateDoc(projectRef, { imageUrl });
                  await updateDoc(chatRoomRef, { imageUrl });
                  setIsEditingImageUrl(false);
+            } else if (field === 'budget') {
+                const newBudget = Number(budget);
+                if (!isNaN(newBudget) && newBudget > 0) {
+                    await updateDoc(projectRef, { budget: newBudget });
+                    setIsEditingBudget(false);
+                } else {
+                     toast({ title: "Invalid Budget", description: `Please enter a valid positive number for the budget.`, variant: 'destructive' });
+                     return;
+                }
             }
 
             onProjectUpdate();
@@ -401,6 +413,27 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             </div>
                         )}
                     </div>
+                    
+                    {/* Project Budget */}
+                     {isCurrentUserAdmin && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Budget (₹)</label>
+                            {isEditingBudget ? (
+                                <div className="flex items-center gap-2">
+                                    <Input value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. 5000" type="number"/>
+                                    <Button onClick={() => handleUpdate('budget')}>Save</Button>
+                                    <Button variant="ghost" onClick={() => setIsEditingBudget(false)}>Cancel</Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm text-muted-foreground">{project.budget ? `₹${project.budget.toLocaleString()}` : 'Not set'}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsEditingBudget(true)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     
                      {/* Actions */}
                      <div className="space-y-2 pt-4 border-t">

@@ -30,6 +30,7 @@ interface Project {
   imageUrl?: string;
   isPrivate?: boolean;
   requiresRequestToJoin?: boolean;
+  budget?: number;
 }
 
 interface ProjectDetailsDialogProps {
@@ -202,6 +203,11 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                     <p className="text-base text-muted-foreground pt-1">{project.college}</p>
                     <div className="flex flex-wrap gap-2 pt-2">
                         <Badge variant="secondary">{project.theme}</Badge>
+                         {project.budget && (
+                            <Badge variant="outline">
+                                Budget: ₹{project.budget.toLocaleString()}
+                            </Badge>
+                        )}
                         {project.isPrivate && <Badge variant="outline">Private</Badge>}
                         {!project.isPrivate && project.requiresRequestToJoin && <Badge variant="outline">Requests Required</Badge>}
                     </div>
