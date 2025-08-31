@@ -128,7 +128,7 @@ export function HostProjectDialog() {
         admins: [user.uid],
         members: [user.uid], // Owner is always a member
         budget: null,
-        requiresRequestToJoin: data.isPrivate,
+        requiresRequestToJoin: true,
       };
 
       const projectDocRef = await addDoc(collection(db, collectionName), projectPayload);

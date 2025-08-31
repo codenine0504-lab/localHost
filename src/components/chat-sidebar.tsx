@@ -244,7 +244,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
                 const projectData = projectDoc.data();
                 projectData.isPrivate = value;
-                projectData.requiresRequestToJoin = value ? true : projectData.requiresRequestToJoin || false;
+                projectData.requiresRequestToJoin = true; // Always require for private
                 
                 if (value && !projectData.members) {
                     projectData.members = [project.owner];
@@ -255,7 +255,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate: value });
 
                 toast({ title: "Success", description: `Project visibility updated to ${value ? 'Private' : 'Public'}.` });
-            } else { // requiresRequestToJoin
+            } else { // requiresRequestToJoin - This case is now removed but logic kept for reference
                  await updateDoc(projectRef, { requiresRequestToJoin: value });
                  toast({ title: "Success", description: `Join requests are now ${value ? 'required' : 'not required'}.` });
             }
@@ -490,15 +490,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                                         </span>
                                     </Label>
                                     <Switch id="isPrivate" checked={project.isPrivate} onCheckedChange={(val) => handleSettingToggle('isPrivate', val)} disabled={isProcessing} />
-                                </div>
-                                <div className={`flex items-center justify-between ${project.isPrivate ? 'opacity-50' : ''}`}>
-                                    <Label htmlFor="requiresRequest" className="flex flex-col gap-1">
-                                        <span>Require Requests to Join</span>
-                                         <span className="text-xs font-normal text-muted-foreground">
-                                            Users must request to join.
-                                        </span>
-                                    </Label>
-                                    <Switch id="requiresRequest" checked={project.requiresRequestToJoin} onCheckedChange={(val) => handleSettingToggle('requiresRequestToJoin', val)} disabled={isProcessing || project.isPrivate} />
                                 </div>
                                  {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
                             </div>
