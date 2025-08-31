@@ -15,6 +15,11 @@ const navItems = [
 
 export function Footer() {
   const pathname = usePathname();
+  const isChatPage = pathname.startsWith('/chatroom/');
+
+  if (isChatPage && pathname !== '/chatroom') {
+    return null;
+  }
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 md:hidden">
