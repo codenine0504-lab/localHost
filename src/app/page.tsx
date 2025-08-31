@@ -1,102 +1,73 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
-import type { User } from 'firebase/auth';
-import { Header } from '@/components/header';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import { HostProjectDialog } from '@/components/host-project-dialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, MessageSquare } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import type { User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { Header } from '@/components/header';
+import { ImageSlider } from '@/components/image-slider';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-       <>
-        <Header />
-         <div className="flex flex-col items-center justify-center min-h-[calc(100vh_-_65px)]">
-            {/* You can add a skeleton loader here if you want */}
-         </div>
-       </>
-    );
-  }
 
   return (
     <>
       <Header />
-      <div className="flex flex-col min-h-[calc(100vh_-_65px)]">
-        <main className="flex-1">
-           <LoggedInView />
-        </main>
-      </div>
+      <section className="relative w-full py-12 md:py-20 flex items-center justify-center overflow-hidden min-h-[calc(100vh_-_169px)] md:min-h-0">
+        <div className="absolute inset-0 radial-gradient-background"></div>
+        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary rounded-full blur-3xl opacity-20 pulse-glow"></div>
+        <div className="container px-4 md:px-6 z-10">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+            
+            {/* Left Side: Hero Content */}
+            <div className="flex-1 flex flex-col items-center md:items-start space-y-6 text-center md:text-left">
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none font-headline">
+                  Welcome to <span className="text-primary">LocalHost</span>
+                </h1>
+                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+                  Connect, Collaborate, Innovate. Your next great idea starts
+                  here!
+                </p>
+              </div>
+              <div className="flex flex-col gap-4 min-[400px]:flex-row">
+                <HostProjectDialog />
+                <Button size="lg" variant="secondary" asChild>
+                  <Link href="/projects">
+                    Join a project
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Side: Featured Projects Slider */}
+            <div className="flex-1 w-full max-w-2xl">
+               <div className="flex flex-col items-center space-y-4 text-center">
+                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:hidden">Featured Projects</h2>
+                 <ImageSlider />
+               </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
     </>
   );
-}
-
-
-function LoggedInView() {
-    return (
-        <section className="w-full py-12 md:py-24 lg:py-32">
-            <div className="container px-4 md:px-6">
-                <div className="flex flex-col justify-center space-y-4 text-center mb-12">
-                     <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                        Welcome to LocalHost
-                    </h1>
-                    <p className="max-w-[600px] text-muted-foreground md:text-xl mx-auto">
-                        Connect, Collaborate, Innovate
-                    </p>
-                </div>
-                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
-                    <Card className="hover:shadow-lg transition-shadow">
-                        <CardHeader>
-                            <CardTitle>Browse Projects</CardTitle>
-                            <CardDescription>Find exciting projects to join and collaborate on.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <Link href="/projects" passHref>
-                                <Button className="w-full">
-                                    View Projects <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
-                     <Card className="hover:shadow-lg transition-shadow">
-                        <CardHeader>
-                            <CardTitle>Host a Project</CardTitle>
-                            <CardDescription>Have an idea? Host your own project and find collaborators.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <HostProjectDialog />
-                        </CardContent>
-                    </Card>
-                     <Card className="hover:shadow-lg transition-shadow">
-                        <CardHeader>
-                            <CardTitle>Join a Chat</CardTitle>
-                            <CardDescription>Discuss ideas and progress with your project teams.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Link href="/chatroom" passHref>
-                                <Button className="w-full" variant="outline">
-                                    Go to Chatrooms <MessageSquare className="ml-2 h-4 w-4" />
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        </section>
-    );
 }

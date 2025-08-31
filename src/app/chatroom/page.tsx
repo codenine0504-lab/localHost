@@ -2,13 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs, collectionGroup, onSnapshot, doc } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
 import Link from 'next/link';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { MessageSquare } from 'lucide-react';
+import type { User } from 'firebase/auth';
 
 
 interface ChatRoom {
@@ -31,31 +32,112 @@ function ChatRoomListSkeleton() {
 }
 
 export default function ChatRoomPage() {
+  const [user, setUser] = useState<User | null>(null);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
+        setUser(currentUser);
+        if (!currentUser) {
+            setLoading(false);
+            setChatRooms([]);
+        }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
     // Clear notification when user visits the main chat page
     localStorage.setItem('lastVisitedChats', Date.now().toString());
     window.dispatchEvent(new Event('storage'));
 
-    const q = query(collection(db, 'chatRooms'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const rooms: ChatRoom[] = [];
-      querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          rooms.push({ 
-            id: doc.id, 
-            name: data.name,
-            imageUrl: data.imageUrl,
-          });
-      });
-      setChatRooms(rooms);
-      setLoading(false);
+    const fetchUserProjects = async () => {
+        setLoading(true);
+        try {
+            const publicProjectsQuery1 = query(collection(db, 'projects'), where('owner', '==', user.uid));
+            const publicProjectsQuery2 = query(collection(db, 'projects'), where('members', 'array-contains', user.uid));
+            
+            const privateProjectsQuery1 = query(collection(db, 'privateProjects'), where('owner', '==', user.uid));
+            const privateProjectsQuery2 = query(collection(db, 'privateProjects'), where('members', 'array-contains', user.uid));
+
+            const [
+                publicProjectsSnapshot1,
+                publicProjectsSnapshot2,
+                privateProjectsSnapshot1,
+                privateProjectsSnapshot2
+            ] = await Promise.all([
+                getDocs(publicProjectsQuery1),
+                getDocs(publicProjectsQuery2),
+                getDocs(privateProjectsQuery1),
+                getDocs(privateProjectsQuery2),
+            ]);
+
+            const projectIds = new Set<string>();
+            publicProjectsSnapshot1.forEach(doc => projectIds.add(doc.id));
+            publicProjectsSnapshot2.forEach(doc => projectIds.add(doc.id));
+            privateProjectsSnapshot1.forEach(doc => projectIds.add(doc.id));
+            privateProjectsSnapshot2.forEach(doc => projectIds.add(doc.id));
+
+            return Array.from(projectIds);
+
+        } catch (error) {
+            console.error("Error fetching user projects:", error);
+            return [];
+        }
+    }
+
+    const setupChatRoomsListener = (projectIds: string[]) => {
+        if (projectIds.length === 0) {
+            setChatRooms([]);
+            setLoading(false);
+            return () => {};
+        }
+
+        const chatRoomRefs = projectIds.map(id => doc(db, "chatRooms", id));
+        
+        // Firestore doesn't have a direct `onSnapshot` for multiple documents not in a collection.
+        // We set up individual listeners. This is not ideal for a very large number of projects.
+        const unsubscribers = chatRoomRefs.map(ref => {
+            return onSnapshot(ref, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    const newRoom: ChatRoom = {
+                        id: doc.id,
+                        name: data.name,
+                        imageUrl: data.imageUrl,
+                    };
+
+                    setChatRooms(prevRooms => {
+                        const existingIndex = prevRooms.findIndex(r => r.id === newRoom.id);
+                        if (existingIndex > -1) {
+                            // Update existing room
+                            const updatedRooms = [...prevRooms];
+                            updatedRooms[existingIndex] = newRoom;
+                            return updatedRooms;
+                        } else {
+                            // Add new room
+                            return [...prevRooms, newRoom];
+                        }
+                    });
+                }
+            });
+        });
+        
+        setLoading(false);
+
+        return () => unsubscribers.forEach(unsub => unsub());
+    }
+
+    let unsubscribe = () => {};
+    fetchUserProjects().then(projectIds => {
+       unsubscribe = setupChatRoomsListener(projectIds);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
 
   return (
@@ -94,7 +176,7 @@ export default function ChatRoomPage() {
           ))
         ) : (
           <div className="text-center text-muted-foreground py-10">
-            <p>No chat rooms available yet. Host a project to start a new chat!</p>
+            <p>You haven&apos;t joined any projects yet. Find a project to start chatting!</p>
           </div>
         )}
       </div>
@@ -102,5 +184,3 @@ export default function ChatRoomPage() {
     </>
   );
 }
-
-    
