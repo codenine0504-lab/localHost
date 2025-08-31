@@ -29,6 +29,7 @@ interface Project {
   imageUrl?: string;
   isPrivate?: boolean;
   budget?: number | null;
+  requiresRequestToJoin?: boolean;
 }
 
 function ProjectCardSkeleton() {
