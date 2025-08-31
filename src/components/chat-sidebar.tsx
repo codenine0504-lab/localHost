@@ -94,7 +94,10 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const isCurrentUserAdmin = currentUser ? project.admins?.includes(currentUser.uid) ?? false : false;
 
     useEffect(() => {
-        if (!isCurrentUserAdmin || (!project.isPrivate && !project.requiresRequestToJoin)) return;
+        if (!isCurrentUserAdmin || (!project.isPrivate && !project.requiresRequestToJoin)) {
+            setJoinRequests([]); // Clear requests if user is not admin or not applicable
+            return;
+        }
 
         const q = query(
             collection(db, 'joinRequests'),
@@ -105,10 +108,13 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
             setJoinRequests(requests);
+        }, (error) => {
+            console.error("Error fetching join requests:", error);
+            toast({ title: "Error", description: "Could not fetch join requests.", variant: "destructive" });
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, project.id, project.isPrivate, project.requiresRequestToJoin]);
+    }, [isCurrentUserAdmin, project.id, project.isPrivate, project.requiresRequestToJoin, toast]);
 
     const handleUpdate = async (field: 'title' | 'description' | 'imageUrl' | 'budget') => {
         try {
@@ -541,7 +547,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                                                     ) : (
                                                         <AlertDialog>
                                                             <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Make Admin</DropdownMenuItem></AlertDialogTrigger>
-                                                            <AlertDialogContent>
+                             <AlertDialogContent>
                                                                 <AlertDialogHeader><AlertDialogTitle>Make Member an Admin?</AlertDialogTitle><AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription></AlertDialogHeader>
                                                                 <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction></AlertDialogFooter>
                                                             </AlertDialogContent>
