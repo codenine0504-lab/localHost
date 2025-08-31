@@ -52,6 +52,7 @@ export default function ChatRoomPage() {
 
     // Clear notification when user visits the main chat page
     localStorage.setItem('lastVisitedChats', Date.now().toString());
+    localStorage.removeItem('hasNewJoinRequests');
     window.dispatchEvent(new Event('storage'));
 
     const fetchUserProjects = async () => {

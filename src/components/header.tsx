@@ -20,6 +20,7 @@ import { usePathname, useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { InstallPwaButton } from './install-pwa-button';
+import { NotificationBadge } from './notification-badge';
 
 
 interface HeaderProps {
@@ -122,8 +123,9 @@ export function Header({ onTitleClick }: HeaderProps) {
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                  {navItems.map((item) => {
                     const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
-                    return (
-                        <Link
+                    
+                    const navLink = (
+                         <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
@@ -133,7 +135,17 @@ export function Header({ onTitleClick }: HeaderProps) {
                         >
                             {item.label}
                         </Link>
-                    )
+                    );
+
+                    if(item.href === '/chatroom') {
+                        return (
+                            <NotificationBadge key={item.href}>
+                                {navLink}
+                            </NotificationBadge>
+                        )
+                    }
+
+                    return navLink;
                  })}
             </nav>
         )}

@@ -123,6 +123,13 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
             setJoinRequests(requests);
+            if(requests.length > 0) {
+                localStorage.setItem('hasNewJoinRequests', 'true');
+                window.dispatchEvent(new Event('storage'));
+            } else {
+                 localStorage.removeItem('hasNewJoinRequests');
+                 window.dispatchEvent(new Event('storage'));
+            }
         }, (error) => {
             console.error("Error fetching join requests:", error);
             toast({ title: "Error", description: "Could not fetch join requests.", variant: "destructive" });

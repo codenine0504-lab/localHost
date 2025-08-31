@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Compass, UserCircle, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NotificationBadge } from './notification-badge';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -26,8 +27,8 @@ export function Footer() {
       <nav className="flex h-16 w-full items-center justify-around">
         {navItems.map((item) => {
           const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
-          return (
-            <Link
+          const navLink = (
+             <Link
               key={item.href}
               href={item.href}
               className={cn(
@@ -39,6 +40,16 @@ export function Footer() {
               <span>{item.label}</span>
             </Link>
           );
+
+          if (item.href === '/chatroom') {
+              return (
+                  <NotificationBadge key={item.href}>
+                      {navLink}
+                  </NotificationBadge>
+              )
+          }
+          
+          return navLink;
         })}
       </nav>
     </footer>
