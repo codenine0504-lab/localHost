@@ -1,4 +1,6 @@
 import type {Config} from 'tailwindcss';
+import colors from 'tailwindcss/colors';
+
 
 export default {
   darkMode: ['class'],
@@ -15,6 +17,8 @@ export default {
         code: ['monospace'],
       },
       colors: {
+        sky: colors.sky,
+        gray: colors.gray,
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

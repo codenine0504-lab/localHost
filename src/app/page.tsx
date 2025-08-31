@@ -55,6 +55,9 @@ export default function Home() {
                   </Link>
                 </Button>
               </div>
+               <div className="pt-6 text-center md:text-left text-sm text-muted-foreground">
+                    Developed by <span className="font-bold text-sky-500">CODE</span><span className="font-bold text-gray-500">-9</span>
+                </div>
             </div>
 
             {/* Right Side: Featured Projects Slider */}

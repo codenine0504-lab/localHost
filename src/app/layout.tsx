@@ -2,8 +2,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { Footer } from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
+import { Footer } from '@/components/footer';
 
 export const metadata: Metadata = {
   title: 'LocalHost',
@@ -40,8 +40,8 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <div className="relative flex min-h-screen flex-col bg-background">
-            <main className="flex-1">{children}</main>
-            <Footer />
+              <main className="flex-1 pb-20 md:pb-0">{children}</main>
+               <Footer />
             </div>
             <Toaster />
         </ThemeProvider>
