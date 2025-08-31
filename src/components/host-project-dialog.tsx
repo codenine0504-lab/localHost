@@ -113,16 +113,16 @@ export function HostProjectDialog() {
 
       const projectPayload: any = {
         ...projectData,
-        budget: null, // Keep budget null as it's removed from form
-        requiresRequestToJoin: data.isPrivate, // Only private projects require requests
+        budget: null,
+        requiresRequestToJoin: data.isPrivate, 
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
-        admins: [user.uid], // Owner is automatically an admin
-      }
+        admins: [user.uid],
+      };
 
       if (data.isPrivate) {
-          projectPayload.members = [user.uid]; // Owner is automatically a member
+          projectPayload.members = [user.uid];
       }
 
       const projectDocRef = await addDoc(collection(db, collectionName), projectPayload);
