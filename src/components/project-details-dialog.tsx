@@ -201,16 +201,6 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                 <DialogHeader className="text-left">
                     <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
                     <p className="text-base text-muted-foreground pt-1">{project.college}</p>
-                    <div className="flex flex-wrap gap-2 pt-2">
-                        <Badge variant="secondary">{project.theme}</Badge>
-                         {project.budget && (
-                            <Badge variant="outline">
-                                Budget: ₹{project.budget.toLocaleString()}
-                            </Badge>
-                        )}
-                        {project.isPrivate && <Badge variant="outline">Private</Badge>}
-                        {!project.isPrivate && project.requiresRequestToJoin && <Badge variant="outline">Requests Required</Badge>}
-                    </div>
                 </DialogHeader>
             </div>
         </div>
