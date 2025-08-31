@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -88,7 +89,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const isCurrentUserAdmin = currentUser ? project.admins?.includes(currentUser.uid) ?? false : false;
 
     useEffect(() => {
-        if (!isCurrentUserAdmin || !project.id) return;
+        if (!isCurrentUserAdmin || !project.isPrivate) return;
 
         const q = query(
             collection(db, 'joinRequests'),
@@ -102,7 +103,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, project.id]);
+    }, [isCurrentUserAdmin, project.id, project.isPrivate]);
 
     const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
         try {
@@ -602,3 +603,5 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
+
+    
