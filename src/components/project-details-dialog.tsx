@@ -29,6 +29,7 @@ interface Project {
   college: string;
   imageUrl?: string;
   isPrivate?: boolean;
+  requiresRequestToJoin?: boolean;
 }
 
 interface ProjectDetailsDialogProps {
@@ -49,7 +50,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   
   useEffect(() => {
       const checkExistingRequest = async () => {
-          if (!user || !project.isPrivate) return;
+          if (!user || (!project.isPrivate && !project.requiresRequestToJoin)) return;
 
           const q = query(
               collection(db, 'joinRequests'),
@@ -59,14 +60,17 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
           const querySnapshot = await getDocs(q);
 
           if (!querySnapshot.empty) {
-              setRequestStatus('sent');
+              const request = querySnapshot.docs[0].data();
+              if (request.status === 'pending') {
+                setRequestStatus('sent');
+              }
           }
       };
 
-      if (user && project.isPrivate) {
+      if (user) {
         checkExistingRequest();
       }
-  }, [user, project.id, project.isPrivate]);
+  }, [user, project.id, project.isPrivate, project.requiresRequestToJoin]);
 
 
   const handleJoinOrRequest = async () => {
@@ -79,7 +83,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
       return;
     }
 
-    if (project.isPrivate) {
+    if (project.isPrivate || project.requiresRequestToJoin) {
       handleRequestToJoin();
     } else {
       handleJoinPublicProject();
@@ -108,12 +112,14 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   }
 
   const handleRequestToJoin = async () => {
-    if (!user) return;
+    if (!user || requestStatus !== 'idle') return;
     setRequestStatus('pending');
     try {
+        const collectionName = project.isPrivate ? 'privateProjects' : 'projects';
         await addDoc(collection(db, 'joinRequests'), {
             projectId: project.id,
             projectTitle: project.title,
+            projectCollection: collectionName,
             userId: user.uid,
             userDisplayName: user.displayName,
             userPhotoURL: user.photoURL,
@@ -166,7 +172,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   };
 
   const getButtonText = () => {
-    if (project.isPrivate) {
+    if (project.isPrivate || project.requiresRequestToJoin) {
         switch (requestStatus) {
             case 'pending': return 'Sending...';
             case 'sent': return 'Request Sent';
@@ -197,6 +203,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
                     <div className="flex flex-wrap gap-2 pt-2">
                         <Badge variant="secondary">{project.theme}</Badge>
                         {project.isPrivate && <Badge variant="outline">Private</Badge>}
+                        {!project.isPrivate && project.requiresRequestToJoin && <Badge variant="outline">Requests Required</Badge>}
                     </div>
                 </DialogHeader>
             </div>

@@ -43,6 +43,7 @@ const projectSchema = z.object({
     }),
   imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
   isPrivate: z.boolean().default(false),
+  requiresRequestToJoin: z.boolean().default(false),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -65,10 +66,12 @@ export function HostProjectDialog() {
       theme: 'software',
       imageUrl: '',
       isPrivate: false,
+      requiresRequestToJoin: false,
     },
   });
 
   const descriptionValue = watch('description');
+  const isPrivateValue = watch('isPrivate');
   const wordCount = descriptionValue.split(/\s+/).filter(Boolean).length;
 
   useEffect(() => {
@@ -109,7 +112,7 @@ export function HostProjectDialog() {
 
       const collectionName = data.isPrivate ? 'privateProjects' : 'projects';
       
-      const { isPrivate, ...projectData } = data;
+      const { ...projectData } = data;
 
       const projectPayload: any = {
         ...projectData,
@@ -247,6 +250,28 @@ export function HostProjectDialog() {
                                 onCheckedChange={field.onChange}
                                 />
                                 <Label htmlFor="isPrivate">{field.value ? 'Private' : 'Public'}</Label>
+                            </>
+                        )}
+                    />
+                </div>
+            </div>
+             <div className={`grid grid-cols-1 sm:grid-cols-4 items-center gap-4 ${isPrivateValue ? 'opacity-50' : ''}`}>
+              <Label htmlFor="requiresRequestToJoin" className="sm:text-right">
+                Join Requests
+              </Label>
+                <div className="col-span-1 sm:col-span-3 flex items-center space-x-2">
+                    <Controller
+                        name="requiresRequestToJoin"
+                        control={control}
+                        render={({ field }) => (
+                            <>
+                                <Switch
+                                id="requiresRequestToJoin"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={isPrivateValue}
+                                />
+                                <Label htmlFor="requiresRequestToJoin">{field.value ? 'Required' : 'Not Required'}</Label>
                             </>
                         )}
                     />

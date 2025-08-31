@@ -46,6 +46,7 @@ interface ProjectDetails {
     owner: string;
     isPrivate: boolean;
     admins?: string[];
+    requiresRequestToJoin?: boolean;
 }
 
 interface Member {
@@ -82,6 +83,8 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
     const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
     const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+
     const { toast } = useToast();
     const router = useRouter();
 
@@ -89,7 +92,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const isCurrentUserAdmin = currentUser ? project.admins?.includes(currentUser.uid) ?? false : false;
 
     useEffect(() => {
-        if (!isCurrentUserAdmin || !project.isPrivate) return;
+        if (!isCurrentUserAdmin || (!project.isPrivate && !project.requiresRequestToJoin)) return;
 
         const q = query(
             collection(db, 'joinRequests'),
@@ -103,7 +106,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, project.id, project.isPrivate]);
+    }, [isCurrentUserAdmin, project.id, project.isPrivate, project.requiresRequestToJoin]);
 
     const handleUpdate = async (field: 'title' | 'description' | 'imageUrl') => {
         try {
@@ -140,7 +143,8 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
         try {
             if (action === 'approve') {
-                const projectRef = doc(db, 'privateProjects', project.id);
+                const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
+                const projectRef = doc(db, projectCollection, project.id);
                 await updateDoc(projectRef, {
                     members: arrayUnion(userId)
                 });
@@ -158,49 +162,50 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             setProcessingRequestId(null);
         }
     };
-
-    const handlePrivacyToggle = async (isPrivate: boolean) => {
+    
+    const handleSettingToggle = async (setting: 'isPrivate' | 'requiresRequestToJoin', value: boolean) => {
         if (!isCurrentUserAdmin) return;
-        setIsTogglingPrivacy(true);
-
-        const fromCollection = isPrivate ? 'projects' : 'privateProjects';
-        const toCollection = isPrivate ? 'privateProjects' : 'projects';
+        setIsProcessing(true);
 
         try {
-            const projectDocRef = doc(db, fromCollection, project.id);
-            const projectDoc = await getDoc(projectDocRef);
+            if (setting === 'isPrivate') {
+                const fromCollection = value ? 'projects' : 'privateProjects';
+                const toCollection = value ? 'privateProjects' : 'projects';
+                const projectDocRef = doc(db, fromCollection, project.id);
+                const projectDoc = await getDoc(projectDocRef);
 
-            if (!projectDoc.exists()) {
-                throw new Error("Project document not found.");
+                if (!projectDoc.exists()) throw new Error("Project document not found.");
+
+                const projectData = projectDoc.data();
+                
+                if (value && !projectData.members) {
+                    projectData.members = [project.owner];
+                }
+                
+                // When making a project private, `requiresRequestToJoin` is implicitly true.
+                // When making public, restore its original state or set to false.
+                projectData.requiresRequestToJoin = value ? true : projectData.requiresRequestToJoin || false;
+
+
+                await setDoc(doc(db, toCollection, project.id), projectData);
+                await deleteDoc(projectDocRef);
+                await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate: value });
+
+                toast({ title: "Success", description: `Project visibility updated to ${value ? 'Private' : 'Public'}.` });
+            } else {
+                 const projectRef = doc(db, 'projects', project.id);
+                 await updateDoc(projectRef, { requiresRequestToJoin: value });
+                 toast({ title: "Success", description: `Join requests are now ${value ? 'required' : 'not required'}.` });
             }
-
-            const projectData = projectDoc.data();
-            
-            // Add owner to members list when making a project private for the first time
-            if (isPrivate && !projectData.members) {
-                projectData.members = [project.owner];
-            }
-
-
-            // Create new doc in the target collection
-            await setDoc(doc(db, toCollection, project.id), projectData);
-
-            // Delete doc from the source collection
-            await deleteDoc(projectDocRef);
-
-            // Update chatRoom
-            await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate });
-
             onProjectUpdate();
-            toast({ title: "Success", description: `Project visibility updated to ${isPrivate ? 'Private' : 'Public'}.` });
-
         } catch (error) {
-            console.error("Error toggling project privacy:", error);
-            toast({ title: "Error", description: "Could not update project visibility.", variant: 'destructive' });
+            console.error("Error updating setting:", error);
+            toast({ title: "Error", description: "Could not update project setting.", variant: 'destructive' });
         } finally {
-            setIsTogglingPrivacy(false);
+            setIsProcessing(false);
         }
     };
+
 
     const handleDeleteProject = async () => {
         if (!isCurrentUserAdmin) return;
@@ -407,28 +412,44 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                      </div>
 
 
-                     {/* Project Visibility */}
+                     {/* Admin Settings */}
                     {isCurrentUserAdmin && (
-                        <div className="space-y-2">
-                            <Label className="text-sm font-medium">Project Visibility</Label>
-                             <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="isPrivate"
-                                    checked={project.isPrivate}
-                                    onCheckedChange={handlePrivacyToggle}
-                                    disabled={isTogglingPrivacy}
-                                />
-                                <Label htmlFor="isPrivate">{project.isPrivate ? 'Private' : 'Public'}</Label>
-                                {isTogglingPrivacy && <Loader2 className="h-4 w-4 animate-spin" />}
-                             </div>
-                             <p className="text-xs text-muted-foreground">
-                                {project.isPrivate ? "Only approved members can join this project." : "This project is visible to everyone."}
-                            </p>
+                        <div className="space-y-4 pt-4 border-t">
+                             <Label className="text-lg font-medium">Admin Settings</Label>
+                             <div className="space-y-2">
+                                <div className="flex items-center space-x-2">
+                                    <Switch
+                                        id="isPrivate"
+                                        checked={project.isPrivate}
+                                        onCheckedChange={(val) => handleSettingToggle('isPrivate', val)}
+                                        disabled={isProcessing}
+                                    />
+                                    <Label htmlFor="isPrivate">{project.isPrivate ? 'Private' : 'Public'}</Label>
+                                    {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {project.isPrivate ? "Only approved members can join this project." : "This project is visible to everyone."}
+                                </p>
+                            </div>
+                             <div className={`space-y-2 ${project.isPrivate ? 'opacity-50' : ''}`}>
+                                <div className="flex items-center space-x-2">
+                                    <Switch
+                                        id="requiresRequest"
+                                        checked={project.requiresRequestToJoin}
+                                        onCheckedChange={(val) => handleSettingToggle('requiresRequestToJoin', val)}
+                                        disabled={isProcessing || project.isPrivate}
+                                    />
+                                    <Label htmlFor="requiresRequest">Require Requests to Join</Label>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    If enabled, users must request to join this public project.
+                                </p>
+                            </div>
                         </div>
                     )}
                     
                      {/* Join Requests */}
-                    {isCurrentUserAdmin && project.isPrivate && joinRequests.length > 0 && (
+                    {isCurrentUserAdmin && (project.isPrivate || project.requiresRequestToJoin) && joinRequests.length > 0 && (
                         <div className="space-y-4 pt-4 border-t">
                             <h3 className="text-lg font-medium flex items-center">
                                 <UserPlus className="mr-2 h-5 w-5" />
@@ -603,5 +624,3 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
-
-    
