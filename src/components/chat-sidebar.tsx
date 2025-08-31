@@ -62,6 +62,7 @@ interface JoinRequest {
     userId: string;
     userDisplayName: string | null;
     userPhotoURL: string | null;
+    projectCollection: 'projects' | 'privateProjects';
 }
 
 interface ChatSidebarProps {
@@ -157,7 +158,14 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
         try {
             if (action === 'approve') {
-                const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
+                const requestDoc = await getDoc(requestRef);
+                if (!requestDoc.exists()) {
+                    throw new Error("Join request not found.");
+                }
+                const requestData = requestDoc.data() as JoinRequest;
+
+                const projectCollection = requestData.projectCollection || (project.isPrivate ? 'privateProjects' : 'projects');
+                
                 const projectRef = doc(db, projectCollection, project.id);
                 await updateDoc(projectRef, {
                     members: arrayUnion(userId)
@@ -611,3 +619,5 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
+
+    
