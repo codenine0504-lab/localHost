@@ -36,6 +36,7 @@ interface ProjectDetails {
     isPrivate: boolean;
     members?: string[];
     admins?: string[];
+    requiresRequestToJoin?: boolean;
 }
 
 interface Member {
@@ -148,6 +149,7 @@ export default function ChatPage() {
             isPrivate: isPrivate,
             members: projectData.members || [],
             admins: projectData.admins || [projectData.owner],
+            requiresRequestToJoin: projectData.requiresRequestToJoin,
         };
         setProjectDetails(projDetails);
 
@@ -399,3 +401,5 @@ export default function ChatPage() {
      </div>
   );
 }
+
+    
