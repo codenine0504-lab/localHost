@@ -75,14 +75,19 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUser, onProjectUpdate }: ChatSidebarProps) {
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [isEditingDesc, setIsEditingDesc] = useState(false);
-    const [isEditingImageUrl, setIsEditingImageUrl] = useState(false);
-    const [isEditingBudget, setIsEditingBudget] = useState(false);
-    const [title, setTitle] = useState(project.title);
-    const [description, setDescription] = useState(project.description);
-    const [imageUrl, setImageUrl] = useState(project.imageUrl || '');
-    const [budget, setBudget] = useState(project.budget);
+    const [isEditing, setIsEditing] = useState({
+        title: false,
+        description: false,
+        imageUrl: false,
+        budget: false,
+    });
+    const [formState, setFormState] = useState({
+        title: '',
+        description: '',
+        imageUrl: '',
+        budget: undefined as number | undefined,
+    });
+    
     const [isDeleting, setIsDeleting] = useState(false);
     const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
     const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
@@ -95,19 +100,17 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const isCurrentUserAdmin = currentUser ? project.admins?.includes(currentUser.uid) ?? false : false;
 
     useEffect(() => {
-        setTitle(project.title);
-        setDescription(project.description);
-        setImageUrl(project.imageUrl || '');
-        setBudget(project.budget);
+        setFormState({
+            title: project.title,
+            description: project.description,
+            imageUrl: project.imageUrl || '',
+            budget: project.budget,
+        });
     }, [project]);
-
+    
     useEffect(() => {
-        if (!isCurrentUserAdmin || !project.id) return;
-        
-        const shouldFetchRequests = project.isPrivate || project.requiresRequestToJoin;
-
-        if (!shouldFetchRequests) {
-            setJoinRequests([]); // Clear requests if not applicable
+        if (!isCurrentUserAdmin || !project.id || !project.requiresRequestToJoin) {
+            setJoinRequests([]);
             return;
         }
 
@@ -126,29 +129,30 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, project.id, project.isPrivate, project.requiresRequestToJoin, toast]);
+    }, [isCurrentUserAdmin, project.id, project.requiresRequestToJoin, toast]);
 
-    const handleUpdate = async (field: 'title' | 'description' | 'imageUrl' | 'budget') => {
+
+    const handleInputChange = (field: keyof typeof formState, value: string | number | undefined) => {
+        setFormState(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleUpdate = async (field: keyof typeof formState) => {
         try {
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             const projectRef = doc(db, projectCollection, project.id);
             const chatRoomRef = doc(db, 'chatRooms', project.id);
+            
+            let updateData: any = { [field]: formState[field] };
+            
+            if (field === 'budget') {
+                 updateData = { budget: formState.budget === undefined ? null : formState.budget };
+            }
 
-            let updateData: any = {};
             if (field === 'title') {
-                updateData = { title };
-                await updateDoc(chatRoomRef, { name: title });
-                setIsEditingTitle(false);
-            } else if (field === 'description') {
-                updateData = { description };
-                setIsEditingDesc(false);
-            } else if (field === 'imageUrl') {
-                updateData = { imageUrl };
-                await updateDoc(chatRoomRef, { imageUrl });
-                setIsEditingImageUrl(false);
-            } else if (field === 'budget') {
-                updateData = { budget: budget === undefined ? null : budget };
-                setIsEditingBudget(false);
+                await updateDoc(chatRoomRef, { name: formState.title });
+            }
+             if (field === 'imageUrl') {
+                await updateDoc(chatRoomRef, { imageUrl: formState.imageUrl });
             }
             
             await updateDoc(projectRef, updateData);
@@ -158,7 +162,19 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         } catch (error) {
             console.error("Error updating project:", error);
             toast({ title: "Error", description: `Could not update project ${field}.`, variant: 'destructive' });
+        } finally {
+             setIsEditing(prev => ({...prev, [field]: false}))
         }
+    };
+    
+    const handleCancelEdit = (field: keyof typeof isEditing) => {
+        setIsEditing(prev => ({ ...prev, [field]: false }));
+        setFormState({
+            title: project.title,
+            description: project.description,
+            imageUrl: project.imageUrl || '',
+            budget: project.budget,
+        });
     };
 
     const handleRequestAction = async (requestId: string, userId: string, action: 'approve' | 'decline') => {
@@ -368,16 +384,16 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             {/* Image URL */}
                             <div className="space-y-2">
                                 <Label>Image URL</Label>
-                                {isEditingImageUrl ? (
+                                {isEditing.imageUrl ? (
                                     <div className="flex items-center gap-2">
-                                        <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.png" />
+                                        <Input value={formState.imageUrl} onChange={(e) => handleInputChange('imageUrl', e.target.value)} placeholder="https://example.com/image.png" />
                                         <Button onClick={() => handleUpdate('imageUrl')} size="sm">Save</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => setIsEditingImageUrl(false)}>Cancel</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('imageUrl')}>Cancel</Button>
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between group">
                                         <p className="text-sm text-muted-foreground truncate">{project.imageUrl || 'No image URL set'}</p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingImageUrl(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, imageUrl: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -387,16 +403,16 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             {/* Project Title */}
                             <div className="space-y-2">
                                 <Label>Title</Label>
-                                {isEditingTitle ? (
+                                {isEditing.title ? (
                                     <div className="flex items-center gap-2">
-                                        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                                        <Input value={formState.title} onChange={(e) => handleInputChange('title', e.target.value)} />
                                         <Button onClick={() => handleUpdate('title')} size="sm">Save</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => setIsEditingTitle(false)}>Cancel</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('title')}>Cancel</Button>
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between group">
                                         <p className="text-sm text-muted-foreground">{project.title}</p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingTitle(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, title: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -406,18 +422,18 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             {/* Project Description */}
                             <div className="space-y-2">
                                 <Label>Description</Label>
-                                {isEditingDesc ? (
+                                {isEditing.description ? (
                                     <div className="flex flex-col gap-2">
-                                        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} />
+                                        <Textarea value={formState.description} onChange={(e) => handleInputChange('description', e.target.value)} rows={5} />
                                         <div className="flex items-center gap-2">
                                             <Button onClick={() => handleUpdate('description')} size="sm">Save</Button>
-                                            <Button variant="ghost" size="sm" onClick={() => setIsEditingDesc(false)}>Cancel</Button>
+                                            <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('description')}>Cancel</Button>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="flex items-start justify-between group">
                                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingDesc(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, description: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -427,27 +443,27 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                              {/* Budget */}
                             <div className="space-y-2">
                                 <Label>Budget</Label>
-                                {isEditingBudget ? (
+                                {isEditing.budget ? (
                                     <div className="flex items-center gap-2">
                                         <div className="relative flex-grow">
                                             <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input 
                                                 type="number" 
-                                                value={budget ?? ''} 
-                                                onChange={(e) => setBudget(e.target.value === '' ? undefined : Number(e.target.value))}
+                                                value={formState.budget ?? ''} 
+                                                onChange={(e) => handleInputChange('budget', e.target.value === '' ? undefined : Number(e.target.value))}
                                                 placeholder="e.g. 5000"
                                                 className="pl-8"
                                             />
                                         </div>
                                         <Button onClick={() => handleUpdate('budget')} size="sm">Save</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => setIsEditingBudget(false)}>Cancel</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('budget')}>Cancel</Button>
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between group">
                                         <p className="text-sm text-muted-foreground">
                                             {project.budget ? `₹${project.budget.toLocaleString()}` : 'Not set'}
                                         </p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingBudget(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, budget: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -494,7 +510,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                          </Button>
 
                         {/* Join Requests */}
-                        {isCurrentUserAdmin && (project.isPrivate || project.requiresRequestToJoin) && joinRequests.length > 0 && (
+                        {isCurrentUserAdmin && project.requiresRequestToJoin && joinRequests.length > 0 && (
                             <div className="space-y-3 pt-4">
                                 <h4 className="text-sm font-medium flex items-center text-muted-foreground">
                                     <UserPlus className="mr-2 h-4 w-4" />
@@ -630,5 +646,3 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
-
-    
