@@ -109,7 +109,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     }, [project]);
     
     useEffect(() => {
-        if (!isCurrentUserAdmin || !project.id) {
+        if (!isCurrentUserAdmin || !project.id || !currentUser) {
             setJoinRequests([]);
             return;
         }
@@ -123,11 +123,13 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
             setJoinRequests(requests);
+            
+            const notificationKey = `hasNewJoinRequests_${currentUser.uid}`;
             if(requests.length > 0) {
-                localStorage.setItem('hasNewJoinRequests', 'true');
+                localStorage.setItem(notificationKey, 'true');
                 window.dispatchEvent(new Event('storage'));
             } else {
-                 localStorage.removeItem('hasNewJoinRequests');
+                 localStorage.removeItem(notificationKey);
                  window.dispatchEvent(new Event('storage'));
             }
         }, (error) => {
@@ -136,7 +138,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, project.id, toast]);
+    }, [isCurrentUserAdmin, project.id, toast, currentUser]);
 
 
     const handleInputChange = (field: keyof typeof formState, value: string | number | undefined) => {

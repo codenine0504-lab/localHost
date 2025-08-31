@@ -2,6 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { auth } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
 
 interface NotificationBadgeProps {
     children: React.ReactNode;
@@ -9,11 +11,22 @@ interface NotificationBadgeProps {
 
 export function NotificationBadge({ children }: NotificationBadgeProps) {
     const [hasNotification, setHasNotification] = useState(false);
+    const [user, setUser] = useState<User | null>(auth.currentUser);
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(setUser);
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         const checkNotifications = () => {
-             // Check for new join requests
-            const hasNewJoinRequests = localStorage.getItem('hasNewJoinRequests') === 'true';
+            if (!user) {
+                setHasNotification(false);
+                return;
+            }
+
+             // Check for new join requests for the current user
+            const hasNewJoinRequests = localStorage.getItem(`hasNewJoinRequests_${user.uid}`) === 'true';
             if (hasNewJoinRequests) {
                 setHasNotification(true);
                 return;
@@ -56,7 +69,7 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
             window.removeEventListener('storage', handleStorageChange);
             document.removeEventListener('visibilitychange', checkNotifications);
         };
-    }, []);
+    }, [user]);
 
     return (
         <div className="relative">

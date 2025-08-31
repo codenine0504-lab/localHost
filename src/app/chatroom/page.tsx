@@ -66,10 +66,9 @@ export default function ChatRoomPage() {
   useEffect(() => {
     if (!user) return;
 
-    // Clear the global "last visited" timestamp, but keep per-chat timestamps
-    localStorage.setItem('lastVisitedChats', Date.now().toString());
-    // Also clear the general join request flag as the user is on the chat page
-    localStorage.removeItem('hasNewJoinRequests');
+    // Clear user-specific join request flag when visiting the chat list
+    const joinRequestKey = `hasNewJoinRequests_${user.uid}`;
+    localStorage.removeItem(joinRequestKey);
     window.dispatchEvent(new Event('storage'));
 
     const fetchUserProjects = async () => {
