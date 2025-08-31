@@ -42,9 +42,7 @@ const projectSchema = z.object({
       message: 'Description must be 50 words or less.'
     }),
   imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
-  budget: z.coerce.number().positive('Budget must be a positive number.').optional().or(z.literal('')),
   isPrivate: z.boolean().default(false),
-  requiresRequestToJoin: z.boolean().default(false),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -66,14 +64,11 @@ export function HostProjectDialog() {
       description: '',
       theme: 'software',
       imageUrl: '',
-      budget: '',
       isPrivate: false,
-      requiresRequestToJoin: false,
     },
   });
 
   const descriptionValue = watch('description');
-  const isPrivateValue = watch('isPrivate');
   const wordCount = descriptionValue.split(/\s+/).filter(Boolean).length;
 
   useEffect(() => {
@@ -118,7 +113,8 @@ export function HostProjectDialog() {
 
       const projectPayload: any = {
         ...projectData,
-        budget: data.budget || null,
+        budget: null, // Keep budget null as it's removed from form
+        requiresRequestToJoin: data.isPrivate, // Only private projects require requests
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
@@ -238,19 +234,6 @@ export function HostProjectDialog() {
               {errors.imageUrl && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.imageUrl.message}</p>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-               <Label htmlFor="budget" className="sm:text-right">
-                Budget (₹)
-              </Label>
-               <Controller
-                name="budget"
-                control={control}
-                render={({ field }) => (
-                  <Input id="budget" type="number" placeholder="e.g., 5000" className="col-span-1 sm:col-span-3" {...field} />
-                )}
-              />
-              {errors.budget && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.budget.message}</p>}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
               <Label htmlFor="isPrivate" className="sm:text-right">
                 Visibility
               </Label>
@@ -266,28 +249,6 @@ export function HostProjectDialog() {
                                 onCheckedChange={field.onChange}
                                 />
                                 <Label htmlFor="isPrivate">{field.value ? 'Private' : 'Public'}</Label>
-                            </>
-                        )}
-                    />
-                </div>
-            </div>
-             <div className={`grid grid-cols-1 sm:grid-cols-4 items-center gap-4 ${isPrivateValue ? 'opacity-50' : ''}`}>
-              <Label htmlFor="requiresRequestToJoin" className="sm:text-right">
-                Join Requests
-              </Label>
-                <div className="col-span-1 sm:col-span-3 flex items-center space-x-2">
-                    <Controller
-                        name="requiresRequestToJoin"
-                        control={control}
-                        render={({ field }) => (
-                            <>
-                                <Switch
-                                id="requiresRequestToJoin"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                disabled={isPrivateValue}
-                                />
-                                <Label htmlFor="requiresRequestToJoin">{field.value ? 'Required' : 'Not Required'}</Label>
                             </>
                         )}
                     />

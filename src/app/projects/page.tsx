@@ -28,7 +28,7 @@ interface Project {
   college: string;
   imageUrl?: string;
   isPrivate?: boolean;
-  budget?: number;
+  budget?: number | null;
 }
 
 function ProjectCardSkeleton() {
