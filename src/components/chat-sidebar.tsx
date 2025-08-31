@@ -304,7 +304,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 toast({ title: "Success", description: "Admin status revoked." });
             }
             onProjectUpdate();
-        } catch (error) => {
+        } catch (error) {
             console.error("Error updating admin status:", error);
             toast({ title: "Error", description: "Could not update admin status.", variant: "destructive" });
         }
@@ -509,7 +509,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                          </Button>
 
                         {/* Join Requests */}
-                        {isCurrentUserAdmin && project.requiresRequestToJoin && joinRequests.length > 0 && (
+                        {isCurrentUserAdmin && joinRequests.length > 0 && (
                             <div className="space-y-3 pt-4">
                                 <h4 className="text-sm font-medium flex items-center text-muted-foreground">
                                     <UserPlus className="mr-2 h-4 w-4" />
