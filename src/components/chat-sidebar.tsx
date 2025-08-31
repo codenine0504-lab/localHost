@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +14,7 @@ import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, on
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
-import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX, Link2 } from 'lucide-react';
+import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX, Link2, Settings, Users } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -194,10 +194,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                     projectData.members = [project.owner];
                 }
                 
-                // When making a project private, `requiresRequestToJoin` is implicitly true.
-                // When making public, restore its original state or set to false.
                 projectData.requiresRequestToJoin = value ? true : projectData.requiresRequestToJoin || false;
-
 
                 await setDoc(doc(db, toCollection, project.id), projectData);
                 await deleteDoc(projectDocRef);
@@ -218,13 +215,11 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
-
     const handleDeleteProject = async () => {
         if (!isCurrentUserAdmin) return;
         setIsDeleting(true);
 
         try {
-            // Delete project image from storage if it's a firebase storage URL
             if (project.imageUrl && project.imageUrl.includes('firebasestorage.googleapis.com')) {
                  try {
                     const imageRef = ref(storage, project.imageUrl);
@@ -234,12 +229,9 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 }
             }
 
-            // Delete firestore documents
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             await deleteDoc(doc(db, projectCollection, project.id));
             await deleteDoc(doc(db, 'chatRooms', project.id));
-            // Note: Deleting chat messages would require a recursive delete, which is complex for clients.
-            // This can be handled with a Firebase Function or left as is.
 
             toast({ title: "Success", description: "Project has been deleted." });
             onOpenChange(false);
@@ -254,7 +246,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     }
     
      const handleAdminToggle = async (memberId: string, shouldBeAdmin: boolean) => {
-        if (!isCurrentUserAdmin || memberId === project.owner) return; // Owner cannot be demoted
+        if (!isCurrentUserAdmin || memberId === project.owner) return;
 
         const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
         const projectRef = doc(db, projectCollection, project.id);
@@ -275,13 +267,12 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
 
     const handleRemoveMember = async (memberId: string) => {
-        if (!isCurrentUserAdmin || memberId === project.owner) return; // Owner cannot be removed
+        if (!isCurrentUserAdmin || memberId === project.owner) return;
 
         const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
         const projectRef = doc(db, projectCollection, project.id);
 
         try {
-            // Atomically remove from both members and admins arrays
             await updateDoc(projectRef, { 
                 members: arrayRemove(memberId),
                 admins: arrayRemove(memberId) 
@@ -306,7 +297,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                 // Fallback for browsers that don't support Web Share API
                 await navigator.clipboard.writeText(shareUrl);
                 toast({
                     title: 'Link Copied',
@@ -323,7 +313,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
-
     const getInitials = (name: string | null | undefined) => {
         if (!name) return "U";
         const nameParts = name.split(" ");
@@ -336,292 +325,234 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent className="w-full sm:max-w-md overflow-y-auto pt-10">
-                <div className="py-6 space-y-6">
-                    {/* Project Image */}
-                    <div className="relative h-48 w-full rounded-lg overflow-hidden group">
-                        <Image
-                            src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                            alt={`Image for ${project.title}`}
-                            layout="fill"
-                            objectFit="cover"
-                            data-ai-hint="project image"
-                        />
-                    </div>
-                    
-                    {/* Image URL */}
-                     {isCurrentUserAdmin && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Image URL</label>
-                            {isEditingImageUrl ? (
-                                <div className="flex items-center gap-2">
-                                    <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.png" />
-                                    <Button onClick={() => handleUpdate('imageUrl')}>Save</Button>
-                                    <Button variant="ghost" onClick={() => setIsEditingImageUrl(false)}>Cancel</Button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm text-muted-foreground truncate">{project.imageUrl || 'No image URL set'}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => setIsEditingImageUrl(true)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                 <SheetHeader className="text-center p-4 border-b">
+                    <SheetTitle>{project.title}</SheetTitle>
+                    <SheetDescription>Project details and settings</SheetDescription>
+                </SheetHeader>
+                <div className="py-6 space-y-8">
 
-
-                    {/* Project Title */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Title</label>
-                        {isEditingTitle && isCurrentUserAdmin ? (
-                            <div className="flex items-center gap-2">
-                                <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-                                <Button onClick={() => handleUpdate('title')}>Save</Button>
-                                <Button variant="ghost" onClick={() => setIsEditingTitle(false)}>Cancel</Button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-between">
-                                <p className="text-lg font-semibold">{project.title}</p>
-                                {isCurrentUserAdmin && (
-                                    <Button variant="ghost" size="icon" onClick={() => setIsEditingTitle(true)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Project Description */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Description</label>
-                        {isEditingDesc && isCurrentUserAdmin ? (
-                            <div className="flex flex-col gap-2">
-                                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} />
-                                <div className="flex items-center gap-2">
-                                    <Button onClick={() => handleUpdate('description')}>Save</Button>
-                                    <Button variant="ghost" onClick={() => setIsEditingDesc(false)}>Cancel</Button>
-                                </div>
-                            </div>
-                        ) : (
-                             <div className="flex items-start justify-between">
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-                                 {isCurrentUserAdmin && (
-                                    <Button variant="ghost" size="icon" onClick={() => setIsEditingDesc(true)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* Project Budget */}
-                     {isCurrentUserAdmin && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Budget (₹)</label>
-                            {isEditingBudget ? (
-                                <div className="flex items-center gap-2">
-                                    <Input value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. 5000" type="number"/>
-                                    <Button onClick={() => handleUpdate('budget')}>Save</Button>
-                                    <Button variant="ghost" onClick={() => setIsEditingBudget(false)}>Cancel</Button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm text-muted-foreground">{project.budget ? `₹${project.budget.toLocaleString()}` : 'Not set'}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => setIsEditingBudget(true)}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    
-                     {/* Actions */}
-                     <div className="space-y-2 pt-4 border-t">
-                         <Label className="text-sm font-medium">Actions</Label>
-                         <Button variant="outline" className="w-full" onClick={handleShare}>
-                            <Link2 className="mr-2 h-4 w-4" />
-                            Invite Members
-                         </Button>
-                     </div>
-
-
-                     {/* Admin Settings */}
+                    {/* Project Settings Section */}
                     {isCurrentUserAdmin && (
-                        <div className="space-y-4 pt-4 border-t">
-                             <Label className="text-lg font-medium">Admin Settings</Label>
-                             <div className="space-y-2">
+                        <div className="space-y-4 px-4">
+                            <h3 className="font-semibold text-lg flex items-center"><Settings className="mr-2 h-5 w-5" /> Project Settings</h3>
+                            
+                            {/* Image URL */}
+                            <div className="space-y-2">
+                                <Label>Image URL</Label>
+                                {isEditingImageUrl ? (
+                                    <div className="flex items-center gap-2">
+                                        <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.png" />
+                                        <Button onClick={() => handleUpdate('imageUrl')} size="sm">Save</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setIsEditingImageUrl(false)}>Cancel</Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between group">
+                                        <p className="text-sm text-muted-foreground truncate">{project.imageUrl || 'No image URL set'}</p>
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingImageUrl(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Project Title */}
+                            <div className="space-y-2">
+                                <Label>Title</Label>
+                                {isEditingTitle ? (
+                                    <div className="flex items-center gap-2">
+                                        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                                        <Button onClick={() => handleUpdate('title')} size="sm">Save</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setIsEditingTitle(false)}>Cancel</Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between group">
+                                        <p className="text-sm text-muted-foreground">{project.title}</p>
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingTitle(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Project Description */}
+                            <div className="space-y-2">
+                                <Label>Description</Label>
+                                {isEditingDesc ? (
+                                    <div className="flex flex-col gap-2">
+                                        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} />
+                                        <div className="flex items-center gap-2">
+                                            <Button onClick={() => handleUpdate('description')} size="sm">Save</Button>
+                                            <Button variant="ghost" size="sm" onClick={() => setIsEditingDesc(false)}>Cancel</Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start justify-between group">
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingDesc(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Project Budget */}
+                            <div className="space-y-2">
+                                <Label>Budget (₹)</Label>
+                                {isEditingBudget ? (
+                                    <div className="flex items-center gap-2">
+                                        <Input value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. 5000" type="number"/>
+                                        <Button onClick={() => handleUpdate('budget')} size="sm">Save</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => setIsEditingBudget(false)}>Cancel</Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between group">
+                                        <p className="text-sm text-muted-foreground">{project.budget ? `₹${project.budget.toLocaleString()}` : 'Not set'}</p>
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingBudget(true)} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <Separator />
+
+                             {/* Privacy and Join Settings */}
+                            <div className="space-y-2">
                                 <div className="flex items-center space-x-2">
-                                    <Switch
-                                        id="isPrivate"
-                                        checked={project.isPrivate}
-                                        onCheckedChange={(val) => handleSettingToggle('isPrivate', val)}
-                                        disabled={isProcessing}
-                                    />
+                                    <Switch id="isPrivate" checked={project.isPrivate} onCheckedChange={(val) => handleSettingToggle('isPrivate', val)} disabled={isProcessing} />
                                     <Label htmlFor="isPrivate">{project.isPrivate ? 'Private' : 'Public'}</Label>
                                     {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    {project.isPrivate ? "Only approved members can join this project." : "This project is visible to everyone."}
+                                <p className="text-xs text-muted-foreground pl-8">
+                                    {project.isPrivate ? "Only approved members can join." : "Visible to everyone."}
                                 </p>
                             </div>
                              <div className={`space-y-2 ${project.isPrivate ? 'opacity-50' : ''}`}>
                                 <div className="flex items-center space-x-2">
-                                    <Switch
-                                        id="requiresRequest"
-                                        checked={project.requiresRequestToJoin}
-                                        onCheckedChange={(val) => handleSettingToggle('requiresRequestToJoin', val)}
-                                        disabled={isProcessing || project.isPrivate}
-                                    />
+                                    <Switch id="requiresRequest" checked={project.requiresRequestToJoin} onCheckedChange={(val) => handleSettingToggle('requiresRequestToJoin', val)} disabled={isProcessing || project.isPrivate} />
                                     <Label htmlFor="requiresRequest">Require Requests to Join</Label>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-muted-foreground pl-8">
                                     If enabled, users must request to join this public project.
                                 </p>
                             </div>
+
                         </div>
                     )}
                     
-                     {/* Join Requests */}
-                    {isCurrentUserAdmin && (project.isPrivate || project.requiresRequestToJoin) && joinRequests.length > 0 && (
-                        <div className="space-y-4 pt-4 border-t">
-                            <h3 className="text-lg font-medium flex items-center">
-                                <UserPlus className="mr-2 h-5 w-5" />
-                                Join Requests ({joinRequests.length})
-                            </h3>
+                     <Separator />
+
+                    {/* Member Management Section */}
+                    <div className="space-y-4 px-4">
+                        <h3 className="font-semibold text-lg flex items-center"><Users className="mr-2 h-5 w-5" /> Member Management</h3>
+                        
+                        <Button variant="outline" className="w-full" onClick={handleShare}>
+                            <Link2 className="mr-2 h-4 w-4" />
+                            Invite Members
+                         </Button>
+
+                        {/* Join Requests */}
+                        {isCurrentUserAdmin && (project.isPrivate || project.requiresRequestToJoin) && joinRequests.length > 0 && (
+                            <div className="space-y-3 pt-4">
+                                <h4 className="text-sm font-medium flex items-center text-muted-foreground">
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Join Requests ({joinRequests.length})
+                                </h4>
+                                <ul className="space-y-3">
+                                    {joinRequests.map(req => (
+                                        <li key={req.id} className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9">
+                                                    <AvatarImage src={req.userPhotoURL || undefined} alt="User avatar" />
+                                                    <AvatarFallback>{getInitials(req.userDisplayName)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="text-sm font-medium">{req.userDisplayName}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button size="icon" variant="outline" className="h-8 w-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white" onClick={() => handleRequestAction(req.id, req.userId, 'approve')} disabled={processingRequestId === req.id}>
+                                                    {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                                </Button>
+                                                <Button size="icon" variant="outline" className="h-8 w-8 border-red-500 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => handleRequestAction(req.id, req.userId, 'decline')} disabled={processingRequestId === req.id}>
+                                                    {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                                                </Button>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Members List */}
+                        <div className="space-y-3 pt-4">
+                             <h4 className="text-sm font-medium flex items-center text-muted-foreground">
+                                Members ({members.length})
+                            </h4>
                             <ul className="space-y-3">
-                                {joinRequests.map(req => (
-                                    <li key={req.id} className="flex items-center justify-between">
+                                {members.map(member => (
+                                    <li key={member.id} className="flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-9 w-9">
-                                                <AvatarImage src={req.userPhotoURL || undefined} alt="User avatar" />
-                                                <AvatarFallback>{getInitials(req.userDisplayName)}</AvatarFallback>
+                                                <AvatarImage src={member.photoURL || undefined} alt="Member avatar" />
+                                                <AvatarFallback>{getInitials(member.displayName)}</AvatarFallback>
                                             </Avatar>
-                                            <span className="text-sm font-medium">{req.userDisplayName}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium">{member.displayName}</span>
+                                                 <div className="flex items-center gap-1">
+                                                    {member.id === project.owner && <Badge variant="secondary" className="text-xs">Owner</Badge>}
+                                                    {member.isAdmin && member.id !== project.owner && <Badge className="text-xs">Admin</Badge>}
+                                                 </div>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                size="icon"
-                                                variant="outline"
-                                                className="h-8 w-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
-                                                onClick={() => handleRequestAction(req.id, req.userId, 'approve')}
-                                                disabled={processingRequestId === req.id}
-                                            >
-                                                {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                                            </Button>
-                                             <Button
-                                                size="icon"
-                                                variant="outline"
-                                                className="h-8 w-8 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                                                onClick={() => handleRequestAction(req.id, req.userId, 'decline')}
-                                                disabled={processingRequestId === req.id}
-                                            >
-                                                {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                                            </Button>
-                                        </div>
+                                        {isCurrentUserAdmin && currentUser?.uid !== member.id && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {member.isAdmin ? (
+                                                        member.id !== project.owner && (
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Remove as Admin</DropdownMenuItem></AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader><AlertDialogTitle>Remove Admin Privileges?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove admin privileges for this member?</AlertDialogDescription></AlertDialogHeader>
+                                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, false)}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        )
+                                                    ) : (
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Make Admin</DropdownMenuItem></AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader><AlertDialogTitle>Make Member an Admin?</AlertDialogTitle><AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription></AlertDialogHeader>
+                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    )}
+
+                                                    {member.id !== project.owner && (
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-500/10 focus:text-red-600"><UserX className="mr-2 h-4 w-4" />Remove Member</DropdownMenuItem></AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader><AlertDialogTitle>Remove Member?</AlertDialogTitle><AlertDialogDescription>This will permanently remove the member from the project. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction></AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
                         </div>
-                    )}
-
-
-                    {/* Members List */}
-                    <div className="space-y-4 pt-4 border-t">
-                        <h3 className="text-lg font-medium">Members ({members.length})</h3>
-                        <ul className="space-y-3">
-                             {members.map(member => (
-                                <li key={member.id} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-9 w-9">
-                                            <AvatarImage src={member.photoURL || undefined} alt="Member avatar" />
-                                            <AvatarFallback>{getInitials(member.displayName)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="text-sm font-medium">{member.displayName}</span>
-                                        {member.id === project.owner && <Badge variant="secondary">Owner</Badge>}
-                                        {member.isAdmin && member.id !== project.owner && <Badge>Admin</Badge>}
-                                    </div>
-                                    
-                                     {isCurrentUserAdmin && currentUser?.uid !== member.id && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {member.isAdmin ? (
-                                                     member.id !== project.owner && (
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                                    <Shield className="mr-2 h-4 w-4" />
-                                                                    Remove as Admin
-                                                                </DropdownMenuItem>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Remove Admin Privileges?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>Are you sure you want to remove admin privileges for this member?</AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={() => handleAdminToggle(member.id, false)}>Confirm</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    )
-                                                ) : (
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                                                <Shield className="mr-2 h-4 w-4" />
-                                                                Make Admin
-                                                            </DropdownMenuItem>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Make Member an Admin?</AlertDialogTitle>
-                                                                <AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                )}
-
-                                                {member.id !== project.owner && (
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-500/10 focus:text-red-600">
-                                                                <UserX className="mr-2 h-4 w-4" />
-                                                                Remove Member
-                                                            </DropdownMenuItem>
-                                                        </AlertDialogTrigger>
-                                                         <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Remove Member?</AlertDialogTitle>
-                                                                <AlertDialogDescription>This will permanently remove the member from the project. This action cannot be undone.</AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
                     </div>
+
 
                      {/* Delete Project */}
                     {isCurrentUserAdmin && (
-                        <div className="pt-6 border-t border-destructive/20">
+                        <div className="pt-6 border-t border-destructive/20 px-4">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive" className="w-full">
