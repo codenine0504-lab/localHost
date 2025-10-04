@@ -15,12 +15,21 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
   bilaspur: ["Guru Ghasidas Vishwavidyalaya", "Government Engineering College, Bilaspur"],
   bhilai: ["IIT Bhilai", "Bhilai Institute of Technology, Durg"],
 };
+
+const interests = [
+    { id: 'software', label: 'Software' },
+    { id: 'hardware', label: 'Hardware' },
+    { id: 'design', label: 'Design' },
+    { id: 'event', label: 'Event' },
+];
 
 function ProfileSkeleton() {
     return (
@@ -50,6 +59,10 @@ function ProfileSkeleton() {
                             <Skeleton className="h-10 w-full" />
                         </div>
                         <div className="space-y-2">
+                            <Label>Interests</Label>
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div className="space-y-2">
                             <Label htmlFor="city">City</Label>
                             <Skeleton className="h-10 w-full" />
                         </div>
@@ -74,6 +87,7 @@ export default function ProfilePage() {
   const [colleges, setColleges] = useState<string[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<string>('');
   const [status, setStatus] = useState<'seeking' | 'active' | 'none'>('none');
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const { toast } = useToast();
 
    useEffect(() => {
@@ -96,6 +110,9 @@ export default function ProfilePage() {
           if (userData.status) {
             setStatus(userData.status);
           }
+          if (userData.interests) {
+            setSelectedInterests(userData.interests);
+          }
         } else {
              await setDoc(userDocRef, {
                 uid: currentUser.uid,
@@ -103,6 +120,7 @@ export default function ProfilePage() {
                 displayName: currentUser.displayName,
                 photoURL: currentUser.photoURL,
                 status: 'none',
+                interests: [],
             }, { merge: true });
         }
       }
@@ -116,6 +134,14 @@ export default function ProfilePage() {
     setColleges(collegesByCity[city] || []);
     setSelectedCollege(''); // Reset college selection
   };
+
+  const handleInterestChange = (interestId: string) => {
+    setSelectedInterests(prev => 
+        prev.includes(interestId) 
+        ? prev.filter(i => i !== interestId)
+        : [...prev, interestId]
+    );
+  }
 
   const handleUpdate = async () => {
     if (!user) {
@@ -132,7 +158,8 @@ export default function ProfilePage() {
             displayName: displayName,
             city: selectedCity,
             college: selectedCollege,
-            status: status
+            status: status,
+            interests: selectedInterests
         }, { merge: true });
 
         toast({
@@ -214,6 +241,32 @@ export default function ProfilePage() {
                             </div>
                         </RadioGroup>
                     </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                        <Label>Interests / Skills</Label>
+                        <p className="text-sm text-muted-foreground">Select themes that match your interests.</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            {interests.map((interest) => (
+                                <div key={interest.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={interest.id}
+                                        checked={selectedInterests.includes(interest.id)}
+                                        onCheckedChange={() => handleInterestChange(interest.id)}
+                                    />
+                                    <label
+                                        htmlFor={interest.id}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        {interest.label}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <Separator />
 
                     <div className="space-y-2">
                         <Label htmlFor="city">City</Label>

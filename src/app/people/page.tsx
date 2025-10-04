@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 
 interface AppUser {
   id: string;
@@ -20,12 +21,17 @@ interface AppUser {
   college?: string;
   email?: string;
   status?: 'seeking' | 'active' | 'none';
+  interests?: string[];
 }
 
 const tabs = [
     { id: 'all', label: 'All' },
     { id: 'seeking', label: 'Seeking' },
     { id: 'active', label: 'Active' },
+    { id: 'software', label: 'Software' },
+    { id: 'hardware', label: 'Hardware' },
+    { id: 'design', label: 'Design' },
+    { id: 'event', label: 'Event' },
 ];
 
 function PeopleSkeleton() {
@@ -52,10 +58,17 @@ export default function PeoplePage() {
 
   useEffect(() => {
     let q;
+    const isStatusFilter = ['seeking', 'active'].includes(activeTab);
+    const isThemeFilter = ['software', 'hardware', 'design', 'event'].includes(activeTab);
+
     if (activeTab === 'all') {
         q = query(collection(db, 'users'), orderBy('displayName'));
-    } else {
+    } else if (isStatusFilter) {
         q = query(collection(db, 'users'), where('status', '==', activeTab), orderBy('displayName'));
+    } else if (isThemeFilter) {
+        q = query(collection(db, 'users'), where('interests', 'array-contains', activeTab), orderBy('displayName'));
+    } else {
+        q = query(collection(db, 'users'), orderBy('displayName'));
     }
     
     setLoading(true);
@@ -119,32 +132,36 @@ export default function PeoplePage() {
             </div>
         </div>
         
-        <div className="flex justify-center mb-8">
-            <div className="flex space-x-1 rounded-full bg-muted p-1">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`${
-                            activeTab === tab.id ? '' : 'hover:text-foreground/60'
-                        } relative rounded-full px-4 py-2 text-sm font-medium text-foreground transition focus-visible:outline-2`}
-                        style={{
-                            WebkitTapHighlightColor: 'transparent',
-                        }}
-                    >
-                        {activeTab === tab.id && (
-                            <motion.span
-                                layoutId="bubble"
-                                className="absolute inset-0 z-10 bg-background shadow-sm"
-                                style={{ borderRadius: 9999 }}
-                                transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                            />
-                        )}
-                        <span className="relative z-20">{tab.label}</span>
-                    </button>
-                ))}
-            </div>
+        <div className="mb-8">
+             <Carousel className="w-full" opts={{ align: "start", dragFree: true }}>
+                <CarouselContent className="-ml-2">
+                    {tabs.map((tab, index) => (
+                        <CarouselItem key={tab.id} className="pl-2 basis-auto">
+                            <button
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`${
+                                    activeTab === tab.id ? '' : 'hover:text-foreground/60'
+                                } relative rounded-full px-4 py-2 text-sm font-medium text-foreground transition focus-visible:outline-2`}
+                                style={{
+                                    WebkitTapHighlightColor: 'transparent',
+                                }}
+                            >
+                                {activeTab === tab.id && (
+                                    <motion.span
+                                        layoutId="bubble"
+                                        className="absolute inset-0 z-10 bg-background shadow-sm"
+                                        style={{ borderRadius: 9999 }}
+                                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                                    />
+                                )}
+                                <span className="relative z-20 whitespace-nowrap">{tab.label}</span>
+                            </button>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+            </Carousel>
         </div>
+
 
         <div className="max-w-4xl mx-auto">
             {loading ? (
@@ -162,14 +179,21 @@ export default function PeoplePage() {
                                     <h3 className="font-semibold">{user.displayName || 'Anonymous User'}</h3>
                                     {user.college && <p className="text-sm text-muted-foreground">{user.college}</p>}
                                 </div>
-                                {getStatusBadge(user.status)}
+                                <div className='flex flex-col items-end gap-2'>
+                                  {getStatusBadge(user.status)}
+                                  <div className="flex gap-1 flex-wrap justify-end">
+                                      {user.interests?.map(interest => (
+                                          <Badge key={interest} variant="secondary">{interest}</Badge>
+                                      ))}
+                                  </div>
+                                </div>
                             </div>
                         </Link>
                     ))}
                 </div>
             ) : (
                 <div className="text-center text-muted-foreground py-10 col-span-full border rounded-lg">
-                    <p>No users found for this category.</p>
+                    <p>No users found for the selected filter.</p>
                 </div>
             )}
         </div>
