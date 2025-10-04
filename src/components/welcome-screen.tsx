@@ -2,9 +2,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { GoogleAuthProvider, signInWithPopup, signInAnonymously } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layers, MessageCircle, User, Code } from 'lucide-react';
