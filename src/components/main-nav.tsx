@@ -107,7 +107,7 @@ export function MainNav() {
     return () => unsubscribe();
   }, []);
 
-  if (loading || !user || user.isAnonymous) {
+  if (loading || !user) {
     return null; 
   }
 
