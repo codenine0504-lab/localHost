@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, getDocs, doc, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { collection, query, where, getDoc, onSnapshot, doc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,7 +21,7 @@ interface ChatRoom {
 }
 
 const tabs = [
-    { id: 'dms', label: 'General' },
+    { id: 'dms', label: 'DMs' },
     { id: 'projects', label: 'Projects' },
 ];
 
@@ -75,47 +75,48 @@ export default function ChatRoomPage() {
   useEffect(() => {
     if (!user) return;
 
+    setLoading(true);
+
+    const q = query(collection(db, 'chatRooms'), where('members', 'array-contains', user.uid));
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+        const allRooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
+
+        const dms: ChatRoom[] = [];
+        const projects: ChatRoom[] = [];
+
+        for (const room of allRooms) {
+            if (room.isDm) {
+                const roomData = room;
+                const otherMemberId = (roomData as any).members.find((id: string) => id !== user.uid);
+                let otherMemberName = 'Direct Message';
+                let otherMemberPhoto = '';
+
+                if (otherMemberId) {
+                    const userDoc = await getDoc(doc(db, 'users', otherMemberId));
+                    if (userDoc.exists()) {
+                        otherMemberName = userDoc.data().displayName || otherMemberName;
+                        otherMemberPhoto = userDoc.data().photoURL || otherMemberPhoto;
+                    }
+                }
+                dms.push({ ...room, name: otherMemberName, imageUrl: otherMemberPhoto });
+            } else {
+                projects.push(room);
+            }
+        }
+
+        setDmRooms(checkNotifications(dms));
+        setProjectRooms(checkNotifications(projects));
+        setLoading(false);
+
+    }, (error) => {
+        console.error("Error fetching chat rooms:", error);
+        setLoading(false);
+    });
+    
     const joinRequestKey = `hasNewJoinRequests_${user.uid}`;
     localStorage.removeItem(joinRequestKey);
     window.dispatchEvent(new Event('storage'));
-
-    const projectQuery = query(collection(db, 'chatRooms'), where('members', 'array-contains', user.uid), where('isDm', '==', false));
-    const dmQuery = query(collection(db, 'chatRooms'), where('members', 'array-contains', user.uid), where('isDm', '==', true));
-
-    setLoading(true);
-
-    const unsubProjects = onSnapshot(projectQuery, (snapshot) => {
-        const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
-        setProjectRooms(checkNotifications(rooms));
-        setLoading(false);
-    });
-
-    const unsubDms = onSnapshot(dmQuery, async (snapshot) => {
-        const rooms: ChatRoom[] = [];
-        for (const docSnap of snapshot.docs) {
-            const roomData = docSnap.data();
-            const otherMemberId = roomData.members.find((id: string) => id !== user.uid);
-            let otherMemberName = 'Direct Message';
-            let otherMemberPhoto = '';
-
-            if (otherMemberId) {
-                const userDoc = await getDoc(doc(db, 'users', otherMemberId));
-                if (userDoc.exists()) {
-                    otherMemberName = userDoc.data().displayName || otherMemberName;
-                    otherMemberPhoto = userDoc.data().photoURL || otherMemberPhoto;
-                }
-            }
-
-            rooms.push({ 
-                id: docSnap.id, 
-                name: otherMemberName, 
-                imageUrl: otherMemberPhoto,
-                ...roomData 
-            } as ChatRoom);
-        }
-        setDmRooms(checkNotifications(rooms));
-        setLoading(false);
-    });
 
     const handleStorageChange = () => {
         setProjectRooms(prevRooms => checkNotifications(prevRooms));
@@ -124,8 +125,7 @@ export default function ChatRoomPage() {
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      unsubProjects();
-      unsubDms();
+      unsubscribe();
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [user]);
@@ -183,7 +183,7 @@ export default function ChatRoomPage() {
     <div className="container mx-auto py-12 px-4 md:px-6 flex flex-col h-screen">
       <AnimatedHeader 
           title="Your Chats"
-          description="Engage in conversations, both public and project-specific."
+          description="Engage in conversations, both direct and project-specific."
       />
         <div className="flex justify-center mb-8">
              <div className="flex space-x-1 rounded-full bg-muted p-1">
