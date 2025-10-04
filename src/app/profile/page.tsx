@@ -255,11 +255,9 @@ export default function ProfilePage() {
                             Login / Sign Up
                         </Link>
                     </Button>
-                    <Button asChild size="lg" variant="outline">
-                        <Link href="/">
-                            <Home className="mr-2 h-5 w-5" />
-                            Back to Welcome
-                        </Link>
+                    <Button onClick={handleLogout} size="lg" variant="outline">
+                        <LogOut className="mr-2 h-5 w-5" />
+                        Logout & Return
                     </Button>
                 </CardContent>
             </Card>
@@ -443,8 +441,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-
-    
-
-    
