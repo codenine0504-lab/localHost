@@ -3,7 +3,11 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { Footer } from '@/components/footer';
+import { MainNav } from '@/components/main-nav';
+import {
+  SidebarProvider,
+  SidebarInset,
+} from '@/components/ui/sidebar';
 
 export const metadata: Metadata = {
   title: 'LocalHost',
@@ -39,15 +43,17 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
         >
-            <div className="relative flex min-h-screen flex-col bg-background">
-              <main className="flex-1 pb-24 md:pb-0">{children}</main>
-               <Footer />
-            </div>
+            <SidebarProvider>
+                <div className="relative flex min-h-screen flex-col bg-background">
+                    <MainNav />
+                    <SidebarInset>
+                        <main className="flex-1 pb-24 md:pb-0">{children}</main>
+                    </SidebarInset>
+                </div>
+            </SidebarProvider>
             <Toaster />
         </ThemeProvider>
       </body>
     </html>
   );
 }
-
-    
