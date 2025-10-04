@@ -83,7 +83,7 @@ export default function Home() {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       setLoading(false); // Set loading to false once auth state is determined
-      if (currentUser) {
+      if (currentUser && !currentUser.isAnonymous) {
         try {
             // Fetch featured projects
             const projectsQuery = query(collection(db, 'projects'), orderBy('views', 'desc'), limit(6));
@@ -119,7 +119,7 @@ export default function Home() {
     return <AppSkeleton />;
   }
 
-  if (!user) {
+  if (!user || user.isAnonymous) {
     return (
         <ThemeProvider forcedTheme="dark">
             <WelcomeScreen />
