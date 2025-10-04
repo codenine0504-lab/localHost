@@ -35,11 +35,13 @@ function ProfileSkeleton() {
     return (
         <div className="grid gap-8 md:grid-cols-3">
             <div className="md:col-span-1">
-                <Card>
-                    <CardHeader className="flex flex-col items-center text-center p-6">
-                        <Skeleton className="h-24 w-24 rounded-full mb-4" />
-                        <Skeleton className="h-8 w-3/4 mb-2" />
-                        <Skeleton className="h-4 w-full" />
+                <Card className="overflow-hidden">
+                    <CardHeader className="flex flex-row items-center gap-4 p-6">
+                        <Skeleton className="h-20 w-20 rounded-full" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-4 w-40" />
+                        </div>
                     </CardHeader>
                 </Card>
             </div>
@@ -212,14 +214,17 @@ export default function ProfilePage() {
         ) : (
             <div className="grid gap-8 md:grid-cols-3">
                 <div className="md:col-span-1">
-                <Card>
-                    <CardHeader className="flex flex-col items-center text-center p-6">
-                    <Avatar className="h-24 w-24 mb-4">
-                        <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt="User avatar" data-ai-hint="user avatar" />
-                        <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-                    </Avatar>
-                    <CardTitle className="text-2xl">{displayName}</CardTitle>
-                    <CardDescription>{user.email}</CardDescription>
+                <Card className="overflow-hidden relative">
+                     <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-primary/20 to-accent/20" />
+                    <CardHeader className="flex flex-row items-center gap-4 p-6 bg-transparent relative z-10">
+                        <Avatar className="h-20 w-20 border-4 border-background shadow-md">
+                            <AvatarImage src={user.photoURL || undefined} alt="User avatar" data-ai-hint="user avatar" />
+                            <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+                        </Avatar>
+                        <div className="grid gap-1">
+                            <CardTitle className="text-xl break-all">{displayName}</CardTitle>
+                            <CardDescription className="text-xs break-all">{user.email}</CardDescription>
+                        </div>
                     </CardHeader>
                 </Card>
                 </div>
