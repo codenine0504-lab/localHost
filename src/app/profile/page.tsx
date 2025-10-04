@@ -158,8 +158,8 @@ export default function ProfilePage() {
         
         <div className="container mx-auto py-12 px-4 md:px-6">
         <div className="space-y-4 mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold">Your Profile</h1>
-            <p className="text-muted-foreground">View and update your personal details.</p>
+            <h1 className="text-3xl md:text-4xl font-bold animate-fade-in-up">Your Profile</h1>
+            <p className="text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.2s' }}>View and update your personal details.</p>
         </div>
         {loading ? (
              <ProfileSkeleton />

@@ -11,8 +11,8 @@ export default function SettingsPage() {
             
             <div className="container mx-auto py-12 px-4 md:px-6">
                 <div className="space-y-4 mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold">Settings</h1>
-                    <p className="text-muted-foreground">Manage your application settings.</p>
+                    <h1 className="text-3xl md:text-4xl font-bold animate-fade-in-up">Settings</h1>
+                    <p className="text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Manage your application settings.</p>
                 </div>
                 <Card className="max-w-2xl mx-auto">
                     <CardHeader>

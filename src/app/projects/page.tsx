@@ -96,8 +96,8 @@ export default function ProjectsPage() {
         
         <div className="container mx-auto py-12 px-4 md:px-6 max-w-4xl">
          <div className="space-y-4 mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold">Explore Projects</h1>
-            <p className="text-muted-foreground">Join Project and Events across different colleges/universities</p>
+            <h1 className="text-3xl md:text-4xl font-bold animate-fade-in-up">Explore Projects</h1>
+            <p className="text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Join Project and Events across different colleges/universities</p>
         </div>
         <div className="flex justify-end mb-6 gap-2">
              <DropdownMenu>
