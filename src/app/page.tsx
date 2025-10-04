@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Compass } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { HostProjectDialog } from '@/components/host-project-dialog';
 import { useEffect, useState } from 'react';
@@ -15,7 +15,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { Users, Code, Brush, Milestone, Cpu, Eye } from 'lucide-react';
+import { Users, Code, Brush, Milestone, Cpu, Eye, Compass } from 'lucide-react';
 
 
 interface Project {
@@ -227,30 +227,34 @@ export default function Home() {
             {featuredProjects.length > 0 ? (
                  <div className="grid gap-6 md:grid-cols-2">
                     {featuredProjects.map((project) => (
-                        <Card key={project.id} className="flex flex-col overflow-hidden h-full transition-shadow hover:shadow-lg">
-                            <Link href={`/projects/${project.id}`} className="block cursor-pointer">
-                            <div className="relative h-48 w-full">
-                                <Image
-                                    src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                                    alt={`Image for ${project.title}`}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    data-ai-hint="project image"
-                                />
-                            </div>
-                             <CardHeader>
-                                <CardTitle className="truncate">{project.title}</CardTitle>
-                                <CardDescription>{project.college}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow space-y-4">
-                                <div className="flex items-center gap-2">
-                                     <Badge variant="secondary">{project.theme}</Badge>
-                                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground ml-auto">
-                                        <Eye className="h-4 w-4" />
-                                        <span>{project.views || 0}</span>
+                        <Card key={project.id} className="overflow-hidden transition-shadow hover:shadow-lg">
+                           <Link href={`/projects/${project.id}`} className="block cursor-pointer h-full">
+                                <div className="flex h-full">
+                                    <div className="relative w-1/3">
+                                        <Image
+                                            src={project.imageUrl || 'https://placehold.co/400x400.png'}
+                                            alt={`Image for ${project.title}`}
+                                            layout="fill"
+                                            objectFit="cover"
+                                            data-ai-hint="project image"
+                                        />
+                                    </div>
+                                    <div className="w-2/3 flex flex-col">
+                                        <CardHeader>
+                                            <CardTitle className="truncate text-lg">{project.title}</CardTitle>
+                                            <CardDescription>{project.college}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="flex-grow flex flex-col justify-end">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="secondary">{project.theme}</Badge>
+                                                <div className="flex items-center gap-1.5 text-sm text-muted-foreground ml-auto">
+                                                    <Eye className="h-4 w-4" />
+                                                    <span>{project.views || 0}</span>
+                                                </div>
+                                            </div>
+                                        </CardContent>
                                     </div>
                                 </div>
-                            </CardContent>
                            </Link>
                         </Card>
                     ))}
@@ -264,4 +268,5 @@ export default function Home() {
     </div>
   );
 }
+
     
