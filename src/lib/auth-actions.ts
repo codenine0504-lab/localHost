@@ -80,6 +80,9 @@ export async function loginWithGoogle() {
       await signInWithRedirect(auth, provider);
       return { success: "Redirecting for Google Sign-In." };
     } catch (error: any) {
+      if (error.code === 'auth/operation-not-supported-in-this-environment') {
+        return { error: 'Google Sign-In is not supported in this environment. Please use email and password.' };
+      }
       console.error('Error during Google sign-in redirect:', error);
       return { error: error.message || 'An unexpected error occurred.' };
     }
