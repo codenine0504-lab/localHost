@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInAnonymously } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
@@ -62,25 +62,11 @@ export function WelcomeScreen() {
         Autoplay({ delay: 2500, stopOnInteraction: true })
     );
 
-    const handleGoogleLogin = async () => {
-        const provider = new GoogleAuthProvider();
+    const handleSkip = async () => {
         try {
-            const result = await signInWithPopup(auth, provider);
-            const loggedInUser = result.user;
-            
-            const userDocRef = doc(db, "users", loggedInUser.uid);
-            const userDoc = await getDoc(userDocRef);
-
-            if (!userDoc.exists()) {
-                await setDoc(userDocRef, {
-                    uid: loggedInUser.uid,
-                    email: loggedInUser.email,
-                    displayName: loggedInUser.displayName,
-                    photoURL: loggedInUser.photoURL,
-                }, { merge: true });
-            }
+            await signInAnonymously(auth);
         } catch (error) {
-            console.error('Error during sign-in:', error);
+            console.error('Error during anonymous sign-in:', error);
         }
     };
 
@@ -153,7 +139,7 @@ export function WelcomeScreen() {
                         size="lg"
                         variant="ghost"
                         className="text-white hover:bg-slate-800 hover:text-white"
-                        onClick={handleGoogleLogin}
+                        onClick={handleSkip}
                     >
                         Skip
                     </Button>
