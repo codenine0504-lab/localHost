@@ -8,8 +8,10 @@ import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -32,7 +34,7 @@ function BottomNav() {
     <footer className="fixed bottom-0 left-0 right-0 w-full z-50 p-2 md:bottom-4">
       <motion.nav
         layout
-        className="flex h-16 max-w-md mx-auto items-center justify-around rounded-full border bg-background/90 backdrop-blur-sm shadow-lg px-2"
+        className="flex h-16 max-w-md mx-auto items-center justify-around rounded-full border border-white/10 bg-black backdrop-blur-sm shadow-lg px-2"
       >
         {navItems.map((item) => {
           const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
@@ -105,6 +107,31 @@ export function MainNav() {
       setLoading(false);
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleRedirect = async () => {
+        try {
+            const result = await getRedirectResult(auth);
+            if (result && result.user) {
+                const user = result.user;
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (!userDoc.exists()) {
+                    await setDoc(userDocRef, {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                    }, { merge: true });
+                }
+            }
+        } catch (error) {
+            console.error("Error handling redirect result:", error);
+        }
+    };
+    handleRedirect();
   }, []);
 
   if (loading || !user) {
