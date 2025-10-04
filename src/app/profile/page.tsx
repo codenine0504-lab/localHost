@@ -15,11 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon, LogOut } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon, LogOut, X, Plus, Star } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -27,12 +27,10 @@ const collegesByCity: Record<string, string[]> = {
   bhilai: ["IIT Bhilai", "Bhilai Institute of Technology, Durg"],
 };
 
-const interests = [
-    { id: 'software', label: 'Software' },
-    { id: 'hardware', label: 'Hardware' },
-    { id: 'design', label: 'Design' },
-    { id: 'event', label: 'Event' },
-];
+interface Skill {
+    name: string;
+    isPrimary: boolean;
+}
 
 function ProfileSkeleton() {
     return (
@@ -79,7 +77,8 @@ export default function ProfilePage() {
   const [colleges, setColleges] = useState<string[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<string>('');
   const [status, setStatus] = useState<'seeking' | 'active' | 'none'>('none');
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [newSkill, setNewSkill] = useState('');
   const [instagram, setInstagram] = useState('');
   const [github, setGithub] = useState('');
   const [linkedin, setLinkedin] = useState('');
@@ -104,7 +103,15 @@ export default function ProfilePage() {
           }
           setSelectedCollege(userData.college || '');
           setStatus(userData.status || 'none');
-          setSelectedInterests(userData.interests || []);
+          // Handle legacy `interests` and new `skills`
+          if (userData.skills) {
+            setSkills(userData.skills);
+          } else if (userData.interests) {
+            // Migrate from old `interests` array to new `skills` object array
+            setSkills(userData.interests.map((interest: string) => ({ name: interest, isPrimary: false })));
+          } else {
+            setSkills([]);
+          }
           setInstagram(userData.instagram || '');
           setGithub(userData.github || '');
           setLinkedin(userData.linkedin || '');
@@ -116,7 +123,7 @@ export default function ProfilePage() {
                 displayName: currentUser.displayName,
                 photoURL: currentUser.photoURL,
                 status: 'none',
-                interests: [],
+                skills: [],
             }, { merge: true });
         }
       }
@@ -131,13 +138,24 @@ export default function ProfilePage() {
     setSelectedCollege(''); // Reset college selection
   };
 
-  const handleInterestChange = (interestId: string) => {
-    setSelectedInterests(prev => 
-        prev.includes(interestId) 
-        ? prev.filter(i => i !== interestId)
-        : [...prev, interestId]
-    );
-  }
+  const handleAddSkill = () => {
+    if (newSkill.trim() !== '' && !skills.some(skill => skill.name.toLowerCase() === newSkill.trim().toLowerCase())) {
+        const isFirstSkill = skills.length === 0;
+        setSkills([...skills, { name: newSkill.trim(), isPrimary: isFirstSkill }]);
+        setNewSkill('');
+    }
+  };
+
+  const handleRemoveSkill = (skillNameToRemove: string) => {
+    setSkills(skills.filter(skill => skill.name !== skillNameToRemove));
+  };
+  
+  const handleSetPrimarySkill = (skillNameToMakePrimary: string) => {
+      setSkills(skills.map(skill => ({
+          ...skill,
+          isPrimary: skill.name === skillNameToMakePrimary
+      })));
+  };
 
   const handleUpdate = async () => {
     if (!user) {
@@ -155,7 +173,8 @@ export default function ProfilePage() {
             city: selectedCity,
             college: selectedCollege,
             status: status,
-            interests: selectedInterests,
+            skills: skills,
+            interests: skills.map(s => s.name), // Keep interests for backward compatibility if needed
             instagram,
             github,
             linkedin,
@@ -281,24 +300,31 @@ export default function ProfilePage() {
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="pt-4 space-y-4">
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Select themes that match your skills. This helps others find you for projects.</p>
+                                         <div>
+                                            <p className="text-sm text-muted-foreground">Add your skills and mark your primary one.</p>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4 pt-2">
-                                            {interests.map((interest) => (
-                                                <div key={interest.id} className="flex items-center space-x-2">
-                                                    <Checkbox
-                                                        id={interest.id}
-                                                        checked={selectedInterests.includes(interest.id)}
-                                                        onCheckedChange={() => handleInterestChange(interest.id)}
-                                                    />
-                                                    <label
-                                                        htmlFor={interest.id}
-                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                    >
-                                                        {interest.label}
-                                                    </label>
-                                                </div>
+                                        <div className="flex gap-2">
+                                            <Input 
+                                                value={newSkill}
+                                                onChange={(e) => setNewSkill(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
+                                                placeholder="e.g., React, Python"
+                                            />
+                                            <Button type="button" onClick={handleAddSkill} size="icon">
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {skills.map(skill => (
+                                                <Badge key={skill.name} variant={skill.isPrimary ? 'default' : 'secondary'} className="flex items-center gap-1.5 pr-1 cursor-pointer group">
+                                                    <button onClick={() => handleSetPrimarySkill(skill.name)} className="mr-1">
+                                                        <Star className={`h-3 w-3 ${skill.isPrimary ? 'text-yellow-300 fill-current' : 'text-gray-400 group-hover:text-yellow-300'}`} />
+                                                    </button>
+                                                    {skill.name}
+                                                    <button onClick={() => handleRemoveSkill(skill.name)} className="rounded-full hover:bg-black/20 p-0.5">
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </Badge>
                                             ))}
                                         </div>
                                     </AccordionContent>
@@ -385,3 +411,6 @@ export default function ProfilePage() {
     </>
   );
 }
+
+
+    

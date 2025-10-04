@@ -9,10 +9,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { AnimatedHeader } from '@/components/animated-header';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+
+interface Skill {
+    name: string;
+    isPrimary: boolean;
+}
 
 interface AppUser {
   id: string;
@@ -21,7 +26,7 @@ interface AppUser {
   college?: string;
   email?: string;
   status?: 'seeking' | 'active' | 'none';
-  interests?: string[];
+  skills?: Skill[];
 }
 
 const tabs = [
@@ -112,6 +117,11 @@ export default function PeoplePage() {
       }
   }
 
+  const getPrimarySkill = (skills: Skill[] | undefined) => {
+      if (!skills) return null;
+      return skills.find(skill => skill.isPrimary);
+  }
+
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
         <AnimatedHeader 
@@ -168,7 +178,9 @@ export default function PeoplePage() {
                 <PeopleSkeleton />
             ) : filteredUsers.length > 0 ? (
                 <div className="space-y-4">
-                    {filteredUsers.map((user) => (
+                    {filteredUsers.map((user) => {
+                        const primarySkill = getPrimarySkill(user.skills);
+                        return (
                         <Link href={`/profile/${user.id}`} key={user.id} className="block">
                             <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200">
                                 <Avatar className="h-12 w-12">
@@ -181,15 +193,21 @@ export default function PeoplePage() {
                                 </div>
                                 <div className='flex flex-col items-end gap-2'>
                                   {getStatusBadge(user.status)}
+                                  {primarySkill && (
+                                      <Badge variant="default" className="flex items-center gap-1.5">
+                                          <Star className="h-3 w-3" />
+                                          {primarySkill.name}
+                                      </Badge>
+                                  )}
                                   <div className="flex gap-1 flex-wrap justify-end">
-                                      {user.interests?.map(interest => (
-                                          <Badge key={interest} variant="secondary">{interest}</Badge>
+                                      {user.skills?.filter(s => !s.isPrimary).slice(0, 2).map(skill => (
+                                          <Badge key={skill.name} variant="secondary">{skill.name}</Badge>
                                       ))}
                                   </div>
                                 </div>
                             </div>
                         </Link>
-                    ))}
+                    )})}
                 </div>
             ) : (
                 <div className="text-center text-muted-foreground py-10 col-span-full border rounded-lg">
@@ -200,3 +218,6 @@ export default function PeoplePage() {
     </div>
   );
 }
+
+
+    
