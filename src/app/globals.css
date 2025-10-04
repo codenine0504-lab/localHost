@@ -74,20 +74,17 @@
     0% {
       transform: translateY(0);
     }
-    16.66% {
+    20% {
       transform: translateY(-100%);
     }
-    33.33% {
+    40% {
       transform: translateY(-100%);
     }
-    50% {
+    60% {
       transform: translateY(-200%);
     }
-    66.66% {
+    80% {
       transform: translateY(-200%);
-    }
-    83.33% {
-      transform: translateY(-300%);
     }
     100% {
       transform: translateY(-300%);
