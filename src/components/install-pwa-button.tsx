@@ -24,7 +24,7 @@ export function InstallPwaButton() {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             // Store the event so it can be triggered later.
-            setPrompt(e as BeforeInstallPromptEvent);
+            setPrompt(e as BeforeInstall_installPromptEvent);
         };
 
         // Event listener for when the app is successfully installed
@@ -35,7 +35,7 @@ export function InstallPwaButton() {
         };
 
         // Check if running in standalone mode (as a PWA)
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        if (typeof window !== "undefined" && window.matchMedia('(display-mode: standalone)').matches) {
             setIsAppInstalled(true);
         }
 
@@ -67,9 +67,11 @@ export function InstallPwaButton() {
     }
 
     return (
-        <Button onClick={handleInstallClick} variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Install
-        </Button>
+        <div className="fixed top-4 right-4 z-50">
+            <Button onClick={handleInstallClick} variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Install App
+            </Button>
+        </div>
     );
 }

@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { MainNav } from '@/components/main-nav';
+import { InstallPwaButton } from '@/components/install-pwa-button';
 
 export const metadata: Metadata = {
   title: 'LocalHost',
@@ -40,6 +41,7 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <div className="relative flex min-h-screen flex-col bg-background">
+                <InstallPwaButton />
                 <main className="flex-1 pb-24">{children}</main>
                 <MainNav />
             </div>
