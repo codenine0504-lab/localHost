@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { Header } from '@/components/header';
@@ -57,7 +57,7 @@ export default function ProjectsPage() {
   const [themeFilter, setThemeFilter] = useState<Project['theme'] | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'), limit(4));
     const unsubscribeProjects = onSnapshot(q, (querySnapshot) => {
       const projs: Project[] = [];
       querySnapshot.forEach((doc) => {
@@ -114,9 +114,10 @@ export default function ProjectsPage() {
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
              {loading ? (
                 <>
+                    <ProjectCardSkeleton />
                     <ProjectCardSkeleton />
                     <ProjectCardSkeleton />
                     <ProjectCardSkeleton />
@@ -168,5 +169,3 @@ export default function ProjectsPage() {
     </>
   );
 }
-
-    
