@@ -56,12 +56,23 @@ function ProfileSkeleton() {
                         </div>
                         <div className="space-y-2">
                             <Label>Status</Label>
-                            <Skeleton className="h-10 w-full" />
+                            <div className="space-y-2 pt-2">
+                                <Skeleton className="h-5 w-40" />
+                                <Skeleton className="h-5 w-40" />
+                                <Skeleton className="h-5 w-40" />
+                            </div>
                         </div>
+                        <Separator />
                         <div className="space-y-2">
                             <Label>Interests</Label>
-                            <Skeleton className="h-10 w-full" />
+                             <div className="grid grid-cols-2 gap-4 pt-2">
+                                <Skeleton className="h-5 w-24" />
+                                <Skeleton className="h-5 w-24" />
+                                <Skeleton className="h-5 w-24" />
+                                <Skeleton className="h-5 w-24" />
+                            </div>
                         </div>
+                         <Separator />
                         <div className="space-y-2">
                             <Label htmlFor="city">City</Label>
                             <Skeleton className="h-10 w-full" />
@@ -226,7 +237,7 @@ export default function ProfilePage() {
 
                     <div className="space-y-3">
                         <Label>Status</Label>
-                        <RadioGroup defaultValue={status} onValueChange={(value) => setStatus(value as 'seeking' | 'active' | 'none')} className="flex flex-col space-y-1">
+                        <RadioGroup defaultValue={status} onValueChange={(value) => setStatus(value as 'seeking' | 'active' | 'none')} className="flex flex-col space-y-2 pt-1">
                             <div className="flex items-center space-x-3">
                                 <RadioGroupItem value="seeking" id="seeking" />
                                 <Label htmlFor="seeking" className="font-normal">Seeking Collaboration</Label>
@@ -247,7 +258,7 @@ export default function ProfilePage() {
                     <div className="space-y-3">
                         <Label>Interests / Skills</Label>
                         <p className="text-sm text-muted-foreground">Select themes that match your interests.</p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 pt-2">
                             {interests.map((interest) => (
                                 <div key={interest.id} className="flex items-center space-x-2">
                                     <Checkbox
