@@ -15,11 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon, LogOut, X, Plus, Star } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon, LogOut, X, Plus, Star, LogIn, Phone } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { AuthDialog } from "@/components/auth-dialog";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -76,6 +77,7 @@ export default function ProfilePage() {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [colleges, setColleges] = useState<string[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<string>('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [status, setStatus] = useState<'seeking' | 'active' | 'none'>('none');
   const [skills, setSkills] = useState<Skill[]>([]);
   const [newSkill, setNewSkill] = useState('');
@@ -90,7 +92,7 @@ export default function ProfilePage() {
    useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
+      if (currentUser && !currentUser.isAnonymous) {
         setDisplayName(currentUser.displayName || '');
         const userDocRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userDocRef);
@@ -102,6 +104,7 @@ export default function ProfilePage() {
             setColleges(collegesByCity[userData.city] || []);
           }
           setSelectedCollege(userData.college || '');
+          setMobileNumber(userData.mobileNumber || '');
           setStatus(userData.status || 'none');
           // Handle legacy `interests` and new `skills`
           if (userData.skills) {
@@ -158,7 +161,7 @@ export default function ProfilePage() {
   };
 
   const handleUpdate = async () => {
-    if (!user) {
+    if (!user || user.isAnonymous) {
         toast({ title: "Not Logged In", description: "You must be logged in to update your profile.", variant: "destructive" });
         return;
     }
@@ -172,6 +175,7 @@ export default function ProfilePage() {
             displayName: displayName,
             city: selectedCity,
             college: selectedCollege,
+            mobileNumber: mobileNumber,
             status: status,
             skills: skills,
             interests: skills.map(s => s.name), // Keep interests for backward compatibility if needed
@@ -235,6 +239,23 @@ export default function ProfilePage() {
              <ProfileSkeleton />
         ) : !user ? (
             <div className="text-center">Please log in to view your profile.</div>
+        ) : user.isAnonymous ? (
+            <Card className="max-w-md mx-auto text-center p-8">
+                <CardHeader>
+                    <CardTitle className="text-2xl">Create an Account</CardTitle>
+                    <CardDescription>
+                        You are currently browsing as a guest. Create an account to build your profile, join projects, and start collaborating.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AuthDialog>
+                        <Button size="lg">
+                            <LogIn className="mr-2 h-5 w-5" />
+                            Login / Sign Up
+                        </Button>
+                    </AuthDialog>
+                </CardContent>
+            </Card>
         ) : (
             <div className="grid gap-8 md:grid-cols-3">
                 <div className="md:col-span-1 space-y-6">
@@ -271,6 +292,10 @@ export default function ProfilePage() {
                                         <div className="space-y-2">
                                             <Label htmlFor="displayName">Display Name</Label>
                                             <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                                        </div>
+                                         <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input value={mobileNumber} onChange={e => setMobileNumber(e.target.value)} placeholder="Mobile Number" className="pl-10" />
                                         </div>
                                         <div className="space-y-3">
                                             <Label>Status</Label>
@@ -412,5 +437,7 @@ export default function ProfilePage() {
   );
 }
 
+
+    
 
     

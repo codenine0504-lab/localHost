@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { AuthDialog } from '@/components/auth-dialog';
 
 interface Message {
   id: string;
@@ -142,7 +143,7 @@ export default function ChatPage() {
   }, [projectId, activeTab, isMember]);
 
   const fetchProjectAndMembers = useCallback(async () => {
-    if (!projectId || !user) return;
+    if (!projectId) return;
     setLoading(true);
 
     try {
@@ -178,7 +179,8 @@ export default function ChatPage() {
         };
         setProjectDetails(projDetails);
 
-        const isProjectMember = projDetails.admins?.includes(user.uid) || (projDetails.members && projDetails.members.includes(user.uid));
+        const isProjectMember = user ? (projDetails.admins?.includes(user.uid) || (projDetails.members && projDetails.members.includes(user.uid))) : false;
+
         setIsMember(isProjectMember);
 
         // Access control
@@ -228,14 +230,12 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    if (user) {
-        fetchProjectAndMembers();
-    }
-  }, [user, fetchProjectAndMembers]);
+    fetchProjectAndMembers();
+  }, [fetchProjectAndMembers]);
 
 
   const setupTabListener = (tab: ChatTab) => {
-    if (!projectId || !hasAccess || !user) return () => {};
+    if (!projectId || !hasAccess) return () => {};
 
     // Guests can't listen to team chat
     if (tab === 'team' && !isMember) return () => {};
@@ -253,7 +253,7 @@ export default function ChatPage() {
       }
       
       // Handle notifications
-      if (msgs.length > 0) {
+      if (msgs.length > 0 && user) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.senderId !== user.uid) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
@@ -334,7 +334,7 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !projectId || !user || !isMember) return;
+    if (newMessage.trim() === '' || !projectId || !user || user.isAnonymous || !isMember) return;
 
     const userMessage = newMessage;
     setNewMessage('');
@@ -420,6 +420,16 @@ export default function ChatPage() {
     )
   }
 
+  const getPlaceholderText = () => {
+    if (user?.isAnonymous) {
+        return "Login to send messages";
+    }
+    if (!isMember) {
+        return "Join project to send messages";
+    }
+    return "Type a message...";
+  }
+
   return (
      <div className="h-screen flex flex-col bg-background">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-grow">
@@ -438,16 +448,31 @@ export default function ChatPage() {
         <div className={cn("fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative", isSidebarOpen && "pr-[var(--sidebar-width)]")}>
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
             <div className="relative">
-                <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder={isMember ? "Type a message..." : "Join project to send messages"}
-                disabled={!user || !isMember}
-                className="pr-12"
-                />
-                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user || !isMember}>
-                <Send className="h-4 w-4" />
-                </Button>
+                 {user?.isAnonymous ? (
+                    <AuthDialog>
+                        <div className="relative">
+                            <Input
+                                placeholder={getPlaceholderText()}
+                                disabled={true}
+                                className="pr-12"
+                            />
+                            <div className="absolute top-0 right-0 bottom-0 left-0 cursor-pointer" />
+                        </div>
+                    </AuthDialog>
+                ) : (
+                    <>
+                        <Input
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder={getPlaceholderText()}
+                            disabled={!user || !isMember}
+                            className="pr-12"
+                        />
+                        <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user || !isMember}>
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </>
+                )}
             </div>
             </form>
         </div>
@@ -497,4 +522,6 @@ export default function ChatPage() {
   }
 }
     
+    
+
     

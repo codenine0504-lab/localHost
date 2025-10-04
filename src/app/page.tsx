@@ -82,6 +82,7 @@ export default function Home() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
+      setLoading(false); // Set loading to false once auth state is determined
       if (currentUser) {
         try {
             // Fetch featured projects
@@ -100,7 +101,6 @@ export default function Home() {
             console.error("Error fetching homepage data:", error);
         }
       }
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -273,5 +273,7 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     

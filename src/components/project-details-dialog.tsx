@@ -18,8 +18,9 @@ import { auth, db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion, increment } from 'firebase/firestore';
-import { Share2, Eye, Users } from 'lucide-react';
+import { Share2, Eye, Users, LogIn } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AuthDialog } from './auth-dialog';
 
 interface Project {
   id: string;
@@ -63,7 +64,7 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
 
   useEffect(() => {
       const checkExistingRequest = async () => {
-          if (!user || !project.requiresRequestToJoin) return;
+          if (!user || user.isAnonymous || !project.requiresRequestToJoin) return;
 
           const q = query(
               collection(db, 'joinRequests'),
@@ -95,6 +96,15 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
       });
       return;
     }
+    
+    if (user.isAnonymous) {
+        toast({
+            title: 'Account Required',
+            description: 'Please create a full account to join projects.',
+            variant: 'destructive',
+        });
+        return;
+    }
 
     if (project.requiresRequestToJoin) {
       handleRequestToJoin();
@@ -125,7 +135,7 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }
 
   const handleRequestToJoin = async () => {
-    if (!user || requestStatus !== 'idle') return;
+    if (!user || user.isAnonymous || requestStatus !== 'idle') return;
     setRequestStatus('pending');
     try {
         const collectionName = project.isPrivate ? 'privateProjects' : 'projects';
@@ -198,6 +208,29 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
     }
     return 'Join Project & Chat';
   }
+  
+   const renderJoinButton = () => {
+    if (user?.isAnonymous) {
+        return (
+            <AuthDialog>
+                <Button className="w-full sm:w-auto">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login to Join
+                </Button>
+            </AuthDialog>
+        )
+    }
+
+    return (
+        <Button
+            className="w-full sm:w-auto"
+            onClick={handleJoinOrRequest}
+            disabled={requestStatus === 'pending' || requestStatus === 'sent' || !user}
+        >
+            {getButtonText()}
+        </Button>
+    )
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -237,13 +270,7 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
                 </p>
             </ScrollArea>
             <DialogFooter className="pt-6 flex-shrink-0 flex-row gap-2 !justify-end">
-                <Button
-                    className="w-full sm:w-auto"
-                    onClick={handleJoinOrRequest}
-                    disabled={requestStatus === 'pending' || requestStatus === 'sent'}
-                >
-                    {getButtonText()}
-                </Button>
+                {renderJoinButton()}
                 <Button size="icon" variant="outline" onClick={handleShare}>
                     <Share2 className="h-4 w-4" />
                 </Button>
@@ -253,3 +280,5 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
     </Dialog>
   );
 }
+
+    
