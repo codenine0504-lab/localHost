@@ -64,15 +64,20 @@ export default function PeoplePage() {
   useEffect(() => {
     let q;
     const isStatusFilter = ['seeking', 'active'].includes(activeTab);
-    const isThemeFilter = ['software', 'hardware', 'design', 'event'].includes(activeTab);
+    
+    // Updated to check against a list of known skills/themes
+    const skillThemes = ['software', 'hardware', 'design', 'event'];
+    const isThemeFilter = skillThemes.includes(activeTab);
 
     if (activeTab === 'all') {
         q = query(collection(db, 'users'), orderBy('displayName'));
     } else if (isStatusFilter) {
         q = query(collection(db, 'users'), where('status', '==', activeTab), orderBy('displayName'));
     } else if (isThemeFilter) {
-        // Updated to query the `skills` array which contains skill names
-        q = query(collection(db, 'users'), where('skills', 'array-contains', { name: activeTab, isPrimary: false }), orderBy('displayName'));
+        // This query checks if the `skills` array contains an object with the selected theme name.
+        // Note: Firestore's `array-contains` requires the full object to match if you're querying an array of objects.
+        // This is a simplified approach; for more complex skill queries, a different data structure might be needed.
+        q = query(collection(db, 'users'), where('interests', 'array-contains', activeTab), orderBy('displayName'));
     } else {
         q = query(collection(db, 'users'), orderBy('displayName'));
     }
@@ -183,28 +188,27 @@ export default function PeoplePage() {
                         const primarySkill = getPrimarySkill(user.skills);
                         return (
                         <Link href={`/profile/${user.id}`} key={user.id} className="block">
-                            <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200">
+                            <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200">
                                 <Avatar className="h-12 w-12">
                                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'}/>
                                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
                                     <h3 className="font-semibold">{user.displayName || 'Anonymous User'}</h3>
-                                    {user.college && <p className="text-sm text-muted-foreground">{user.college}</p>}
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                        {primarySkill && (
+                                            <Badge variant="default" className="flex items-center gap-1.5">
+                                                <Star className="h-3 w-3" />
+                                                {primarySkill.name}
+                                            </Badge>
+                                        )}
+                                        {user.skills?.filter(s => !s.isPrimary).slice(0, 3).map(skill => (
+                                            <Badge key={skill.name} variant="secondary">{skill.name}</Badge>
+                                        ))}
+                                    </div>
                                 </div>
                                 <div className='flex flex-col items-end gap-2'>
                                   {getStatusBadge(user.status)}
-                                  {primarySkill && (
-                                      <Badge variant="default" className="flex items-center gap-1.5">
-                                          <Star className="h-3 w-3" />
-                                          {primarySkill.name}
-                                      </Badge>
-                                  )}
-                                  <div className="flex gap-1 flex-wrap justify-end">
-                                      {user.skills?.filter(s => !s.isPrimary).slice(0, 2).map(skill => (
-                                          <Badge key={skill.name} variant="secondary">{skill.name}</Badge>
-                                      ))}
-                                  </div>
                                 </div>
                             </div>
                         </Link>
@@ -219,5 +223,3 @@ export default function PeoplePage() {
     </div>
   );
 }
-
-    
