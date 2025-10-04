@@ -140,7 +140,7 @@ export default function PeoplePage() {
                             <button
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`${
-                                    activeTab === tab.id ? '' : 'hover:text-foreground/60'
+                                    activeTab === tab.id ? 'text-white' : 'hover:text-foreground/60'
                                 } relative rounded-full px-4 py-2 text-sm font-medium text-foreground transition focus-visible:outline-2`}
                                 style={{
                                     WebkitTapHighlightColor: 'transparent',
@@ -149,7 +149,7 @@ export default function PeoplePage() {
                                 {activeTab === tab.id && (
                                     <motion.span
                                         layoutId="bubble"
-                                        className="absolute inset-0 z-10 bg-background shadow-sm"
+                                        className="absolute inset-0 z-10 bg-blue-900 dark:bg-blue-500 shadow-sm"
                                         style={{ borderRadius: 9999 }}
                                         transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                                     />
