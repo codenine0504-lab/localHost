@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
+import { Home } from "lucide-react";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -247,11 +248,17 @@ export default function ProfilePage() {
                         You are currently browsing as a guest. Create an account to build your profile, join projects, and start collaborating.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col gap-4">
                     <Button asChild size="lg">
                         <Link href="/login">
                             <LogIn className="mr-2 h-5 w-5" />
                             Login / Sign Up
+                        </Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline">
+                        <Link href="/">
+                            <Home className="mr-2 h-5 w-5" />
+                            Back to Welcome
                         </Link>
                     </Button>
                 </CardContent>

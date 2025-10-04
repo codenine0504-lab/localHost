@@ -77,7 +77,7 @@ export function WelcomeScreen() {
                     <AnimatedLogo />
                     
                     <div className="mt-8">
-                         <p className="text-lg text-slate-300 mb-2 tracking-widest">GECR presents</p>
+                         <p className="text-lg text-slate-300 mb-2 tracking-widest">A GEC startup</p>
                          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
                              Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-blue-400 to-purple-500">LocalHost</span>
                          </h1>
