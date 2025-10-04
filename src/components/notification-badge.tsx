@@ -40,15 +40,17 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                     const parts = key.split('_');
                     if (parts.length < 3) continue; // Skip malformed keys
                     const roomId = parts.slice(2).join('_');
+                    
+                    const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${roomId}`);
+                    // Only show notification if the last message was not from the current user
+                    if (lastMessageSenderId === user.uid) {
+                        continue;
+                    }
 
                     const lastMessageTimestampStr = localStorage.getItem(key);
                     const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}`);
                     
                     const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
-                    
-                    // If lastRead doesn't exist, it means the user has never opened the chat, so no notification unless there is a message.
-                    // But if there's no message timestamp, there's no notification.
-                    // If there IS a message, but no read timestamp, it's a new message.
                     const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
                     if (lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp) {
@@ -65,7 +67,7 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
         const handleStorageChange = (event: StorageEvent) => {
              // Only run check if the change is relevant to notifications
-            if (event.key?.includes('lastMessageTimestamp_') || event.key?.includes('lastRead_') || event.key?.includes('hasNewJoinRequests_')) {
+            if (event.key?.includes('lastMessageTimestamp_') || event.key?.includes('lastRead_') || event.key?.includes('hasNewJoinRequests_') || event.key?.includes('lastMessageSenderId_')) {
                 checkNotifications();
             }
         };
@@ -86,8 +88,8 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
             {children}
             {hasNotification && (
                 <div className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                 </div>
             )}
         </div>

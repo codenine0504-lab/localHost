@@ -314,12 +314,13 @@ export default function ChatPage() {
       
       if (msgs.length > 0 && user) {
         const lastMessage = msgs[msgs.length - 1];
-        if (lastMessage.senderId !== user.uid && lastMessage.createdAt) {
+        if (lastMessage.createdAt) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
             localStorage.setItem(`lastMessageTimestamp_${chatId}`, lastTimestamp.toString());
+            localStorage.setItem(`lastMessageSenderId_${chatId}`, lastMessage.senderId);
             window.dispatchEvent(new Event('storage'));
 
-            if(document.hidden) {
+            if(document.hidden && lastMessage.senderId !== user.uid) {
                 const audio = new Audio('/chatnotify.mp3');
                 audio.play().catch(e => console.error("Audio play failed:", e));
             }
@@ -370,7 +371,6 @@ export default function ChatPage() {
   useEffect(() => {
       if(chatId) {
           localStorage.setItem(`lastRead_${chatId}`, Date.now().toString());
-          localStorage.removeItem(`lastMessageTimestamp_${chatId}`);
           window.dispatchEvent(new Event('storage'));
       }
   }, [chatId]);
