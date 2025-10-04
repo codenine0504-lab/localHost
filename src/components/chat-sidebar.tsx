@@ -662,5 +662,3 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
-
-    

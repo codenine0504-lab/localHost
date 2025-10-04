@@ -87,7 +87,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
     if (open && !user) {
         toast({
             title: "Authentication Required",
-            description: "Please log in with Google to host a project.",
+            description: "Please log in to host a project.",
             variant: "destructive"
         });
         return;
@@ -101,6 +101,11 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
   const onSubmit = async (data: ProjectFormValues) => {
     if (!user) {
         toast({ title: "Not Logged In", description: "You must be logged in to host a project.", variant: "destructive" });
+        return;
+    }
+    
+    if (user.isAnonymous) {
+         toast({ title: "Account Required", description: "Please create an account to host a project.", variant: "destructive" });
         return;
     }
 
@@ -179,7 +184,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Host a Project</DialogTitle>
@@ -188,99 +193,95 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="sm:text-right">
-                Title
-              </Label>
-              <Controller
-                name="title"
-                control={control}
-                render={({ field }) => (
-                  <Input id="title" placeholder="Your project title" className="col-span-1 sm:col-span-3" {...field} />
-                )}
-              />
-              {errors.title && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.title.message}</p>}
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Controller
+                        name="title"
+                        control={control}
+                        render={({ field }) => (
+                        <Input id="title" placeholder="Your project title" {...field} />
+                        )}
+                    />
+                    {errors.title && <p className="text-red-500 text-xs">{errors.title.message}</p>}
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="theme">Theme</Label>
+                    <Controller
+                        name="theme"
+                        control={control}
+                        render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger id="theme">
+                                <SelectValue placeholder="Select a theme" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="software">Software</SelectItem>
+                                <SelectItem value="hardware">Hardware</SelectItem>
+                                <SelectItem value="event">Event</SelectItem>
+                                <SelectItem value="design">Design</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        )}
+                    />
+                </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="theme" className="sm:text-right">
-                Theme
-              </Label>
-              <Controller
-                name="theme"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <SelectTrigger className="col-span-1 sm:col-span-3">
-                      <SelectValue placeholder="Select a theme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="software">Software</SelectItem>
-                      <SelectItem value="hardware">Hardware</SelectItem>
-                      <SelectItem value="event">Event</SelectItem>
-                      <SelectItem value="design">Design</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-4">
-              <Label htmlFor="description" className="sm:text-right pt-2">
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">
                 Description
               </Label>
-               <div className="col-span-1 sm:col-span-3 space-y-2">
-                 <Controller
+               <Controller
                   name="description"
                   control={control}
                   render={({ field }) => (
-                    <Textarea id="description" placeholder="Describe your project" className="w-full" {...field} />
+                    <Textarea id="description" placeholder="Describe your project in 50 words or less." className="w-full" {...field} />
                   )}
                 />
                  <div className="text-xs text-muted-foreground text-right">
                   <span className={cn(wordCount > 50 ? 'text-red-500' : '')}>{wordCount}</span>/50 words
                 </div>
-               </div>
-              {errors.description && <p className="col-span-1 sm:col-start-2 sm:col-span-3 text-red-500 text-xs">{errors.description.message}</p>}
+              {errors.description && <p className="text-red-500 text-xs">{errors.description.message}</p>}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-               <Label htmlFor="imageUrl" className="sm:text-right">
+
+            <div className="space-y-2">
+               <Label htmlFor="imageUrl">
                 Image URL
               </Label>
                <Controller
                 name="imageUrl"
                 control={control}
                 render={({ field }) => (
-                  <Input id="imageUrl" type="url" placeholder="https://example.com/image.png" className="col-span-1 sm:col-span-3" {...field} />
+                  <Input id="imageUrl" type="url" placeholder="https://postimages.org/ a service to host image" {...field} />
                 )}
               />
-              {errors.imageUrl && <p className="col-span-1 sm:col-span-4 text-red-500 text-xs text-center">{errors.imageUrl.message}</p>}
+              {errors.imageUrl && <p className="text-red-500 text-xs">{errors.imageUrl.message}</p>}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-              <Label htmlFor="isPrivate" className="sm:text-right">
-                Visibility
-              </Label>
-                <div className="col-span-1 sm:col-span-3 flex items-center space-x-2">
-                    <Controller
-                        name="isPrivate"
-                        control={control}
-                        render={({ field }) => (
-                            <>
-                                <Switch
-                                id="isPrivate"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                />
-                                <Label htmlFor="isPrivate">{field.value ? 'Private' : 'Public'}</Label>
-                            </>
-                        )}
-                    />
-                </div>
+            
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="isPrivate">
+                    Visibility
+                </Label>
+                 <p className="text-xs text-muted-foreground">
+                    Private projects require admin approval to join.
+                </p>
+              </div>
+                <Controller
+                    name="isPrivate"
+                    control={control}
+                    render={({ field }) => (
+                        <Switch
+                        id="isPrivate"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        />
+                    )}
+                />
             </div>
           </div>
           <DialogFooter>
-             <DialogClose asChild>
-                <Button variant="outline" type="button">Cancel</Button>
-            </DialogClose>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Hosting...' : 'Host Project'}
             </Button>
@@ -290,5 +291,3 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
     </Dialog>
   );
 }
-
-    
