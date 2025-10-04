@@ -167,6 +167,10 @@ export default function ChatRoomPage() {
     <>
       
       <div className="container mx-auto py-12 px-4 md:px-6">
+        <div className="space-y-4 mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold">Your Chat Rooms</h1>
+            <p className="text-muted-foreground">Select a project to start chatting with your team.</p>
+        </div>
        <div className="space-y-4">
         {loading ? (
             <ChatRoomListSkeleton />

@@ -2,10 +2,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,11 +37,16 @@ function ProjectCardSkeleton() {
     return (
         <Card className="flex flex-row overflow-hidden">
             <Skeleton className="h-full w-1/3" />
-            <div className="w-2/3 p-4">
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-4" />
-                <Skeleton className="h-6 w-20 mb-4" />
-                <Skeleton className="h-10 w-full" />
+            <div className="w-2/3 p-4 flex flex-col justify-between">
+                <div>
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-4" />
+                    <Skeleton className="h-6 w-20 mb-4" />
+                </div>
+                 <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-16" />
+                </div>
             </div>
         </Card>
     )
@@ -90,8 +95,9 @@ export default function ProjectsPage() {
     <>
         
         <div className="container mx-auto py-12 px-4 md:px-6 max-w-4xl">
-        <div className="space-y-4 mb-8 text-center">
-            <h1 className="text-base text-muted-foreground">Join Project and Events across different colleges/universities</h1>
+         <div className="space-y-4 mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold">Explore Projects</h1>
+            <p className="text-muted-foreground">Join Project and Events across different colleges/universities</p>
         </div>
         <div className="flex justify-end mb-6 gap-2">
              <DropdownMenu>
@@ -148,21 +154,19 @@ export default function ProjectsPage() {
                                         </Badge>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1.5">
-                                        <Eye className="h-4 w-4" />
-                                        <span>{project.views || 0}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Users className="h-4 w-4" />
-                                        <span>{project.applicantCount || 0}</span>
-                                    </div>
-                                </div>
                             </CardContent>
-                            <CardFooter>
-                                <Button className="w-full" variant="outline" asChild>
+                             <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1.5">
+                                    <Eye className="h-4 w-4" />
+                                    <span>{project.views || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Users className="h-4 w-4" />
+                                    <span>{project.applicantCount || 0}</span>
+                                </div>
+                                 <Button className="ml-auto" size="sm" variant="outline" asChild>
                                     <Link href={`/projects/${project.id}`}>
-                                        View Details
+                                        View
                                     </Link>
                                  </Button>
                             </CardFooter>
