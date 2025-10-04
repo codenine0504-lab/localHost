@@ -3,19 +3,17 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Ban, Lock, MessagesSquare } from 'lucide-react';
+import { Send, Ban, MessagesSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 interface Message {
@@ -48,8 +46,6 @@ interface Member {
     photoURL: string | null;
     isAdmin: boolean;
 }
-
-type ChatTab = 'general' | 'team';
 
 function ChatSkeleton() {
     return (
@@ -100,10 +96,7 @@ export default function ChatPage() {
   const [hasAccess, setHasAccess] = useState(false);
   const [isMember, setIsMember] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<ChatTab>('general');
-  const [notifications, setNotifications] = useState({ general: false, team: false });
-  const { toast } = useToast();
-
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
 
@@ -117,31 +110,6 @@ export default function ChatPage() {
     return () => unsubscribe();
   }, []);
   
-  const clearTabNotification = (tab: ChatTab) => {
-    setNotifications(prev => ({...prev, [tab]: false}));
-    localStorage.setItem(`lastRead_${projectId}_${tab}`, Date.now().toString());
-    window.dispatchEvent(new Event('storage')); // Notify other components like the footer
-  }
-
-  const handleTabChange = (value: string) => {
-      const newTab = value as ChatTab;
-      if (newTab === 'team' && !isMember) {
-          toast({
-              title: "Members Only",
-              description: "You need to join the project to access the team chat.",
-          });
-          return;
-      }
-      setActiveTab(newTab);
-  }
-
-  // Mark chat as read when tab changes
-  useEffect(() => {
-    if(projectId && (activeTab === 'general' || isMember)) {
-        clearTabNotification(activeTab);
-    }
-  }, [projectId, activeTab, isMember]);
-
   const fetchProjectAndMembers = useCallback(async () => {
     if (!projectId) return;
     setLoading(true);
@@ -233,47 +201,28 @@ export default function ChatPage() {
   }, [fetchProjectAndMembers]);
 
 
-  const setupTabListener = (tab: ChatTab) => {
-    if (!projectId || !hasAccess) return () => {};
+  useEffect(() => {
+    if (!projectId || !hasAccess || !isMember) return () => {};
 
-    // Guests can't listen to team chat
-    if (tab === 'team' && !isMember) return () => {};
-
-    const collectionName = tab === 'general' ? 'General' : 'Team';
-    const q = query(collection(db, `chatRooms/${projectId}/${collectionName}`), orderBy('createdAt', 'asc'));
+    const q = query(collection(db, `chatRooms/${projectId}/messages`), orderBy('createdAt', 'asc'));
     
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-      
-      // Update messages only if it's the active tab
-      if (tab === activeTab) {
-          setMessages(msgs);
-      }
+      setMessages(msgs);
       
       // Handle notifications
       if (msgs.length > 0 && user) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.senderId !== user.uid) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
-            const lastReadTimestampStr = localStorage.getItem(`lastRead_${projectId}_${tab}`);
-            const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
-            
-            if (lastTimestamp > lastReadTimestamp) {
-                // Set local notification state for the tab dot
-                if (tab !== activeTab) {
-                    setNotifications(prev => ({...prev, [tab]: true}));
-                }
-                
-                // Set localStorage for global notification state (e.g., footer)
-                localStorage.setItem(`lastMessageTimestamp_${projectId}_${tab}`, lastTimestamp.toString());
-                window.dispatchEvent(new Event('storage'));
+            localStorage.setItem(`lastMessageTimestamp_${projectId}`, lastTimestamp.toString());
+            window.dispatchEvent(new Event('storage'));
 
-                // Play sound if document is hidden
-                if(document.hidden) {
-                    const audio = new Audio('/chatnotify.mp3');
-                    audio.play().catch(e => console.error("Audio play failed:", e));
-                }
+            // Play sound if document is hidden
+            if(document.hidden) {
+                const audio = new Audio('/chatnotify.mp3');
+                audio.play().catch(e => console.error("Audio play failed:", e));
             }
         }
       }
@@ -305,17 +254,7 @@ export default function ChatPage() {
     });
 
     return unsubscribe;
-  }
-
-  useEffect(() => {
-      const unsubGeneral = setupTabListener('general');
-      const unsubTeam = setupTabListener('team');
-
-      return () => {
-          unsubGeneral();
-          unsubTeam();
-      }
-  }, [projectId, hasAccess, user, projectDetails, activeTab, isMember]);
+  }, [projectId, hasAccess, user, projectDetails, isMember]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -330,6 +269,13 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+      if(projectId) {
+          localStorage.setItem(`lastRead_${projectId}`, Date.now().toString());
+          window.dispatchEvent(new Event('storage'));
+      }
+  }, [projectId]);
+
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -339,8 +285,7 @@ export default function ChatPage() {
     setNewMessage('');
 
     try {
-        const collectionName = activeTab === 'general' ? 'General' : 'Team';
-        await addDoc(collection(db, `chatRooms/${projectId}/${collectionName}`), {
+        await addDoc(collection(db, `chatRooms/${projectId}/messages`), {
             text: userMessage,
             createdAt: serverTimestamp(),
             senderId: user.uid, 
@@ -394,26 +339,12 @@ export default function ChatPage() {
     const member = memberCache.current.get(senderId);
     return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
   };
-
-  const TabTriggerWithNotification = ({ value, label, hasNotification, disabled = false }: { value: string, label: string, hasNotification: boolean, disabled?: boolean }) => (
-    <TabsTrigger value={value} className="relative" disabled={disabled}>
-      <div className="flex items-center gap-2">
-        {disabled && <Lock className="h-3 w-3" />}
-        {label}
-      </div>
-      {!disabled && hasNotification && (
-        <span className="absolute top-1 right-1 flex h-2 w-2">
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-        </span>
-      )}
-    </TabsTrigger>
-  );
   
   function NoChatView() {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
             <MessagesSquare className="h-12 w-12 mb-4" />
-            <h2 className="text-xl font-semibold text-foreground">Welcome to the chat!</h2>
+            <h2 className="text-xl font-semibold text-foreground">Welcome to the team chat!</h2>
             <p>No messages here yet. Be the first to start the conversation.</p>
         </div>
     )
@@ -429,20 +360,40 @@ export default function ChatPage() {
     return "Type a message...";
   }
 
+  function ChatView() {
+    return (
+        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+            <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
+                {messages.length === 0 ? <NoChatView /> : messages.map((msg) => (
+                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
+                        {msg.senderId !== user?.uid && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
+                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                        </Avatar>
+                        )}
+                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                            <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
+                            <p className="text-sm">{msg.text}</p>
+                        </div>
+                        {msg.senderId === user?.uid && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
+                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                        </Avatar>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </ScrollArea>
+    );
+  }
+
   return (
      <div className="h-screen flex flex-col bg-background">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-grow">
-            <TabsList className="grid w-full grid-cols-2">
-                 <TabTriggerWithNotification value="general" label="General" hasNotification={notifications.general} />
-                 <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} disabled={!isMember}/>
-            </TabsList>
-            <TabsContent value="general" className="flex-grow flex flex-col">
-                 <ChatView key="general" />
-            </TabsContent>
-            <TabsContent value="team" className="flex-grow flex flex-col">
-                 <ChatView key="team" />
-            </TabsContent>
-        </Tabs>
+        <div className="flex flex-col flex-grow">
+            <ChatView />
+        </div>
         
         <div className={cn("fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative", isSidebarOpen && "pr-[var(--sidebar-width)]")}>
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
@@ -487,38 +438,6 @@ export default function ChatPage() {
         )}
      </div>
   );
-  
-  function ChatView() {
-    if (messages.length === 0) {
-        return <NoChatView />;
-    }
-    return (
-        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-            <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
-                {messages.map((msg) => (
-                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
-                        {msg.senderId !== user?.uid && (
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
-                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
-                        </Avatar>
-                        )}
-                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                            <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
-                            <p className="text-sm">{msg.text}</p>
-                        </div>
-                        {msg.senderId === user?.uid && (
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
-                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
-                        </Avatar>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </ScrollArea>
-    );
-  }
 }
     
     

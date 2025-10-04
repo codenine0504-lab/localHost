@@ -65,11 +65,8 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
                 name: `DM between ${currentUser.displayName} and ${user.displayName}`,
             });
 
-            // Create dummy docs to ensure subcollections are created.
-            const generalChatRef = doc(collection(chatRoomRef, 'General'));
-            batch.set(generalChatRef, {});
-            const teamChatRef = doc(collection(chatRoomRef, 'Team'));
-            batch.set(teamChatRef, {});
+            const messagesCollectionRef = doc(collection(chatRoomRef, 'messages'));
+            batch.set(messagesCollectionRef, {});
 
             await batch.commit();
         }

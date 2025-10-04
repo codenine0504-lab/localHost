@@ -295,12 +295,9 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             await deleteDoc(doc(db, projectCollection, project.id));
             
             const chatRoomRef = doc(db, 'chatRooms', project.id);
-            const generalChatRef = collection(chatRoomRef, 'General');
-            const teamChatRef = collection(chatRoomRef, 'Team');
-
-            await deleteSubcollection(generalChatRef);
-            await deleteSubcollection(teamChatRef);
+            const messagesRef = collection(chatRoomRef, 'messages');
             
+            await deleteSubcollection(messagesRef);
             await deleteDoc(chatRoomRef);
 
             toast({ title: "Success", description: "Project has been deleted." });

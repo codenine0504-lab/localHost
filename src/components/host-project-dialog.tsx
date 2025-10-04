@@ -151,11 +151,8 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         isPrivate: isPrivate,
       });
 
-      // Create dummy docs to ensure subcollections are created.
-      const generalChatRef = doc(collection(chatRoomRef, 'General'));
-      batch.set(generalChatRef, {});
-      const teamChatRef = doc(collection(chatRoomRef, 'Team'));
-      batch.set(teamChatRef, {});
+      const messagesCollectionRef = doc(collection(chatRoomRef, 'messages'));
+      batch.set(messagesCollectionRef, {});
 
       await batch.commit();
 

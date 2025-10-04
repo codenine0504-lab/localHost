@@ -39,12 +39,9 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                 if (key && key.startsWith('lastMessageTimestamp_')) {
                     const parts = key.split('_');
                     const roomId = parts[2];
-                    const tab = parts[3];
-
-                    if (!tab) continue; // Skip keys that don't have a tab part
 
                     const lastMessageTimestampStr = localStorage.getItem(key);
-                    const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}_${tab}`);
+                    const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}`);
                     
                     const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
                     const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : Date.now();

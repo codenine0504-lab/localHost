@@ -3,7 +3,7 @@
 
 import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 
 const signUpSchema = z.object({
@@ -31,13 +31,26 @@ export async function signUpWithEmail(values: z.infer<typeof signUpSchema>) {
         const user = userCredential.user;
 
         await updateProfile(user, { displayName });
+        
+        const batch = writeBatch(db);
 
-        await setDoc(doc(db, "users", user.uid), {
+        const userDocRef = doc(db, "users", user.uid);
+        batch.set(userDocRef, {
             uid: user.uid,
             email: user.email,
             displayName: displayName,
             photoURL: user.photoURL,
         }, { merge: true });
+
+        // Ensure general chat room exists
+        const generalChatRef = doc(db, 'chatRooms', 'general');
+        const generalChatDoc = await getDoc(generalChatRef);
+        if (!generalChatDoc.exists()) {
+            batch.set(generalChatRef, { name: 'General Chat' });
+        }
+        
+        await batch.commit();
+
 
         return { success: "User created successfully." };
     } catch (error: any) {
@@ -76,15 +89,27 @@ export async function loginWithGoogle() {
       
       const userDocRef = doc(db, "users", loggedInUser.uid);
       const userDoc = await getDoc(userDocRef);
+      
+      const batch = writeBatch(db);
 
       if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
+        batch.set(userDocRef, {
             uid: loggedInUser.uid,
             email: loggedInUser.email,
             displayName: loggedInUser.displayName,
             photoURL: loggedInUser.photoURL,
         }, { merge: true });
       }
+      
+      // Ensure general chat room exists
+        const generalChatRef = doc(db, 'chatRooms', 'general');
+        const generalChatDoc = await getDoc(generalChatRef);
+        if (!generalChatDoc.exists()) {
+            batch.set(generalChatRef, { name: 'General Chat' });
+        }
+        
+      await batch.commit();
+
       return { success: "Logged in successfully." };
 
     } catch (error: any) {
