@@ -149,7 +149,7 @@ export default function PeoplePage() {
                                 {activeTab === tab.id && (
                                     <motion.span
                                         layoutId="bubble"
-                                        className="absolute inset-0 z-10 bg-primary shadow-sm"
+                                        className="absolute inset-0 z-10 bg-blue-600 shadow-sm"
                                         style={{ borderRadius: 9999 }}
                                         transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                                     />

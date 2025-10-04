@@ -196,7 +196,7 @@ export default function PublicProfilePage() {
                     </CardHeader>
                     <CardContent className="p-6">
                          {currentUser?.uid !== profileUser.id && (
-                             <Button className="w-full" onClick={handleSendMessage}>
+                             <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
                                  <MessageSquare className="mr-2 h-4 w-4" /> Message
                              </Button>
                          )}

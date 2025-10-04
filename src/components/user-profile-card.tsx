@@ -120,7 +120,7 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
                     </Badge>
                 )}
                  {currentUser?.uid !== user.id && (
-                    <Button className="mt-4 w-full" onClick={handleSendMessage}>
+                    <Button className="mt-4 w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
                         <MessageSquare className="mr-2 h-4 w-4" /> Message
                     </Button>
                 )}
