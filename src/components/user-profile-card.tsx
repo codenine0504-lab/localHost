@@ -50,7 +50,7 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
     }
 
     const chatRoomId = [currentUser.uid, user.id].sort().join('_');
-    const chatRoomRef = doc(db, 'chatRooms', chatRoomId);
+    const chatRoomRef = doc(db, 'General', chatRoomId);
     
     try {
         const chatRoomDoc = await getDoc(chatRoomRef);
@@ -59,13 +59,9 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
             const batch = writeBatch(db);
             
             batch.set(chatRoomRef, {
-                isDm: true,
                 members: [currentUser.uid, user.id],
                 createdAt: serverTimestamp(),
             });
-
-            const messagesCollectionRef = doc(collection(chatRoomRef, 'messages'));
-            batch.set(messagesCollectionRef, {});
 
             await batch.commit();
         }

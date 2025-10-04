@@ -108,7 +108,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         try {
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             const projectRef = doc(db, projectCollection, project.id);
-            const chatRoomRef = doc(db, 'chatRooms', project.id);
+            const chatRoomRef = doc(db, 'ProjectChats', project.id);
             
             let updateData: any = { [field]: formState[field] };
             
@@ -175,7 +175,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
                 await setDoc(doc(db, toCollection, project.id), projectData);
                 await deleteDoc(projectDocRef);
-                await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate: value });
+                await updateDoc(doc(db, 'ProjectChats', project.id), { isPrivate: value });
 
                 toast({ title: "Success", description: `Project visibility updated to ${value ? 'Private' : 'Public'}.` });
             } 
@@ -214,7 +214,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             await deleteDoc(doc(db, projectCollection, project.id));
             
-            const chatRoomRef = doc(db, 'chatRooms', project.id);
+            const chatRoomRef = doc(db, 'ProjectChats', project.id);
             const messagesRef = collection(chatRoomRef, 'messages');
             
             await deleteSubcollection(messagesRef);
@@ -258,12 +258,19 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
         const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
         const projectRef = doc(db, projectCollection, project.id);
+        const chatRef = doc(db, 'ProjectChats', project.id);
 
         try {
-            await updateDoc(projectRef, { 
+            const batch = writeBatch(db);
+            batch.update(projectRef, { 
                 members: arrayRemove(memberId),
                 admins: arrayRemove(memberId) 
             });
+            batch.update(chatRef, { 
+                members: arrayRemove(memberId)
+            });
+            await batch.commit();
+
             toast({ title: "Success", description: "Member has been removed from the project." });
             onProjectUpdate();
         } catch(error) {

@@ -77,40 +77,40 @@ export default function ChatRoomPage() {
 
     setLoading(true);
 
-    const q = query(collection(db, 'chatRooms'), where('members', 'array-contains', user.uid));
-
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-        const allRooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
-
+    // Listener for DMs
+    const dmQuery = query(collection(db, 'General'), where('members', 'array-contains', user.uid));
+    const unsubscribeDms = onSnapshot(dmQuery, async (snapshot) => {
         const dms: ChatRoom[] = [];
-        const projects: ChatRoom[] = [];
+        for (const roomDoc of snapshot.docs) {
+            const roomData = roomDoc.data();
+            const otherMemberId = roomData.members.find((id: string) => id !== user.uid);
+            let otherMemberName = 'Direct Message';
+            let otherMemberPhoto = '';
 
-        for (const room of allRooms) {
-            if (room.isDm) {
-                const roomData = room;
-                const otherMemberId = (roomData as any).members.find((id: string) => id !== user.uid);
-                let otherMemberName = 'Direct Message';
-                let otherMemberPhoto = '';
-
-                if (otherMemberId) {
-                    const userDoc = await getDoc(doc(db, 'users', otherMemberId));
-                    if (userDoc.exists()) {
-                        otherMemberName = userDoc.data().displayName || otherMemberName;
-                        otherMemberPhoto = userDoc.data().photoURL || otherMemberPhoto;
-                    }
+            if (otherMemberId) {
+                const userDoc = await getDoc(doc(db, 'users', otherMemberId));
+                if (userDoc.exists()) {
+                    otherMemberName = userDoc.data().displayName || otherMemberName;
+                    otherMemberPhoto = userDoc.data().photoURL || otherMemberPhoto;
                 }
-                dms.push({ ...room, name: otherMemberName, imageUrl: otherMemberPhoto });
-            } else {
-                projects.push(room);
             }
+            dms.push({ id: roomDoc.id, name: otherMemberName, imageUrl: otherMemberPhoto });
         }
-
         setDmRooms(checkNotifications(dms));
+        setLoading(false); // Can set loading false after first listener returns
+    }, (error) => {
+        console.error("Error fetching DMs:", error);
+        setLoading(false);
+    });
+
+    // Listener for Project Chats
+    const projectChatQuery = query(collection(db, 'ProjectChats'), where('members', 'array-contains', user.uid));
+    const unsubscribeProjects = onSnapshot(projectChatQuery, (snapshot) => {
+        const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
         setProjectRooms(checkNotifications(projects));
         setLoading(false);
-
     }, (error) => {
-        console.error("Error fetching chat rooms:", error);
+        console.error("Error fetching project chats:", error);
         setLoading(false);
     });
     
@@ -125,7 +125,8 @@ export default function ChatRoomPage() {
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      unsubscribe();
+      unsubscribeDms();
+      unsubscribeProjects();
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [user]);

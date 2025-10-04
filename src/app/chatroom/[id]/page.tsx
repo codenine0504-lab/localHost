@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc, arrayUnion, increment, where } from 'firebase/firestore';
+import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc, arrayUnion, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { ChatHeader } from '@/components/chat-header';
 import { JoinRequestCard } from '@/components/join-request-card';
 import { useToast } from '@/hooks/use-toast';
+import { Linkify } from '@/components/Linkify';
 
 
 interface Message {
@@ -100,7 +101,7 @@ function ChatSkeleton() {
 export default function ChatPage() {
   const params = useParams();
   const router = useRouter();
-  const projectId = params.id as string;
+  const chatId = params.id as string;
   const [user, setUser] = useState<User | null>(auth.currentUser);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -115,6 +116,7 @@ export default function ChatPage() {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
   const [isDm, setIsDm] = useState(false);
+  const [chatCollection, setChatCollection] = useState<'General' | 'ProjectChats' | null>(null);
   const { toast } = useToast();
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -131,45 +133,59 @@ export default function ChatPage() {
   }, []);
   
   const fetchProjectAndMembers = useCallback(async () => {
-    if (!projectId) return;
+    if (!chatId) return;
     setLoading(true);
 
     try {
-        const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
-        if (!chatRoomDoc.exists()) {
-             setLoading(false);
-             setHasAccess(false);
-             return;
-        }
+        let chatRoomDoc;
+        let chatRoomData;
 
-        const chatRoomData = chatRoomDoc.data();
-        setIsDm(chatRoomData.isDm || false);
+        // Determine if it's a DM or Project Chat
+        const generalChatDoc = await getDoc(doc(db, "General", chatId));
+        if (generalChatDoc.exists()) {
+            chatRoomDoc = generalChatDoc;
+            chatRoomData = generalChatDoc.data();
+            setIsDm(true);
+            setChatCollection('General');
+        } else {
+            const projectChatDoc = await getDoc(doc(db, "ProjectChats", chatId));
+            if (projectChatDoc.exists()) {
+                chatRoomDoc = projectChatDoc;
+                chatRoomData = projectChatDoc.data();
+                setIsDm(false);
+                setChatCollection('ProjectChats');
+            } else {
+                setLoading(false);
+                setHasAccess(false);
+                return;
+            }
+        }
 
         setChatRoom({ id: chatRoomDoc.id, ...chatRoomData } as ChatRoom);
 
         let projDetails: ProjectDetails | null = null;
+        const memberIdsToCheck = chatRoomData.members || [];
 
-        if (chatRoomData.isDm) {
-             const canView = user ? (chatRoomData.members?.includes(user.uid) ?? false) : false;
+        if (isDm) {
+             const canView = user ? (memberIdsToCheck.includes(user.uid)) : false;
              setHasAccess(canView);
              if (!canView) {
                 setLoading(false);
                 return;
              }
-             setIsMember(true); // For DMs, if you have access, you are a "member"
-             const memberIds = chatRoomData.members || [];
+             setIsMember(true);
              projDetails = {
-                id: projectId,
+                id: chatId,
                 title: chatRoomData.name,
                 description: 'Direct Message',
                 owner: '',
                 isPrivate: true,
                 admins: [],
-                members: memberIds,
+                members: memberIdsToCheck,
              }
         } else {
-            const publicProjectDoc = await getDoc(doc(db, "projects", projectId));
-            const privateProjectDoc = await getDoc(doc(db, "privateProjects", projectId));
+            const publicProjectDoc = await getDoc(doc(db, "projects", chatId));
+            const privateProjectDoc = await getDoc(doc(db, "privateProjects", chatId));
             
             let projectDoc;
             let isPrivate = false;
@@ -202,10 +218,8 @@ export default function ChatPage() {
             setIsCurrentUserAdmin(isUserAdmin);
 
             const isProjectMember = user ? (isUserAdmin || (projDetails.members && projDetails.members.includes(user.uid))) : false;
-
             setIsMember(isProjectMember);
 
-            // Access control
             const canView = !isPrivate || isProjectMember;
             setHasAccess(canView);
 
@@ -217,8 +231,6 @@ export default function ChatPage() {
         
         setProjectDetails(projDetails);
 
-
-        // Fetch member details
         const memberIds = new Set(projDetails?.members);
         if(projDetails?.owner) memberIds.add(projDetails.owner);
         (projDetails?.admins || []).forEach(id => memberIds.add(id));
@@ -248,7 +260,7 @@ export default function ChatPage() {
     } finally {
         setLoading(false);
     }
-  }, [projectId, user]);
+  }, [chatId, user, isDm]);
 
 
   useEffect(() => {
@@ -257,14 +269,14 @@ export default function ChatPage() {
   
   
    useEffect(() => {
-        if (!isCurrentUserAdmin || !projectId) {
+        if (!isCurrentUserAdmin || !chatId || isDm) {
             setJoinRequests([]);
             return;
         }
 
         const q = query(
             collection(db, 'joinRequests'),
-            where('projectId', '==', projectId),
+            where('projectId', '==', chatId),
             where('status', '==', 'pending')
         );
 
@@ -287,28 +299,26 @@ export default function ChatPage() {
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, projectId, toast, user]);
+    }, [isCurrentUserAdmin, chatId, toast, user, isDm]);
 
 
   useEffect(() => {
-    if (!projectId || !hasAccess || !isMember) return () => {};
+    if (!chatId || !hasAccess || !isMember || !chatCollection) return () => {};
 
-    const q = query(collection(db, `chatRooms/${projectId}/messages`), orderBy('createdAt', 'asc'));
+    const q = query(collection(db, `${chatCollection}/${chatId}/messages`), orderBy('createdAt', 'asc'));
     
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs);
       
-      // Handle notifications
       if (msgs.length > 0 && user) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.senderId !== user.uid && lastMessage.createdAt) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
-            localStorage.setItem(`lastMessageTimestamp_${projectId}`, lastTimestamp.toString());
+            localStorage.setItem(`lastMessageTimestamp_${chatId}`, lastTimestamp.toString());
             window.dispatchEvent(new Event('storage'));
 
-            // Play sound if document is hidden
             if(document.hidden) {
                 const audio = new Audio('/chatnotify.mp3');
                 audio.play().catch(e => console.error("Audio play failed:", e));
@@ -316,7 +326,6 @@ export default function ChatPage() {
         }
       }
 
-      // Fetch sender details if they are not in cache
       const senderIds = new Set(msgs.map(msg => msg.senderId));
       const newSenderIds = Array.from(senderIds).filter(id => !memberCache.current.has(id));
 
@@ -343,7 +352,7 @@ export default function ChatPage() {
     });
 
     return unsubscribe;
-  }, [projectId, hasAccess, user, projectDetails, isMember]);
+  }, [chatId, hasAccess, user, projectDetails, isMember, chatCollection]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -359,23 +368,23 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-      if(projectId) {
-          localStorage.setItem(`lastRead_${projectId}`, Date.now().toString());
-          localStorage.removeItem(`lastMessageTimestamp_${projectId}`); // Clear message notification for this room
+      if(chatId) {
+          localStorage.setItem(`lastRead_${chatId}`, Date.now().toString());
+          localStorage.removeItem(`lastMessageTimestamp_${chatId}`);
           window.dispatchEvent(new Event('storage'));
       }
-  }, [projectId]);
+  }, [chatId]);
 
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !projectId || !user || user.isAnonymous || !isMember) return;
+    if (newMessage.trim() === '' || !chatId || !user || user.isAnonymous || !isMember || !chatCollection) return;
 
     const userMessage = newMessage;
     setNewMessage('');
 
     try {
-        await addDoc(collection(db, `chatRooms/${projectId}/messages`), {
+        await addDoc(collection(db, `${chatCollection}/${chatId}/messages`), {
             text: userMessage,
             createdAt: serverTimestamp(),
             senderId: user.uid, 
@@ -398,7 +407,7 @@ export default function ChatPage() {
             }
             const requestData = requestDoc.data() as JoinRequest;
             const projectCollection = requestData.projectCollection || (projectDetails?.isPrivate ? 'privateProjects' : 'projects');
-            const projectRef = doc(db, projectCollection, projectId);
+            const projectRef = doc(db, projectCollection, chatId);
 
             if (action === 'approve') {
                 await updateDoc(projectRef, {
@@ -407,7 +416,6 @@ export default function ChatPage() {
                 await updateDoc(requestRef, { status: 'approved' });
                 toast({ title: 'User Approved', description: 'The user has been added to the project.' });
             } else {
-                // No need to decrement applicantCount, as they are no longer pending
                 await updateDoc(requestRef, { status: 'declined' });
                 toast({ title: 'User Declined', description: 'The join request has been declined.' });
             }
@@ -500,7 +508,7 @@ export default function ChatPage() {
                         )}
                         <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                             <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
-                            <p className="text-sm">{msg.text}</p>
+                            <p className="text-sm"><Linkify text={msg.text} /></p>
                         </div>
                         {msg.senderId === user?.uid && (
                         <Avatar className="h-8 w-8">

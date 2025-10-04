@@ -141,7 +141,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
 
       const projectDocRef = await addDoc(collection(db, collectionName), projectPayload);
 
-      const chatRoomRef = doc(db, 'chatRooms', projectDocRef.id);
+      const chatRoomRef = doc(db, 'ProjectChats', projectDocRef.id);
       const batch = writeBatch(db);
 
       batch.set(chatRoomRef, {
@@ -149,10 +149,8 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         createdAt: serverTimestamp(),
         imageUrl: data.imageUrl,
         isPrivate: isPrivate,
+        members: [user.uid]
       });
-
-      const messagesCollectionRef = doc(collection(chatRoomRef, 'messages'));
-      batch.set(messagesCollectionRef, {});
 
       await batch.commit();
 

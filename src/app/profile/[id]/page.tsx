@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { doc, getDoc, collection, addDoc, query, where, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, serverTimestamp, writeBatch, setDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -102,7 +102,7 @@ export default function PublicProfilePage() {
     }
 
     const chatRoomId = [currentUser.uid, profileUser.id].sort().join('_');
-    const chatRoomRef = doc(db, 'chatRooms', chatRoomId);
+    const chatRoomRef = doc(db, 'General', chatRoomId);
     
     try {
         const chatRoomDoc = await getDoc(chatRoomRef);
@@ -111,14 +111,10 @@ export default function PublicProfilePage() {
              const batch = writeBatch(db);
              
              batch.set(chatRoomRef, {
-                isDm: true,
                 members: [currentUser.uid, profileUser.id],
                 createdAt: serverTimestamp(),
             });
             
-            const messagesCollectionRef = doc(collection(chatRoomRef, 'messages'));
-            batch.set(messagesCollectionRef, {});
-
             await batch.commit();
         }
 
