@@ -9,7 +9,7 @@ import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carouse
 import { Card, CardContent } from '@/components/ui/card';
 import { Layers, MessageCircle, User, Code } from 'lucide-react';
 import Autoplay from 'embla-carousel-autoplay';
-import React from 'react';
+import React, { useState } from 'react';
 
 const AnimatedLogo = () => (
     <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
@@ -56,6 +56,7 @@ const features = [
 
 
 export function WelcomeScreen() {
+    const [showFeatures, setShowFeatures] = useState(false);
     const plugin = React.useRef(
         Autoplay({ delay: 2500, stopOnInteraction: true })
     );
@@ -98,45 +99,52 @@ export function WelcomeScreen() {
                     The ultimate platform to connect with peers, build amazing projects, and bring your ideas to life.
                 </p>
 
-                <Button 
-                    size="lg" 
-                    className="mt-10 bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
-                    onClick={handleGoogleLogin}
-                >
-                    Get Started
-                </Button>
-
-                <div className="mt-16 w-full max-w-4xl">
-                    <h2 className="text-2xl font-bold text-white mb-4">Features</h2>
-                     <Carousel
-                        plugins={[plugin.current]}
-                        className="w-full"
-                        onMouseEnter={plugin.current.stop}
-                        onMouseLeave={plugin.current.reset}
+                {!showFeatures && (
+                    <Button 
+                        size="lg" 
+                        className="mt-10 bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
+                        onClick={() => setShowFeatures(true)}
                     >
-                        <CarouselContent>
-                            {features.map((feature, index) => (
-                                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                                    <div className="p-1">
-                                        <Card className="bg-slate-900/50 border-slate-800">
-                                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                                                {feature.icon}
-                                                <h3 className="text-xl font-semibold text-white mt-4">{feature.title}</h3>
-                                                <p className="text-slate-400 mt-2 text-sm">{feature.description}</p>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                    </Carousel>
-                    <div className="mt-6">
-                        <Button variant="link" className="text-slate-400" onClick={handleGoogleLogin}>
-                            Skip
-                        </Button>
-                    </div>
-                </div>
+                        Get Started
+                    </Button>
+                )}
 
+                {showFeatures && (
+                    <div className="mt-16 w-full max-w-4xl">
+                        <h2 className="text-2xl font-bold text-white mb-4">Features</h2>
+                         <Carousel
+                            plugins={[plugin.current]}
+                            className="w-full"
+                            onMouseEnter={plugin.current.stop}
+                            onMouseLeave={plugin.current.reset}
+                        >
+                            <CarouselContent>
+                                {features.map((feature, index) => (
+                                    <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                                        <div className="p-1">
+                                            <Card className="bg-slate-900/50 border-slate-800">
+                                                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                                    {feature.icon}
+                                                    <h3 className="text-xl font-semibold text-white mt-4">{feature.title}</h3>
+                                                    <p className="text-slate-400 mt-2 text-sm">{feature.description}</p>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                        </Carousel>
+                        <div className="mt-6">
+                            <Button 
+                                size="lg" 
+                                className="mt-4 bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
+                                onClick={handleGoogleLogin}
+                            >
+                                Login with Google
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
