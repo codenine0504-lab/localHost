@@ -16,8 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { Instagram, Github, Linkedin, Link as LinkIcon } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -53,45 +53,11 @@ function ProfileSkeleton() {
                         <CardDescription>Update your personal and university information.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="displayName">Display Name</Label>
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Status</Label>
-                            <div className="space-y-2 pt-2">
-                                <Skeleton className="h-5 w-40" />
-                                <Skeleton className="h-5 w-40" />
-                                <Skeleton className="h-5 w-40" />
-                            </div>
-                        </div>
-                        <Separator />
-                        <div className="space-y-2">
-                            <Label>Interests</Label>
-                             <div className="grid grid-cols-2 gap-4 pt-2">
-                                <Skeleton className="h-5 w-24" />
-                                <Skeleton className="h-5 w-24" />
-                                <Skeleton className="h-5 w-24" />
-                                <Skeleton className="h-5 w-24" />
-                            </div>
-                        </div>
-                        <Separator />
-                        <div className="space-y-4">
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                         <Separator />
-                        <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="college">University/College</Label>
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-10 w-full mt-4" />
                     </CardContent>
                 </Card>
             </div>
@@ -243,125 +209,145 @@ export default function ProfilePage() {
                 </Card>
                 </div>
                 <div className="md:col-span-2">
-                <Card>
-                    <CardHeader>
-                    <CardTitle>Profile Details</CardTitle>
-                    <CardDescription>Update your personal and university information.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-8">
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="displayName">Display Name</Label>
-                                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                            </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Profile Details</CardTitle>
+                            <CardDescription>Update your personal and university information.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Accordion type="multiple" defaultValue={['personal-info']} className="w-full">
+                                <AccordionItem value="personal-info">
+                                    <AccordionTrigger className="text-base">
+                                        <div className="flex items-center gap-3">
+                                            <UserIcon className="h-5 w-5" />
+                                            Personal Info
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-4 space-y-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="displayName">Display Name</Label>
+                                            <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label>Status</Label>
+                                            <RadioGroup defaultValue={status} onValueChange={(value) => setStatus(value as 'seeking' | 'active' | 'none')} className="flex flex-col space-y-2 pt-1">
+                                                <div className="flex items-center space-x-3">
+                                                    <RadioGroupItem value="seeking" id="seeking" />
+                                                    <Label htmlFor="seeking" className="font-normal">Seeking Collaboration</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-3">
+                                                    <RadioGroupItem value="active" id="active" />
+                                                    <Label htmlFor="active" className="font-normal">Actively Building</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-3">
+                                                    <RadioGroupItem value="none" id="none" />
+                                                    <Label htmlFor="none" className="font-normal">Not Specified</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
 
-                            <div className="space-y-3">
-                                <Label>Status</Label>
-                                <RadioGroup defaultValue={status} onValueChange={(value) => setStatus(value as 'seeking' | 'active' | 'none')} className="flex flex-col space-y-2 pt-1">
-                                    <div className="flex items-center space-x-3">
-                                        <RadioGroupItem value="seeking" id="seeking" />
-                                        <Label htmlFor="seeking" className="font-normal">Seeking Collaboration</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-3">
-                                        <RadioGroupItem value="active" id="active" />
-                                        <Label htmlFor="active" className="font-normal">Actively Building</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-3">
-                                        <RadioGroupItem value="none" id="none" />
-                                        <Label htmlFor="none" className="font-normal">Not Specified</Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
-                        </div>
-
-                    <Separator />
-
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Interests / Skills</Label>
-                            <p className="text-sm text-muted-foreground">Select themes that match your interests. This helps others find you for projects.</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 pt-2">
-                            {interests.map((interest) => (
-                                <div key={interest.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={interest.id}
-                                        checked={selectedInterests.includes(interest.id)}
-                                        onCheckedChange={() => handleInterestChange(interest.id)}
-                                    />
-                                    <label
-                                        htmlFor={interest.id}
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                        {interest.label}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-4">
-                         <div className="space-y-2">
-                             <Label>Social Links</Label>
-                             <p className="text-sm text-muted-foreground">Add links to your social and professional profiles.</p>
-                         </div>
-                         <div className="space-y-4">
-                            <div className="relative">
-                                <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram username" className="pl-10" />
-                            </div>
-                            <div className="relative">
-                                <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input value={github} onChange={e => setGithub(e.target.value)} placeholder="GitHub username" className="pl-10" />
-                            </div>
-                            <div className="relative">
-                                <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn profile URL" className="pl-10" />
-                            </div>
-                            <div className="relative">
-                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input value={otherLink} onChange={e => setOtherLink(e.target.value)} placeholder="Personal website or other link" className="pl-10" />
-                            </div>
-                         </div>
-                    </div>
-                    
-                    <Separator />
-
-                    <div className="space-y-4">
-                         <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Select onValueChange={handleCityChange} value={selectedCity}>
-                            <SelectTrigger id="city">
-                                <SelectValue placeholder="Select a city" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="raipur">Raipur</SelectItem>
-                                <SelectItem value="bilaspur">Bilaspur</SelectItem>
-                                <SelectItem value="bhilai">Bhilai</SelectItem>
-                            </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="college">University/College</Label>
-                            <Select disabled={!selectedCity} onValueChange={setSelectedCollege} value={selectedCollege}>
-                            <SelectTrigger id="college">
-                                <SelectValue placeholder="Select your university/college" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {colleges.map((college) => (
-                                <SelectItem key={college} value={college}>
-                                    {college}
-                                </SelectItem>
-                                ))}
-                            </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    <Button className="w-full" onClick={handleUpdate}>Update Profile</Button>
-                    </CardContent>
-                </Card>
+                                <AccordionItem value="skills">
+                                    <AccordionTrigger className="text-base">
+                                        <div className="flex items-center gap-3">
+                                            <Brush className="h-5 w-5" />
+                                            Skills
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-4 space-y-4">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Select themes that match your skills. This helps others find you for projects.</p>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4 pt-2">
+                                            {interests.map((interest) => (
+                                                <div key={interest.id} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={interest.id}
+                                                        checked={selectedInterests.includes(interest.id)}
+                                                        onCheckedChange={() => handleInterestChange(interest.id)}
+                                                    />
+                                                    <label
+                                                        htmlFor={interest.id}
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                    >
+                                                        {interest.label}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                                
+                                <AccordionItem value="social-links">
+                                     <AccordionTrigger className="text-base">
+                                        <div className="flex items-center gap-3">
+                                            <LinksIcon className="h-5 w-5" />
+                                            Social Links
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-4 space-y-4">
+                                         <div className="relative">
+                                            <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram username" className="pl-10" />
+                                        </div>
+                                        <div className="relative">
+                                            <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input value={github} onChange={e => setGithub(e.target.value)} placeholder="GitHub username" className="pl-10" />
+                                        </div>
+                                        <div className="relative">
+                                            <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn profile URL" className="pl-10" />
+                                        </div>
+                                        <div className="relative">
+                                            <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input value={otherLink} onChange={e => setOtherLink(e.target.value)} placeholder="Personal website or other link" className="pl-10" />
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                                
+                                <AccordionItem value="education">
+                                     <AccordionTrigger className="text-base">
+                                        <div className="flex items-center gap-3">
+                                            <BookOpen className="h-5 w-5" />
+                                            Education
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-4 space-y-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="city">City</Label>
+                                            <Select onValueChange={handleCityChange} value={selectedCity}>
+                                                <SelectTrigger id="city">
+                                                    <SelectValue placeholder="Select a city" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="raipur">Raipur</SelectItem>
+                                                    <SelectItem value="bilaspur">Bilaspur</SelectItem>
+                                                    <SelectItem value="bhilai">Bhilai</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="college">University/College</Label>
+                                            <Select disabled={!selectedCity} onValueChange={setSelectedCollege} value={selectedCollege}>
+                                                <SelectTrigger id="college">
+                                                    <SelectValue placeholder="Select your university/college" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {colleges.map((college) => (
+                                                    <SelectItem key={college} value={college}>
+                                                        {college}
+                                                    </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                            <Button className="w-full mt-6" onClick={handleUpdate}>Update Profile</Button>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         )}
