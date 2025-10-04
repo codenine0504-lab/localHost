@@ -101,7 +101,6 @@ export default function ChatPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ChatTab>('general');
   const [notifications, setNotifications] = useState({ general: false, team: false });
-  const [hasChatContent, setHasChatContent] = useState(false);
   const { toast } = useToast();
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -253,11 +252,6 @@ export default function ChatPage() {
           setMessages(msgs);
       }
       
-      if (msgs.length > 0) {
-        setHasChatContent(true);
-      }
-
-
       // Handle notifications
       if (msgs.length > 0) {
         const lastMessage = msgs[msgs.length - 1];
@@ -428,24 +422,18 @@ export default function ChatPage() {
 
   return (
      <div className="h-screen flex flex-col bg-background">
-        {hasChatContent ? (
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-grow">
-                <TabsList className="grid w-full grid-cols-2">
-                     <TabTriggerWithNotification value="general" label="General" hasNotification={notifications.general} />
-                     <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} disabled={!isMember}/>
-                </TabsList>
-                <TabsContent value="general" className="flex-grow flex flex-col">
-                     <ChatView key="general" />
-                </TabsContent>
-                <TabsContent value="team" className="flex-grow flex flex-col">
-                     <ChatView key="team" />
-                </TabsContent>
-            </Tabs>
-        ) : (
-            <div className="flex-grow">
-                <NoChatView />
-            </div>
-        )}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-grow">
+            <TabsList className="grid w-full grid-cols-2">
+                 <TabTriggerWithNotification value="general" label="General" hasNotification={notifications.general} />
+                 <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} disabled={!isMember}/>
+            </TabsList>
+            <TabsContent value="general" className="flex-grow flex flex-col">
+                 <ChatView key="general" />
+            </TabsContent>
+            <TabsContent value="team" className="flex-grow flex flex-col">
+                 <ChatView key="team" />
+            </TabsContent>
+        </Tabs>
         
         <div className={cn("fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative", isSidebarOpen && "pr-[var(--sidebar-width)]")}>
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
@@ -477,6 +465,9 @@ export default function ChatPage() {
   );
   
   function ChatView() {
+    if (messages.length === 0) {
+        return <NoChatView />;
+    }
     return (
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
             <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
