@@ -45,6 +45,7 @@ export default function ProjectPage() {
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const params = useParams();
     const router = useRouter();
     const projectId = params.id as string;
@@ -55,21 +56,26 @@ export default function ProjectPage() {
 
             try {
                 setLoading(true);
+                let projectData;
                 const projectDocRef = doc(db, 'projects', projectId);
                 const projectDoc = await getDoc(projectDocRef);
 
                 if (projectDoc.exists()) {
-                    setProject({ id: projectDoc.id, ...projectDoc.data() } as Project);
+                    projectData = { id: projectDoc.id, ...projectDoc.data() } as Project;
                 } else {
                     const privateProjectDocRef = doc(db, 'privateProjects', projectId);
                     const privateProjectDoc = await getDoc(privateProjectDocRef);
 
                     if (privateProjectDoc.exists()) {
-                         setProject({ id: privateProjectDoc.id, ...privateProjectDoc.data() } as Project);
+                         projectData = { id: privateProjectDoc.id, ...privateProjectDoc.data() } as Project;
                     } else {
                         setError('Project not found.');
+                        setLoading(false);
+                        return;
                     }
                 }
+                setProject(projectData);
+                setIsDialogOpen(true);
             } catch (err) {
                 console.error("Error fetching project:", err);
                 setError('Failed to load project details.');
@@ -80,6 +86,11 @@ export default function ProjectPage() {
 
         fetchProject();
     }, [projectId]);
+
+    const handleDialogClose = () => {
+        setIsDialogOpen(false);
+        router.push('/projects');
+    }
 
     return (
         <>
@@ -92,28 +103,14 @@ export default function ProjectPage() {
                 </div>
             )}
             {project && (
-                 <div className="container mx-auto py-12 px-4 md:px-6">
-                    <ProjectDetailsDialog project={project}>
-                       <></>
-                    </ProjectDetailsDialog>
-                    <div className="invisible absolute">
-                        <ProjectDetailsDialog project={project}>
-                            <div id="trigger" />
-                        </ProjectDetailsDialog>
-                    </div>
-                 </div>
+                 <ProjectDetailsDialog
+                    project={project}
+                    open={isDialogOpen}
+                    onOpenChange={handleDialogClose}
+                 >
+                    {/* Trigger is not needed as we control state */}
+                 </ProjectDetailsDialog>
             )}
         </>
     );
 }
-
-// This is a bit of a hack to auto-trigger the dialog on page load.
-const AutoTriggerDialog = () => {
-    useEffect(() => {
-        const trigger = document.getElementById('trigger');
-        trigger?.click();
-    }, []);
-    return null;
-}
-
-    

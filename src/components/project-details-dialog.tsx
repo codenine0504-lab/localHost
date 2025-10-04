@@ -36,9 +36,11 @@ interface Project {
 interface ProjectDetailsDialogProps {
   project: Project;
   children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialogProps) {
+export function ProjectDetailsDialog({ project, children, open, onOpenChange }: ProjectDetailsDialogProps) {
   const [user, setUser] = useState<User | null>(auth.currentUser);
   const [requestStatus, setRequestStatus] = useState<'idle' | 'pending' | 'sent'>('idle');
   const router = useRouter();
@@ -84,7 +86,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
       return;
     }
 
-    if (project.isPrivate || project.requiresRequestToJoin) {
+    if (project.requiresRequestToJoin) {
       handleRequestToJoin();
     } else {
       handleJoinPublicProject();
@@ -173,7 +175,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   };
 
   const getButtonText = () => {
-    if (project.isPrivate || project.requiresRequestToJoin) {
+    if (project.requiresRequestToJoin) {
         switch (requestStatus) {
             case 'pending': return 'Sending...';
             case 'sent': return 'Request Sent';
@@ -184,7 +186,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col md:flex-row">
         <div className="md:w-1/2 flex flex-col p-6">
@@ -227,5 +229,3 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     </Dialog>
   );
 }
-
-    
