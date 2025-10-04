@@ -134,13 +134,21 @@ export function WelcomeScreen() {
                             ))}
                         </CarouselContent>
                     </Carousel>
-                    <div className="mt-8">
+                    <div className="mt-8 flex gap-4">
                         <Button 
                             size="lg" 
                             className="bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
                             onClick={handleGoogleLogin}
                         >
                             Login with Google
+                        </Button>
+                        <Button
+                            size="lg"
+                            variant="ghost"
+                            className="text-white hover:bg-slate-800 hover:text-white"
+                            onClick={handleGoogleLogin}
+                        >
+                            Skip
                         </Button>
                     </div>
                 </div>
