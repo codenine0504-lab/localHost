@@ -124,13 +124,14 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
             setJoinRequests(requests);
             
-            const notificationKey = `hasNewJoinRequests_${currentUser?.uid}`;
-            if(requests.length > 0) {
-                localStorage.setItem(notificationKey, 'true');
+            if (currentUser) {
+                const notificationKey = `hasNewJoinRequests_${currentUser.uid}`;
+                if (requests.length > 0) {
+                    localStorage.setItem(notificationKey, 'true');
+                } else {
+                    localStorage.removeItem(notificationKey);
+                }
                 window.dispatchEvent(new Event('storage'));
-            } else {
-                 localStorage.removeItem(notificationKey);
-                 window.dispatchEvent(new Event('storage'));
             }
         }, (error) => {
             console.error("Error fetching join requests:", error);
@@ -192,13 +193,13 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         const requestRef = doc(db, 'joinRequests', requestId);
 
         try {
-            if (action === 'approve') {
-                const requestDoc = await getDoc(requestRef);
-                if (!requestDoc.exists()) {
-                    throw new Error("Join request not found.");
-                }
-                const requestData = requestDoc.data() as JoinRequest;
+            const requestDoc = await getDoc(requestRef);
+            if (!requestDoc.exists()) {
+                throw new Error("Join request not found.");
+            }
+            const requestData = requestDoc.data() as JoinRequest;
 
+            if (action === 'approve') {
                 const projectCollection = requestData.projectCollection || (project.isPrivate ? 'privateProjects' : 'projects');
                 
                 const projectRef = doc(db, projectCollection, project.id);
@@ -211,7 +212,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 await updateDoc(requestRef, { status: 'declined' });
                 toast({ title: 'User Declined', description: 'The join request has been declined.' });
             }
-            onProjectUpdate(); // Re-fetch project members
+            onProjectUpdate(); 
         } catch(error) {
             console.error(`Error ${action === 'approve' ? 'approving' : 'declining'} request:`, error);
             toast({ title: "Error", description: "Could not process the request.", variant: 'destructive' });
@@ -220,7 +221,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
     
-    const handleSettingToggle = async (setting: 'isPrivate' | 'requiresRequestToJoin', value: boolean) => {
+    const handleSettingToggle = async (setting: 'isPrivate', value: boolean) => {
         if (!isCurrentUserAdmin) return;
         setIsProcessing(true);
 
@@ -232,7 +233,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 const fromCollection = value ? 'projects' : 'privateProjects';
                 const toCollection = value ? 'privateProjects' : 'projects';
                 
-                if (fromCollection === toCollection) { // No change needed
+                if (fromCollection === toCollection) { 
                     setIsProcessing(false);
                     return;
                 }
@@ -244,7 +245,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
                 const projectData = projectDoc.data();
                 projectData.isPrivate = value;
-                projectData.requiresRequestToJoin = true; // Always require for private
+                projectData.requiresRequestToJoin = true; 
                 
                 if (value && !projectData.members) {
                     projectData.members = [project.owner];
@@ -255,10 +256,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate: value });
 
                 toast({ title: "Success", description: `Project visibility updated to ${value ? 'Private' : 'Public'}.` });
-            } else { 
-                 await updateDoc(projectRef, { requiresRequestToJoin: value });
-                 toast({ title: "Success", description: `Join requests are now ${value ? 'required' : 'not required'}.` });
-            }
+            } 
             onProjectUpdate();
         } catch (error) {
             console.error("Error updating setting:", error);
@@ -339,10 +337,10 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
     
      const handleShare = async () => {
-        const shareUrl = `${window.location.origin}/projects/${project.id}`;
+        const shareUrl = `${window.location.origin}/projects`;
         const shareData = {
-            title: `Join my project: ${project.title}`,
-            text: `Join "${project.title}" on LocalHost!`,
+            title: `Check out projects on LocalHost!`,
+            text: `Join and collaborate on projects on LocalHost!`,
             url: shareUrl,
         };
 
@@ -353,7 +351,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 await navigator.clipboard.writeText(shareUrl);
                 toast({
                     title: 'Link Copied',
-                    description: 'Project invitation link copied to clipboard.',
+                    description: 'Projects page link copied to clipboard.',
                 });
             }
         } catch (error) {
@@ -645,5 +643,3 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
-
-    
