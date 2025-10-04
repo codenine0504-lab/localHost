@@ -6,6 +6,9 @@ import { usePathname } from 'next/navigation';
 import { Home, Compass, UserCircle, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
+import { useEffect, useState } from 'react';
+import type { User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -16,9 +19,24 @@ const navItems = [
 
 export function Footer() {
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const isChatPage = pathname.startsWith('/chatroom/');
 
-  if (isChatPage && pathname !== '/chatroom') {
+  if (loading) {
+    return null; // Don't show footer while checking auth state
+  }
+
+  if (!user || (isChatPage && pathname !== '/chatroom')) {
     return null;
   }
 
