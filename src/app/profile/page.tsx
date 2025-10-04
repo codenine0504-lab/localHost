@@ -10,14 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
+import { onAuthStateChanged, User, updateProfile, signOut } from 'firebase/auth';
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon, LogOut } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useRouter } from 'next/navigation';
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -44,6 +45,9 @@ function ProfileSkeleton() {
                             <Skeleton className="h-4 w-40" />
                         </div>
                     </CardHeader>
+                    <CardContent className="p-6 pt-0 space-y-2">
+                        <Skeleton className="h-9 w-full" />
+                    </CardContent>
                 </Card>
             </div>
             <div className="md:col-span-2">
@@ -80,6 +84,8 @@ export default function ProfilePage() {
   const [linkedin, setLinkedin] = useState('');
   const [otherLink, setOtherLink] = useState('');
   const { toast } = useToast();
+  const router = useRouter();
+
 
    useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -168,6 +174,24 @@ export default function ProfilePage() {
         });
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Could not log out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
@@ -193,7 +217,7 @@ export default function ProfilePage() {
             <div className="text-center">Please log in to view your profile.</div>
         ) : (
             <div className="grid gap-8 md:grid-cols-3">
-                <div className="md:col-span-1">
+                <div className="md:col-span-1 space-y-6">
                 <Card className="overflow-hidden relative">
                      <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-primary/20 to-accent/20" />
                     <CardHeader className="flex flex-row items-center gap-4 p-6 bg-transparent relative z-10">
@@ -206,6 +230,12 @@ export default function ProfilePage() {
                             <CardDescription className="text-xs break-all">{user.email}</CardDescription>
                         </div>
                     </CardHeader>
+                    <CardContent className="p-6 pt-0">
+                        <Button variant="outline" className="w-full" onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Logout
+                        </Button>
+                    </CardContent>
                 </Card>
                 </div>
                 <div className="md:col-span-2">
@@ -355,3 +385,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
+    
