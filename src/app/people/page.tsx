@@ -10,8 +10,8 @@ import Link from 'next/link';
 import { AnimatedHeader } from '@/components/animated-header';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 
 interface AppUser {
   id: string;
@@ -21,6 +21,12 @@ interface AppUser {
   email?: string;
   status?: 'seeking' | 'active' | 'none';
 }
+
+const tabs = [
+    { id: 'all', label: 'All' },
+    { id: 'seeking', label: 'Seeking' },
+    { id: 'active', label: 'Active' },
+];
 
 function PeopleSkeleton() {
     return (
@@ -112,15 +118,33 @@ export default function PeoplePage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             </div>
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-8">
-            <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="seeking">Seeking</TabsTrigger>
-                <TabsTrigger value="active">Active</TabsTrigger>
-            </TabsList>
-        </Tabs>
-
+        
+        <div className="flex justify-center mb-8">
+            <div className="flex space-x-1 rounded-full bg-muted p-1">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`${
+                            activeTab === tab.id ? '' : 'hover:text-foreground/60'
+                        } relative rounded-full px-4 py-2 text-sm font-medium text-foreground transition focus-visible:outline-2`}
+                        style={{
+                            WebkitTapHighlightColor: 'transparent',
+                        }}
+                    >
+                        {activeTab === tab.id && (
+                            <motion.span
+                                layoutId="bubble"
+                                className="absolute inset-0 z-10 bg-background shadow-sm"
+                                style={{ borderRadius: 9999 }}
+                                transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                            />
+                        )}
+                        <span className="relative z-20">{tab.label}</span>
+                    </button>
+                ))}
+            </div>
+        </div>
 
         <div className="max-w-4xl mx-auto">
             {loading ? (
