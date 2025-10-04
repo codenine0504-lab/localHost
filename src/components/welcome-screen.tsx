@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Layers, MessageSquare, Search, User } from 'lucide-react';
 
 const AnimatedLogo = () => (
     <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
@@ -24,16 +23,6 @@ const AnimatedLogo = () => (
         <span className="absolute inset-0 flex items-center justify-center text-5xl font-extrabold text-primary-foreground">
             LH
         </span>
-    </div>
-);
-
-const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
-    <div className="bg-slate-800/50 p-6 rounded-lg text-center backdrop-blur-sm border border-slate-700">
-        <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/20 text-primary mx-auto mb-4">
-            {icon}
-        </div>
-        <h3 className="text-xl font-bold text-slate-100">{title}</h3>
-        <p className="mt-2 text-slate-400">{description}</p>
     </div>
 );
 
@@ -84,32 +73,6 @@ export function WelcomeScreen() {
                 >
                     Get Started
                 </Button>
-            </div>
-            
-            <div className="relative z-10 container mx-auto mt-24 px-4">
-                 <h2 className="text-3xl font-bold text-center text-white mb-12">Features</h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <FeatureCard
-                        icon={<Layers className="w-6 h-6" />}
-                        title="Host & Join Projects"
-                        description="Easily create new projects or join existing ones. Public and private options available."
-                    />
-                    <FeatureCard
-                        icon={<Search className="w-6 h-6" />}
-                        title="Explore & Discover"
-                        description="Find interesting projects from various colleges and universities across different themes."
-                    />
-                     <FeatureCard
-                        icon={<MessageSquare className="w-6 h-6" />}
-                        title="Real-time Chat"
-                        description="Collaborate with your team members in a dedicated chat room for every project."
-                    />
-                    <FeatureCard
-                        icon={<User className="w-6 h-6" />}
-                        title="Customize Your Profile"
-                        description="Set up your profile with your college and city to connect with peers."
-                    />
-                </div>
             </div>
         </div>
     );
