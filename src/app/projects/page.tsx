@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Filter } from 'lucide-react';
+import Link from 'next/link';
 
 
 interface Project {
@@ -123,8 +124,8 @@ export default function ProjectsPage() {
              ) : filteredProjects.length > 0 ? (
                 filteredProjects.map((project) => (
                     <Card key={project.id} className="flex flex-col overflow-hidden h-full transition-colors duration-300">
-                        <ProjectDetailsDialog project={project}>
-                           <div className="relative h-48 w-full cursor-pointer">
+                        <Link href={`/projects/${project.id}`} className="block cursor-pointer">
+                           <div className="relative h-48 w-full">
                                 <Image
                                     src={project.imageUrl || 'https://placehold.co/600x400.png'}
                                     alt={`Image for ${project.title}`}
@@ -133,7 +134,7 @@ export default function ProjectsPage() {
                                     data-ai-hint="project image"
                                 />
                             </div>
-                        </ProjectDetailsDialog>
+                        </Link>
                         <CardHeader>
                         <CardTitle>{project.title}</CardTitle>
                         <CardDescription>{project.college}</CardDescription>
@@ -149,11 +150,11 @@ export default function ProjectsPage() {
                         </div>
                         </CardContent>
                         <CardFooter>
-                            <ProjectDetailsDialog project={project}>
-                                <Button className="w-full" variant="outline">
+                            <Button className="w-full" variant="outline" asChild>
+                                <Link href={`/projects/${project.id}`}>
                                     View Details
-                                </Button>
-                             </ProjectDetailsDialog>
+                                </Link>
+                             </Button>
                         </CardFooter>
                     </Card>
                 ))
@@ -167,3 +168,5 @@ export default function ProjectsPage() {
     </>
   );
 }
+
+    

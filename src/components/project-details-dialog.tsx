@@ -145,10 +145,10 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
   
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}/chatroom/${project.id}`;
+    const shareUrl = `${window.location.origin}/projects/${project.id}`;
     const shareData = {
-        title: `Join my project: ${project.title}`,
-        text: `Join "${project.title}" on LocalHost!`,
+        title: `Check out this project: ${project.title}`,
+        text: `"${project.title}" on LocalHost!`,
         url: shareUrl,
     };
 
@@ -159,7 +159,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
             await navigator.clipboard.writeText(shareUrl);
             toast({
                 title: 'Link Copied',
-                description: 'Project invitation link copied to clipboard.',
+                description: 'Project link copied to clipboard.',
             });
         }
     } catch (error) {
@@ -180,7 +180,7 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
             default: return 'Request to Join';
         }
     }
-    return 'Join Project';
+    return 'Join Project & Chat';
   }
 
   return (
@@ -227,3 +227,5 @@ export function ProjectDetailsDialog({ project, children }: ProjectDetailsDialog
     </Dialog>
   );
 }
+
+    

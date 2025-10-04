@@ -109,7 +109,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     }, [project]);
     
     useEffect(() => {
-        if (!isCurrentUserAdmin || !project.id || !currentUser) {
+        if (!isCurrentUserAdmin || !project.id) {
             setJoinRequests([]);
             return;
         }
@@ -124,7 +124,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
             setJoinRequests(requests);
             
-            const notificationKey = `hasNewJoinRequests_${currentUser.uid}`;
+            const notificationKey = `hasNewJoinRequests_${currentUser?.uid}`;
             if(requests.length > 0) {
                 localStorage.setItem(notificationKey, 'true');
                 window.dispatchEvent(new Event('storage'));
@@ -255,7 +255,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 await updateDoc(doc(db, 'chatRooms', project.id), { isPrivate: value });
 
                 toast({ title: "Success", description: `Project visibility updated to ${value ? 'Private' : 'Public'}.` });
-            } else { // requiresRequestToJoin - This case is now removed but logic kept for reference
+            } else { 
                  await updateDoc(projectRef, { requiresRequestToJoin: value });
                  toast({ title: "Success", description: `Join requests are now ${value ? 'required' : 'not required'}.` });
             }
@@ -339,7 +339,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
     
      const handleShare = async () => {
-        const shareUrl = `${window.location.origin}/chatroom/${project.id}`;
+        const shareUrl = `${window.location.origin}/projects/${project.id}`;
         const shareData = {
             title: `Join my project: ${project.title}`,
             text: `Join "${project.title}" on LocalHost!`,
@@ -645,3 +645,5 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
+
+    
