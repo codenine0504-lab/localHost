@@ -239,18 +239,11 @@ export default function ChatRoomPage() {
 
   const checkNotifications = (rooms: ChatRoom[]): ChatRoom[] => {
       return rooms.map(room => {
-          if (room.id === 'general') {
-               const lastGeneralMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_general`);
-               const lastGeneralReadTimestampStr = localStorage.getItem(`lastRead_general`);
-               const lastGeneralMessageTimestamp = lastGeneralMessageTimestampStr ? parseInt(lastGeneralMessageTimestampStr, 10) : 0;
-               const lastGeneralReadTimestamp = lastGeneralReadTimestampStr ? parseInt(lastGeneralReadTimestampStr, 10) : Date.now();
-               return {...room, hasNotification: lastGeneralMessageTimestamp > lastGeneralReadTimestamp };
-          }
-
           const lastMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}`);
           const lastReadTimestampStr = localStorage.getItem(`lastRead_${room.id}`);
+          
           const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
-          const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : Date.now();
+          const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
           return {
               ...room,
@@ -304,8 +297,8 @@ export default function ChatRoomPage() {
 
     const setupChatRoomsListener = (projectIds: string[]) => {
         if (projectIds.length === 0) {
-            setChatRooms([]);
             setLoading(false);
+            setChatRooms([]); // No projects, so no project chats.
             return () => {};
         }
 
@@ -365,15 +358,15 @@ export default function ChatRoomPage() {
           title="Your Chats"
           description="Engage in conversations, both public and project-specific."
       />
-      <Tabs defaultValue="projects" className="flex-1 flex flex-col">
+      <Tabs defaultValue="projects" className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="projects">Projects</TabsTrigger>
           </TabsList>
-          <TabsContent value="general" className="flex-1">
+          <TabsContent value="general" className="flex-1 min-h-0">
               <GeneralChat />
           </TabsContent>
-          <TabsContent value="projects" className="flex-1">
+          <TabsContent value="projects" className="flex-1 min-h-0">
               <div className="space-y-4 h-full overflow-y-auto">
                   {loading ? (
                       <ChatRoomListSkeleton />

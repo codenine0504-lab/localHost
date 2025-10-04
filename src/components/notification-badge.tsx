@@ -38,17 +38,22 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('lastMessageTimestamp_')) {
                     const parts = key.split('_');
-                    const roomId = parts[2];
+                    if (parts.length < 3) continue; // Skip malformed keys
+                    const roomId = parts.slice(2).join('_');
 
                     const lastMessageTimestampStr = localStorage.getItem(key);
                     const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}`);
                     
                     const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
-                    const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : Date.now();
                     
-                    if (lastMessageTimestamp > lastReadTimestamp) {
+                    // If lastRead doesn't exist, it means the user has never opened the chat, so no notification unless there is a message.
+                    // But if there's no message timestamp, there's no notification.
+                    // If there IS a message, but no read timestamp, it's a new message.
+                    const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
+
+                    if (lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp) {
                         hasNewMessage = true;
-                        break; 
+                        break;
                     }
                 }
             }
@@ -88,5 +93,3 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
         </div>
     );
 }
-
-    

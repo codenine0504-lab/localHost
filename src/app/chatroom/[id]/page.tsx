@@ -273,7 +273,7 @@ export default function ChatPage() {
       // Handle notifications
       if (msgs.length > 0 && user) {
         const lastMessage = msgs[msgs.length - 1];
-        if (lastMessage.senderId !== user.uid) {
+        if (lastMessage.senderId !== user.uid && lastMessage.createdAt) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
             localStorage.setItem(`lastMessageTimestamp_${projectId}`, lastTimestamp.toString());
             window.dispatchEvent(new Event('storage'));
@@ -331,6 +331,7 @@ export default function ChatPage() {
   useEffect(() => {
       if(projectId) {
           localStorage.setItem(`lastRead_${projectId}`, Date.now().toString());
+          localStorage.removeItem(`lastMessageTimestamp_${projectId}`); // Clear message notification for this room
           window.dispatchEvent(new Event('storage'));
       }
   }, [projectId]);
@@ -376,9 +377,7 @@ export default function ChatPage() {
                 await updateDoc(requestRef, { status: 'approved' });
                 toast({ title: 'User Approved', description: 'The user has been added to the project.' });
             } else {
-                await updateDoc(projectRef, { 
-                    applicantCount: increment(-1)
-                });
+                // No need to decrement applicantCount, as they are no longer pending
                 await updateDoc(requestRef, { status: 'declined' });
                 toast({ title: 'User Declined', description: 'The join request has been declined.' });
             }
@@ -551,8 +550,3 @@ export default function ChatPage() {
      </div>
   );
 }
-    
-    
-
-    
-
