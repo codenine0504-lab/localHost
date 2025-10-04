@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectDetailsDialog } from '@/components/project-details-dialog';
 import {
@@ -94,7 +93,7 @@ export default function ProjectsPage() {
 
   return (
     <>
-        <Header />
+        
         <div className="container mx-auto py-12 px-4 md:px-6">
         <div className="space-y-4 mb-8 text-center">
             <h1 className="text-base text-muted-foreground">Join Project and Events across different colleges/universities</h1>

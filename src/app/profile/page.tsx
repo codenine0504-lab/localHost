@@ -12,7 +12,6 @@ import { db, auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
 import { Input } from "@/components/ui/input";
-import { Header } from "@/components/header";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const collegesByCity: Record<string, string[]> = {
@@ -156,7 +155,7 @@ export default function ProfilePage() {
 
   return (
     <>
-        <Header />
+        
         <div className="container mx-auto py-12 px-4 md:px-6">
         {loading ? (
              <ProfileSkeleton />

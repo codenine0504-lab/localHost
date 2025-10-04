@@ -2,14 +2,13 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Header } from "@/components/header";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Label } from "@/components/ui/label";
 
 export default function SettingsPage() {
     return (
         <>
-            <Header />
+            
             <div className="container mx-auto py-12 px-4 md:px-6">
                 <Card className="max-w-2xl mx-auto">
                     <CardHeader>

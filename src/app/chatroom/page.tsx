@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import Link from 'next/link';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { MessageSquare } from 'lucide-react';
@@ -166,7 +165,7 @@ export default function ChatRoomPage() {
 
   return (
     <>
-      <Header />
+      
       <div className="container mx-auto py-12 px-4 md:px-6">
        <div className="space-y-4">
         {loading ? (

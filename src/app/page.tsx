@@ -8,7 +8,6 @@ import { HostProjectDialog } from '@/components/host-project-dialog';
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Header } from '@/components/header';
 import { ImageSlider } from '@/components/image-slider';
 import { WelcomeScreen } from '@/components/welcome-screen';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 function AppSkeleton() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      
       <section className="relative w-full py-12 md:py-20 flex-1">
         <div className="container px-4 md:px-6">
            <div className="flex flex-col md:flex-row items-center justify-center gap-12">
@@ -60,7 +59,7 @@ export default function Home() {
 
   return (
     <>
-      <Header />
+      
       <section className="relative w-full py-12 md:py-20 flex items-center justify-center overflow-hidden min-h-[calc(100vh_-_169px)] md:min-h-0">
         <div className="absolute inset-0 radial-gradient-background"></div>
         <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary rounded-full blur-3xl opacity-20 pulse-glow"></div>

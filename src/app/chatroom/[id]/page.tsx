@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Ban } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {
@@ -296,7 +295,7 @@ export default function ChatPage() {
   if (loading) {
     return (
         <div className="h-screen flex flex-col">
-            <Header />
+            
             <ChatSkeleton />
         </div>
     );
@@ -310,7 +309,7 @@ export default function ChatPage() {
   if (!hasAccess) {
     return (
       <>
-        <Header />
+        
         <div className="flex flex-col items-center justify-center h-[calc(100vh_-_65px)] text-center p-4">
             <Ban className="h-16 w-16 text-destructive mb-4" />
             <h1 className="text-2xl font-bold">Access Denied</h1>
@@ -342,7 +341,7 @@ export default function ChatPage() {
 
   return (
      <div className="h-screen flex flex-col bg-background">
-        <Header onTitleClick={() => setIsSidebarOpen(true)} />
+        
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
             <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
                 {messages.length === 0 && (

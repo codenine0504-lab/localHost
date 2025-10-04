@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useParams, useRouter } from 'next/navigation';
-import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectDetailsDialog } from '@/components/project-details-dialog';
 import { Button } from '@/components/ui/button';
@@ -94,7 +93,7 @@ export default function ProjectPage() {
 
     return (
         <>
-            <Header />
+            
             {loading && <ProjectPageSkeleton />}
             {error && (
                 <div className="container mx-auto py-12 text-center">
