@@ -110,7 +110,7 @@ export default function ChatPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
-  const [isMember, setIsMember] = useState(false);
+  const [isMember, setIsMember] = useState(isMember);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
@@ -496,7 +496,7 @@ export default function ChatPage() {
 
   function ChatView() {
     return (
-        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+        <ScrollArea className="h-full" ref={scrollAreaRef}>
             <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
                 {messages.length === 0 ? <NoChatView /> : messages.map((msg) => (
                     <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
@@ -541,7 +541,7 @@ export default function ChatPage() {
             />
         )}
         
-        <div className="flex flex-col flex-grow min-h-0">
+        <div className="flex-grow min-h-0">
             <ChatView />
         </div>
         
@@ -589,3 +589,5 @@ export default function ChatPage() {
      </div>
   );
 }
+
+    
