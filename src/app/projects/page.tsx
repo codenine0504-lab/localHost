@@ -131,7 +131,7 @@ export default function ProjectsPage() {
         <div className={cn(
             "grid gap-6",
             layout === 'grid' && "md:grid-cols-2",
-            layout === 'list' && "md:grid-cols-2",
+            layout === 'list' && "grid-cols-1",
             layout === 'linear' && "grid-cols-1"
         )}>
              {loading ? (
@@ -146,7 +146,7 @@ export default function ProjectsPage() {
                         key={project.id} 
                         className={cn(
                             "overflow-hidden h-full transition-shadow duration-300 hover:shadow-lg",
-                            layout === 'list' ? "flex flex-col md:flex-row" : "flex flex-col"
+                            layout === 'list' && "md:flex md:flex-row"
                         )}
                     >
                          {layout === 'list' ? (
@@ -188,6 +188,12 @@ export default function ProjectsPage() {
                                         </Badge>
                                     )}
                                 </div>
+                                <p className={cn("text-sm text-muted-foreground", {
+                                    "truncate": layout === 'grid',
+                                    "line-clamp-2": layout === 'list' || layout === 'linear',
+                                })}>
+                                    {project.description}
+                                </p>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-1.5">
                                         <Eye className="h-4 w-4" />
