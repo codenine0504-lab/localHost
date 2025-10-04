@@ -296,10 +296,10 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             
             const chatRoomRef = doc(db, 'chatRooms', project.id);
             const generalChatRef = collection(chatRoomRef, 'General');
-            const projectChatRef = collection(chatRoomRef, 'Project');
+            const teamChatRef = collection(chatRoomRef, 'Team');
 
             await deleteSubcollection(generalChatRef);
-            await deleteSubcollection(projectChatRef);
+            await deleteSubcollection(teamChatRef);
             
             await deleteDoc(chatRoomRef);
 
@@ -662,3 +662,5 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         </Sheet>
     );
 }
+
+    

@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 interface Message {
   id: string;
@@ -46,7 +47,7 @@ interface Member {
     isAdmin: boolean;
 }
 
-type ChatTab = 'general' | 'project';
+type ChatTab = 'general' | 'team';
 
 function ChatSkeleton() {
     return (
@@ -97,6 +98,7 @@ export default function ChatPage() {
   const [hasAccess, setHasAccess] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ChatTab>('general');
+  const [notifications, setNotifications] = useState({ general: false, team: false });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
   const initialLoadHandled = useRef(false);
@@ -111,11 +113,16 @@ export default function ChatPage() {
     return () => unsubscribe();
   }, []);
   
-  // Mark chat as read when component mounts
+  const clearTabNotification = (tab: ChatTab) => {
+    setNotifications(prev => ({...prev, [tab]: false}));
+    localStorage.setItem(`lastRead_${projectId}_${tab}`, Date.now().toString());
+    window.dispatchEvent(new Event('storage')); // Notify other components like the footer
+  }
+
+  // Mark chat as read when tab changes
   useEffect(() => {
     if(projectId) {
-        localStorage.setItem(`lastRead_${projectId}_${activeTab}`, Date.now().toString());
-        window.dispatchEvent(new Event('storage')); // Notify other components
+        clearTabNotification(activeTab);
     }
   }, [projectId, activeTab]);
 
@@ -209,33 +216,49 @@ export default function ChatPage() {
   }, [user, fetchProjectAndMembers]);
 
 
-  useEffect(() => {
-    if (!projectId || !hasAccess || !user) return;
+  const setupTabListener = (tab: ChatTab) => {
+    if (!projectId || !hasAccess || !user) return () => {};
 
-    const collectionName = activeTab === 'general' ? 'General' : 'Project';
+    const collectionName = tab === 'general' ? 'General' : 'Team';
     const q = query(collection(db, `chatRooms/${projectId}/${collectionName}`), orderBy('createdAt', 'asc'));
+    
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-      setMessages(msgs);
+      
+      // Update messages only if it's the active tab
+      if (tab === activeTab) {
+          setMessages(msgs);
+      }
 
-      if (initialLoadHandled.current && msgs.length > 0) {
+      // Handle notifications
+      if (msgs.length > 0) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.senderId !== user.uid) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
-            localStorage.setItem(`lastMessageTimestamp_${projectId}_${activeTab}`, lastTimestamp.toString());
-            window.dispatchEvent(new Event('storage')); 
+            const lastReadTimestampStr = localStorage.getItem(`lastRead_${projectId}_${tab}`);
+            const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
+            
+            if (lastTimestamp > lastReadTimestamp) {
+                // Set local notification state for the tab dot
+                if (tab !== activeTab) {
+                    setNotifications(prev => ({...prev, [tab]: true}));
+                }
+                
+                // Set localStorage for global notification state (e.g., footer)
+                localStorage.setItem(`lastMessageTimestamp_${projectId}_${tab}`, lastTimestamp.toString());
+                window.dispatchEvent(new Event('storage'));
 
-            if(document.hidden) {
-                const audio = new Audio('/chatnotify.mp3');
-                audio.play().catch(e => console.error("Audio play failed:", e));
+                // Play sound if document is hidden
+                if(document.hidden) {
+                    const audio = new Audio('/chatnotify.mp3');
+                    audio.play().catch(e => console.error("Audio play failed:", e));
+                }
             }
         }
       }
-      
-      if(!initialLoadHandled.current && msgs.length > 0) {
-          initialLoadHandled.current = true;
-      }
 
+      // Fetch sender details if they are not in cache
       const senderIds = new Set(msgs.map(msg => msg.senderId));
       const newSenderIds = Array.from(senderIds).filter(id => !memberCache.current.has(id));
 
@@ -261,7 +284,17 @@ export default function ChatPage() {
       }
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
+  }
+
+  useEffect(() => {
+      const unsubGeneral = setupTabListener('general');
+      const unsubTeam = setupTabListener('team');
+
+      return () => {
+          unsubGeneral();
+          unsubTeam();
+      }
   }, [projectId, hasAccess, user, projectDetails, activeTab]);
 
   const scrollToBottom = () => {
@@ -286,7 +319,7 @@ export default function ChatPage() {
     setNewMessage('');
 
     try {
-        const collectionName = activeTab === 'general' ? 'General' : 'Project';
+        const collectionName = activeTab === 'general' ? 'General' : 'Team';
         await addDoc(collection(db, `chatRooms/${projectId}/${collectionName}`), {
             text: userMessage,
             createdAt: serverTimestamp(),
@@ -300,7 +333,6 @@ export default function ChatPage() {
   if (loading) {
     return (
         <div className="h-screen flex flex-col">
-            
             <ChatSkeleton />
         </div>
     );
@@ -314,7 +346,6 @@ export default function ChatPage() {
   if (!hasAccess) {
     return (
       <>
-        
         <div className="flex flex-col items-center justify-center h-[calc(100vh_-_65px)] text-center p-4">
             <Ban className="h-16 w-16 text-destructive mb-4" />
             <h1 className="text-2xl font-bold">Access Denied</h1>
@@ -344,22 +375,33 @@ export default function ChatPage() {
     return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
   };
 
+  const TabTriggerWithNotification = ({ value, label, hasNotification }: { value: string, label: string, hasNotification: boolean }) => (
+    <TabsTrigger value={value} className="relative">
+      {label}
+      {hasNotification && (
+        <span className="absolute top-1 right-1 flex h-2 w-2">
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+        </span>
+      )}
+    </TabsTrigger>
+  );
+
   return (
      <div className="h-screen flex flex-col bg-background">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ChatTab)} className="flex flex-col flex-grow">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="project">Project</TabsTrigger>
+                 <TabTriggerWithNotification value="general" label="General" hasNotification={notifications.general} />
+                 <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} />
             </TabsList>
             <TabsContent value="general" className="flex-grow flex flex-col">
-                 <ChatView />
+                 <ChatView key="general" />
             </TabsContent>
-            <TabsContent value="project" className="flex-grow flex flex-col">
-                 <ChatView />
+            <TabsContent value="team" className="flex-grow flex flex-col">
+                 <ChatView key="team" />
             </TabsContent>
         </Tabs>
         
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative">
+        <div className={cn("fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative", isSidebarOpen && "pr-[var(--sidebar-width)]")}>
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
             <div className="relative">
                 <Input
@@ -423,3 +465,5 @@ export default function ChatPage() {
   }
 
 }
+
+    

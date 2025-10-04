@@ -148,8 +148,8 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
       // Create dummy docs to ensure subcollections are created.
       const generalChatRef = doc(collection(chatRoomRef, 'General'));
       batch.set(generalChatRef, {});
-      const projectChatRef = doc(collection(chatRoomRef, 'Project'));
-      batch.set(projectChatRef, {});
+      const teamChatRef = doc(collection(chatRoomRef, 'Team'));
+      batch.set(teamChatRef, {});
 
       await batch.commit();
 
@@ -290,3 +290,5 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
     </Dialog>
   );
 }
+
+    

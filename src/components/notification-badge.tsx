@@ -41,6 +41,8 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                     const roomId = parts[2];
                     const tab = parts[3];
 
+                    if (!tab) continue; // Skip keys that don't have a tab part
+
                     const lastMessageTimestampStr = localStorage.getItem(key);
                     const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}_${tab}`);
                     
@@ -89,3 +91,5 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
         </div>
     );
 }
+
+    
