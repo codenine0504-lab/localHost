@@ -83,7 +83,7 @@ export default function Home() {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       setLoading(false); // Set loading to false once auth state is determined
-      if (currentUser && !currentUser.isAnonymous) {
+      if (currentUser) { // Fetch data for both guest and logged-in users
         try {
             // Fetch featured projects
             const projectsQuery = query(collection(db, 'projects'), orderBy('views', 'desc'), limit(6));
@@ -119,13 +119,19 @@ export default function Home() {
     return <AppSkeleton />;
   }
 
-  if (!user || user.isAnonymous) {
+  if (!user) {
     return (
         <ThemeProvider forcedTheme="dark">
             <WelcomeScreen />
         </ThemeProvider>
     );
   }
+  
+  if (user.isAnonymous) {
+      // You can customize a view for anonymous users here if needed in the future.
+      // For now, they see the main page.
+  }
+
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 space-y-16">
@@ -273,6 +279,8 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     
 
