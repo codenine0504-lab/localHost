@@ -32,12 +32,8 @@ export function Footer() {
 
   const isChatPage = pathname.startsWith('/chatroom/');
 
-  if (loading) {
+  if (loading || !user || (isChatPage && pathname !== '/chatroom')) {
     return null; 
-  }
-
-  if (!user || (isChatPage && pathname !== '/chatroom')) {
-    return null;
   }
 
   return (
@@ -73,3 +69,5 @@ export function Footer() {
     </footer>
   );
 }
+
+    

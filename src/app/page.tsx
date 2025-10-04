@@ -7,32 +7,67 @@ import Link from 'next/link';
 import { HostProjectDialog } from '@/components/host-project-dialog';
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { ImageSlider } from '@/components/image-slider';
+import { auth, db } from '@/lib/firebase';
 import { WelcomeScreen } from '@/components/welcome-screen';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
+import { Users, Code, Brush, Milestone, Cpu, Eye } from 'lucide-react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  theme: 'software' | 'hardware' | 'event' | 'design';
+  college: string;
+  imageUrl?: string;
+  views?: number;
+}
+
+interface AppUser {
+    id: string;
+    displayName: string | null;
+    photoURL: string | null;
+}
+
+const themes = [
+    { name: 'Software', icon: Code, color: 'bg-blue-500' },
+    { name: 'Hardware', icon: Cpu, color: 'bg-green-500' },
+    { name: 'Event', icon: Milestone, color: 'bg-pink-500' },
+    { name: 'Design', icon: Brush, color: 'bg-purple-500' },
+];
 
 function AppSkeleton() {
   return (
-    <div className="flex flex-col min-h-screen">
-      
-      <section className="relative w-full py-12 md:py-20 flex-1">
-        <div className="container px-4 md:px-6">
-           <div className="flex flex-col md:flex-row items-center justify-center gap-12">
-             <div className="flex-1 space-y-6">
-                <Skeleton className="h-16 w-3/4" />
-                <Skeleton className="h-8 w-full" />
-                <div className="flex gap-4">
-                  <Skeleton className="h-12 w-40" />
-                  <Skeleton className="h-12 w-40" />
-                </div>
-             </div>
-             <div className="flex-1 w-full max-w-2xl">
-                <Skeleton className="aspect-video w-full rounded-lg" />
-             </div>
-           </div>
+    <div className="flex flex-col min-h-screen container mx-auto px-4 md:px-6 py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
         </div>
-      </section>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 mb-8">
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+       <Skeleton className="h-10 w-40 mb-4" />
+       <div className="flex space-x-4 mb-8">
+         {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 w-40" />)}
+      </div>
+       <Skeleton className="h-10 w-40 mb-4" />
+       <div className="flex space-x-4 mb-8">
+         {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-16 rounded-full" />)}
+      </div>
+      <Skeleton className="h-10 w-56 mb-4" />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+         <Skeleton className="h-64 w-full" />
+         <Skeleton className="h-64 w-full" />
+         <Skeleton className="h-64 w-full" />
+      </div>
     </div>
   )
 }
@@ -40,14 +75,44 @@ function AppSkeleton() {
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
+  const [people, setPeople] = useState<AppUser[]>([]);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        try {
+            // Fetch featured projects
+            const projectsQuery = query(collection(db, 'projects'), orderBy('views', 'desc'), limit(6));
+            const projectsSnapshot = await getDocs(projectsQuery);
+            const projs = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+            setFeaturedProjects(projs);
+
+            // Fetch people
+            const usersQuery = query(collection(db, 'users'), limit(10));
+            const usersSnapshot = await getDocs(usersQuery);
+            const userList = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser));
+            setPeople(userList);
+
+        } catch (error) {
+            console.error("Error fetching homepage data:", error);
+        }
+      }
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "U";
+    const nameParts = name.split(" ");
+    if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {
+      return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
 
   if (loading) {
     return <AppSkeleton />;
@@ -58,50 +123,152 @@ export default function Home() {
   }
 
   return (
-    <>
-      
-      <section className="relative w-full py-12 md:py-20 flex items-center justify-center overflow-hidden min-h-[calc(100vh_-_169px)] md:min-h-0">
-        <div className="absolute inset-0 radial-gradient-background"></div>
-        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary rounded-full blur-3xl opacity-20 pulse-glow"></div>
-        <div className="container px-4 md:px-6 z-10">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-12">
-            
-            {/* Left Side: Hero Content */}
-            <div className="flex-1 flex flex-col items-center md:items-start space-y-6 text-center md:text-left">
-              <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none font-headline">
-                  Welcome to <span className="text-primary">LocalHost</span>
-                </h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Connect, Collaborate, Innovate. Your next great idea starts
-                  here!
-                </p>
-              </div>
-              <div className="flex flex-col gap-4 min-[400px]:flex-row">
-                <HostProjectDialog />
-                <Button size="lg" variant="secondary" asChild>
-                  <Link href="/projects">
-                    Join a project
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-               <div className="pt-6 text-center md:text-left text-sm text-muted-foreground">
-                    Developed by <span className="font-bold text-sky-500">CODE</span><span className="font-bold text-gray-500">-9</span>
-                </div>
+    <div className="container mx-auto px-4 md:px-6 py-8 space-y-12">
+        {/* User Greeting */}
+        <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 border-2 border-primary">
+                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'}/>
+                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+            </Avatar>
+            <div>
+                <h1 className="text-2xl md:text-3xl font-bold">Hi, {user.displayName || 'User'}!</h1>
+                <p className="text-muted-foreground">Let's create something amazing today.</p>
             </div>
-
-            {/* Right Side: Featured Projects Slider */}
-            <div className="flex-1 w-full max-w-2xl">
-               <div className="flex flex-col items-center space-y-4 text-center">
-                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:hidden">Featured Projects</h2>
-                 <ImageSlider />
-               </div>
-            </div>
-
-          </div>
         </div>
-      </section>
-    </>
+
+        {/* Action Cards */}
+        <div className="grid gap-6 md:grid-cols-2">
+            <HostProjectDialog>
+                 <Card className="group cursor-pointer hover:border-primary transition-all h-full flex flex-col justify-between">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-2xl">
+                            <Users className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                            Host a Project
+                        </CardTitle>
+                        <CardDescription>Start your own project and invite collaborators to join your team.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button variant="ghost" className="text-primary group-hover:translate-x-1 transition-transform">
+                            Get Started <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </CardContent>
+                </Card>
+            </HostProjectDialog>
+            <Link href="/projects">
+                <Card className="group cursor-pointer hover:border-primary transition-all h-full flex flex-col justify-between">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-2xl">
+                             <Compass className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                            Join a Project
+                        </CardTitle>
+                        <CardDescription>Explore existing projects and events to lend your skills and collaborate.</CardDescription>
+                    </CardHeader>
+                     <CardContent>
+                        <Button variant="ghost" className="text-primary group-hover:translate-x-1 transition-transform">
+                            Explore Projects <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </CardContent>
+                </Card>
+            </Link>
+        </div>
+
+        {/* Themes Section */}
+        <div>
+            <h2 className="text-2xl font-bold mb-4">Explore by Theme</h2>
+            <div className="relative">
+                <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+                    <div className="flex w-max space-x-4 p-4">
+                        {themes.map((theme) => (
+                        <Card key={theme.name} className="w-40 flex-shrink-0 hover:shadow-lg transition-shadow">
+                             <Link href={`/projects?theme=${theme.name.toLowerCase()}`} className="block">
+                                <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
+                                     <div className={`p-3 rounded-full ${theme.color}`}>
+                                        <theme.icon className="h-6 w-6 text-white" />
+                                    </div>
+                                    <p className="font-semibold">{theme.name}</p>
+                                </CardContent>
+                            </Link>
+                        </Card>
+                        ))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+            </div>
+        </div>
+        
+         {/* People Section */}
+        <div>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Connect with People</h2>
+                 <Button asChild variant="ghost" className="text-primary">
+                    <Link href="/people">
+                        View All <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+            </div>
+             <div className="relative">
+                <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+                    <div className="flex w-max space-x-6 p-4">
+                        {people.map((person) => (
+                        <Link href={`/profile/${person.id}`} key={person.id}>
+                            <div className="flex flex-col items-center gap-2 text-center w-20">
+                                <Avatar className="h-16 w-16 border-2 border-muted hover:border-primary transition-all">
+                                    <AvatarImage src={person.photoURL || undefined} alt={person.displayName || 'User'}/>
+                                    <AvatarFallback>{getInitials(person.displayName)}</AvatarFallback>
+                                </Avatar>
+                                <p className="text-xs font-medium truncate w-full">{person.displayName || 'User'}</p>
+                            </div>
+                         </Link>
+                        ))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+            </div>
+        </div>
+
+
+        {/* Featured Projects Section */}
+        <div>
+            <h2 className="text-2xl font-bold mb-4">Featured Projects</h2>
+            {featuredProjects.length > 0 ? (
+                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {featuredProjects.map((project) => (
+                        <Card key={project.id} className="flex flex-col overflow-hidden h-full transition-shadow hover:shadow-lg">
+                            <Link href={`/projects/${project.id}`} className="block cursor-pointer">
+                            <div className="relative h-48 w-full">
+                                <Image
+                                    src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                                    alt={`Image for ${project.title}`}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    data-ai-hint="project image"
+                                />
+                            </div>
+                             <CardHeader>
+                                <CardTitle className="truncate">{project.title}</CardTitle>
+                                <CardDescription>{project.college}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow space-y-4">
+                                <div className="flex items-center gap-2">
+                                     <Badge variant="secondary">{project.theme}</Badge>
+                                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground ml-auto">
+                                        <Eye className="h-4 w-4" />
+                                        <span>{project.views || 0}</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                           </Link>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center text-muted-foreground py-10 col-span-full border rounded-lg">
+                    <p>No featured projects available yet. Be the first to host one!</p>
+                </div>
+            )}
+        </div>
+    </div>
   );
 }
+
+    
