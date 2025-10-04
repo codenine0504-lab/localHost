@@ -33,7 +33,7 @@ export function Footer() {
   const isChatPage = pathname.startsWith('/chatroom/');
 
   if (loading) {
-    return null; // Don't show footer while checking auth state
+    return null; 
   }
 
   if (!user || (isChatPage && pathname !== '/chatroom')) {
@@ -41,8 +41,8 @@ export function Footer() {
   }
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 md:hidden">
-      <nav className="flex h-16 w-full items-center justify-around">
+    <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-50 md:hidden">
+      <nav className="flex h-16 w-full items-center justify-around rounded-full border bg-background/90 backdrop-blur-sm shadow-lg">
         {navItems.map((item) => {
           const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
           const navLink = (
@@ -50,12 +50,12 @@ export function Footer() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center gap-1 rounded-md p-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
-                isActive && 'text-primary'
+                'flex items-center justify-center h-12 w-12 rounded-full text-muted-foreground transition-colors',
+                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground'
               )}
             >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
+              <item.icon className="h-6 w-6" />
+              <span className="sr-only">{item.label}</span>
             </Link>
           );
 
@@ -73,5 +73,3 @@ export function Footer() {
     </footer>
   );
 }
-
-    
