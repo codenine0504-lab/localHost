@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, UserCircle, MessageSquare } from 'lucide-react';
+import { Home, Compass, UserCircle, MessageSquare, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { useEffect, useState } from 'react';
@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/projects', label: 'Explore', icon: Compass },
+  { href: '/people', label: 'Search', icon: Search },
   { href: '/chatroom', label: 'Chat', icon: MessageSquare },
   { href: '/profile', label: 'Profile', icon: UserCircle },
 ];

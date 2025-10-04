@@ -74,12 +74,10 @@ export default function PeoplePage() {
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
-        <div className="text-center">
-            <AnimatedHeader 
-                title="Discover People"
-                description="Connect with students and creators from various colleges. Find your next collaborator."
-            />
-        </div>
+        <AnimatedHeader 
+            title="Discover People"
+            description="Connect with students and creators from various colleges. Find your next collaborator."
+        />
 
         <div className="flex justify-center my-8">
             <div className="relative w-full max-w-lg">
