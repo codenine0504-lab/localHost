@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { MainNav } from '@/components/main-nav';
+import { FloatingNotificationBell } from '@/components/floating-notification-bell';
 
 export const metadata: Metadata = {
   title: 'LocalHost',
@@ -41,6 +42,7 @@ export default function RootLayout({
         >
             <div className="relative flex min-h-screen flex-col bg-background">
                 <main className="flex-1 pb-24">{children}</main>
+                <FloatingNotificationBell />
                 <MainNav />
             </div>
             <Toaster />
