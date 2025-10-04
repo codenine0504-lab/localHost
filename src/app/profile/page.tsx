@@ -20,7 +20,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useRouter } from 'next/navigation';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { AuthDialog } from "@/components/auth-dialog";
+import Link from 'next/link';
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -248,12 +248,12 @@ export default function ProfilePage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <AuthDialog>
-                        <Button size="lg">
+                    <Button asChild size="lg">
+                        <Link href="/login">
                             <LogIn className="mr-2 h-5 w-5" />
                             Login / Sign Up
-                        </Button>
-                    </AuthDialog>
+                        </Link>
+                    </Button>
                 </CardContent>
             </Card>
         ) : (

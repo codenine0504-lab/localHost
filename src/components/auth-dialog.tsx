@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -187,3 +188,4 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
     </Dialog>
   );
 }
+

@@ -20,7 +20,7 @@ import { useEffect, useState } from 'react';
 import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 import { Share2, Eye, Users, LogIn } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AuthDialog } from './auth-dialog';
+import Link from 'next/link';
 
 interface Project {
   id: string;
@@ -212,12 +212,12 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
    const renderJoinButton = () => {
     if (user?.isAnonymous) {
         return (
-            <AuthDialog>
-                <Button className="w-full sm:w-auto">
+            <Button asChild className="w-full sm:w-auto">
+                <Link href="/login">
                     <LogIn className="mr-2 h-4 w-4" />
                     Login to Join
-                </Button>
-            </AuthDialog>
+                </Link>
+            </Button>
         )
     }
 

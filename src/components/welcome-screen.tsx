@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Layers, MessageCircle, User, Code } from 'lucide-react';
 import Autoplay from 'embla-carousel-autoplay';
 import React, { useState } from 'react';
-import { AuthDialog } from './auth-dialog';
+import Link from 'next/link';
 
 const AnimatedLogo = () => (
     <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
@@ -126,14 +126,13 @@ export function WelcomeScreen() {
                     </CarouselContent>
                 </Carousel>
                 <div className="mt-8 flex gap-4">
-                    <AuthDialog>
-                        <Button 
-                            size="lg" 
-                            className="bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
-                        >
-                            Login / Sign Up
-                        </Button>
-                    </AuthDialog>
+                    <Button 
+                        asChild
+                        size="lg" 
+                        className="bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
+                    >
+                        <Link href="/login">Login / Sign Up</Link>
+                    </Button>
                     <Button
                         size="lg"
                         variant="ghost"
@@ -147,3 +146,4 @@ export function WelcomeScreen() {
         </div>
     );
 }
+

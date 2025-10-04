@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { AuthDialog } from '@/components/auth-dialog';
+import Link from 'next/link';
 
 interface Message {
   id: string;
@@ -219,7 +219,6 @@ export default function ChatPage() {
                 memberCache.current.set(docSnapshot.id, member);
             }
         });
-        setMembers(fetchedMembers);
 
     } catch(error) {
         console.error("Error fetching project details:", error);
@@ -449,7 +448,7 @@ export default function ChatPage() {
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
             <div className="relative">
                  {user?.isAnonymous ? (
-                    <AuthDialog>
+                    <Link href="/login" className="block">
                         <div className="relative">
                             <Input
                                 placeholder={getPlaceholderText()}
@@ -458,7 +457,7 @@ export default function ChatPage() {
                             />
                             <div className="absolute top-0 right-0 bottom-0 left-0 cursor-pointer" />
                         </div>
-                    </AuthDialog>
+                    </Link>
                 ) : (
                     <>
                         <Input
