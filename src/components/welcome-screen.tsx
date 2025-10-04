@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Card, CardContent } from '@/components/ui/card';
+import { Layers, MessageCircle, User, Code } from 'lucide-react';
+import Autoplay from 'embla-carousel-autoplay';
+import React from 'react';
 
 const AnimatedLogo = () => (
     <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
@@ -26,7 +31,34 @@ const AnimatedLogo = () => (
     </div>
 );
 
+const features = [
+  {
+    icon: <Layers className="h-8 w-8 text-white" />,
+    title: 'Host & Join Projects',
+    description: 'Create your own projects or discover and join exciting projects from others.',
+  },
+  {
+    icon: <MessageCircle className="h-8 w-8 text-white" />,
+    title: 'Real-time Chat',
+    description: 'Collaborate with team members seamlessly with integrated real-time chat.',
+  },
+  {
+    icon: <User className="h-8 w-8 text-white" />,
+    title: 'Customize Your Profile',
+    description: 'Showcase your skills and college information on your personal profile.',
+  },
+  {
+    icon: <Code className="h-8 w-8 text-white" />,
+    title: 'Multiple Project Themes',
+    description: 'Find or create projects in software, hardware, events, or design.',
+  },
+];
+
+
 export function WelcomeScreen() {
+    const plugin = React.useRef(
+        Autoplay({ delay: 2500, stopOnInteraction: true })
+    );
 
     const handleGoogleLogin = async () => {
         const provider = new GoogleAuthProvider();
@@ -73,6 +105,38 @@ export function WelcomeScreen() {
                 >
                     Get Started
                 </Button>
+
+                <div className="mt-16 w-full max-w-4xl">
+                    <h2 className="text-2xl font-bold text-white mb-4">Features</h2>
+                     <Carousel
+                        plugins={[plugin.current]}
+                        className="w-full"
+                        onMouseEnter={plugin.current.stop}
+                        onMouseLeave={plugin.current.reset}
+                    >
+                        <CarouselContent>
+                            {features.map((feature, index) => (
+                                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                                    <div className="p-1">
+                                        <Card className="bg-slate-900/50 border-slate-800">
+                                            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                                                {feature.icon}
+                                                <h3 className="text-xl font-semibold text-white mt-4">{feature.title}</h3>
+                                                <p className="text-slate-400 mt-2 text-sm">{feature.description}</p>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                    </Carousel>
+                    <div className="mt-6">
+                        <Button variant="link" className="text-slate-400" onClick={handleGoogleLogin}>
+                            Skip
+                        </Button>
+                    </div>
+                </div>
+
             </div>
         </div>
     );
