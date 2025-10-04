@@ -14,19 +14,17 @@ export default function SettingsPage() {
                 <AnimatedHeader 
                     title="Settings"
                     description="Manage your application settings."
-                />
+                >
+                    <ThemeToggle />
+                </AnimatedHeader>
                 <Card className="max-w-2xl mx-auto">
                     <CardHeader>
                         <CardTitle>Appearance</CardTitle>
                         <CardDescription>Customize the look and feel of the application.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="dark-mode" className="text-lg">Theme</Label>
-                            <ThemeToggle />
-                        </div>
                          <p className="text-sm text-muted-foreground">
-                                Select between light and dark mode, or sync with your system preference.
+                                You can change the theme using the toggle in the header. Select between light and dark mode, or sync with your system preference.
                             </p>
                     </CardContent>
                 </Card>

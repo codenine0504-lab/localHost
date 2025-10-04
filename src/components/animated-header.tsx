@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 interface AnimatedHeaderProps {
   title: string;
   description: string;
+  children?: React.ReactNode;
 }
 
-export function AnimatedHeader({ title, description }: AnimatedHeaderProps) {
+export function AnimatedHeader({ title, description, children }: AnimatedHeaderProps) {
   const [gradient, setGradient] = useState({ from: '#000', to: '#000' });
 
   useEffect(() => {
@@ -22,12 +23,15 @@ export function AnimatedHeader({ title, description }: AnimatedHeaderProps) {
 
   return (
     <div className="space-y-4 mb-8">
-      <h1
-        className="text-3xl md:text-4xl font-bold animate-fade-in-up animated-gradient-underline"
-        style={{ '--gradient-from': gradient.from, '--gradient-to': gradient.to } as React.CSSProperties}
-      >
-        {title}
-      </h1>
+      <div className="flex justify-between items-center">
+        <h1
+          className="text-3xl md:text-4xl font-bold animate-fade-in-up animated-gradient-underline"
+          style={{ '--gradient-from': gradient.from, '--gradient-to': gradient.to } as React.CSSProperties}
+        >
+          {title}
+        </h1>
+        {children}
+      </div>
       <p className="text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
         {description}
       </p>

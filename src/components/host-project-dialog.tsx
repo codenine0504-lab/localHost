@@ -184,7 +184,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[480px]">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Host a Project</DialogTitle>
@@ -258,27 +258,6 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
               {errors.imageUrl && <p className="text-red-500 text-xs">{errors.imageUrl.message}</p>}
             </div>
             
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="isPrivate">
-                    Visibility
-                </Label>
-                 <p className="text-xs text-muted-foreground">
-                    Private projects require admin approval to join.
-                </p>
-              </div>
-                <Controller
-                    name="isPrivate"
-                    control={control}
-                    render={({ field }) => (
-                        <Switch
-                        id="isPrivate"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        />
-                    )}
-                />
-            </div>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting} className="w-full">
