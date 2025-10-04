@@ -8,23 +8,55 @@ import { HostProjectDialog } from '@/components/host-project-dialog';
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { Header } from '@/components/header';
 import { ImageSlider } from '@/components/image-slider';
+import { WelcomeScreen } from '@/components/welcome-screen';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function AppSkeleton() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <section className="relative w-full py-12 md:py-20 flex-1">
+        <div className="container px-4 md:px-6">
+           <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+             <div className="flex-1 space-y-6">
+                <Skeleton className="h-16 w-3/4" />
+                <Skeleton className="h-8 w-full" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-12 w-40" />
+                  <Skeleton className="h-12 w-40" />
+                </div>
+             </div>
+             <div className="flex-1 w-full max-w-2xl">
+                <Skeleton className="aspect-video w-full rounded-lg" />
+             </div>
+           </div>
+        </div>
+      </section>
+    </div>
+  )
+}
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const { toast } = useToast();
-  const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
+  if (loading) {
+    return <AppSkeleton />;
+  }
+
+  if (!user) {
+    return <WelcomeScreen />;
+  }
 
   return (
     <>

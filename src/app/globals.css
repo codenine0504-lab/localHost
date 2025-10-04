@@ -68,3 +68,46 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
+@layer utilities {
+  @keyframes slide {
+    0% {
+      transform: translateY(0);
+    }
+    16.66% {
+      transform: translateY(-100%);
+    }
+    33.33% {
+      transform: translateY(-100%);
+    }
+    50% {
+      transform: translateY(-200%);
+    }
+    66.66% {
+      transform: translateY(-200%);
+    }
+    83.33% {
+      transform: translateY(-300%);
+    }
+    100% {
+      transform: translateY(-300%);
+    }
+  }
+
+  .animate-slide {
+    animation: slide 12s cubic-bezier(0.86, 0, 0.07, 1) infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
