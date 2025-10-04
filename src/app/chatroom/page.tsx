@@ -80,6 +80,14 @@ export default function ChatRoomPage() {
     if (!user) return;
 
     setLoading(true);
+    let dmLoaded = false;
+    let projectLoaded = false;
+
+    const checkLoadingDone = () => {
+        if (dmLoaded && projectLoaded) {
+            setLoading(false);
+        }
+    }
 
     // Listener for DMs
     const dmQuery = query(collection(db, 'General'), where('members', 'array-contains', user.uid));
@@ -101,10 +109,12 @@ export default function ChatRoomPage() {
             dms.push({ id: roomDoc.id, name: otherMemberName, imageUrl: otherMemberPhoto });
         }
         setDmRooms(checkNotifications(dms));
-        if (projectRooms.length > 0 || dms.length > 0) setLoading(false);
+        dmLoaded = true;
+        checkLoadingDone();
     }, (error) => {
         console.error("Error fetching DMs:", error);
-        setLoading(false);
+        dmLoaded = true;
+        checkLoadingDone();
     });
 
     // Listener for Project Chats
@@ -112,10 +122,12 @@ export default function ChatRoomPage() {
     const unsubscribeProjects = onSnapshot(projectChatQuery, (snapshot) => {
         const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
         setProjectRooms(checkNotifications(projects));
-        if (projects.length > 0 || dmRooms.length > 0) setLoading(false);
+        projectLoaded = true;
+        checkLoadingDone();
     }, (error) => {
         console.error("Error fetching project chats:", error);
-        setLoading(false);
+        projectLoaded = true;
+        checkLoadingDone();
     });
     
     const joinRequestKey = `hasNewJoinRequests_${user.uid}`;
