@@ -185,3 +185,5 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
       </DialogContent>
     </Dialog>
+  );
+}
