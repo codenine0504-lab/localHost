@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatedHeader } from "@/components/animated-header";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -157,10 +158,10 @@ export default function ProfilePage() {
     <>
         
         <div className="container mx-auto py-12 px-4 md:px-6">
-        <div className="space-y-4 mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold animate-fade-in-up">Your Profile</h1>
-            <p className="text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.2s' }}>View and update your personal details.</p>
-        </div>
+        <AnimatedHeader 
+            title="Your Profile"
+            description="View and update your personal details."
+        />
         {loading ? (
              <ProfileSkeleton />
         ) : !user ? (

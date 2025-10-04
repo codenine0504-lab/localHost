@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { MessageSquare } from 'lucide-react';
 import type { User } from 'firebase/auth';
+import { AnimatedHeader } from '@/components/animated-header';
 
 
 interface ChatRoom {
@@ -167,10 +168,10 @@ export default function ChatRoomPage() {
     <>
       
       <div className="container mx-auto py-12 px-4 md:px-6">
-        <div className="space-y-4 mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold animate-fade-in-up">Your Chat Rooms</h1>
-            <p className="text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Select a project to start chatting with your team.</p>
-        </div>
+        <AnimatedHeader 
+            title="Your Chat Rooms"
+            description="Select a project to start chatting with your team."
+        />
        <div className="space-y-4">
         {loading ? (
             <ChatRoomListSkeleton />

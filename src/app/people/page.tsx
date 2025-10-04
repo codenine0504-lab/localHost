@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
+import { AnimatedHeader } from '@/components/animated-header';
 
 interface AppUser {
   id: string;
@@ -65,9 +66,11 @@ export default function PeoplePage() {
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
-        <div className="space-y-4 mb-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold animate-fade-in-up">Discover People</h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Connect with students and creators from various colleges. Find your next collaborator.</p>
+        <div className="text-center">
+            <AnimatedHeader 
+                title="Discover People"
+                description="Connect with students and creators from various colleges. Find your next collaborator."
+            />
         </div>
 
         {loading ? (

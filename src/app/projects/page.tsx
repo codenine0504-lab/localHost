@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Filter, Users, Eye } from 'lucide-react';
 import Link from 'next/link';
+import { AnimatedHeader } from '@/components/animated-header';
 
 
 interface Project {
@@ -73,12 +74,9 @@ export default function ProjectsPage() {
     };
   }, []);
 
-  const filteredProjects = useMemo(() => {
-    if (!themeFilter) {
-      return projects;
-    }
-    return projects.filter(project => project.theme === themeFilter);
-  }, [projects, themeFilter]);
+  const filteredProjects = themeFilter
+    ? projects.filter(project => project.theme === themeFilter)
+    : projects;
 
   const getThemeBadgeVariant = (theme: Project['theme']): 'software' | 'hardware' | 'event' | 'design' | 'secondary' => {
     const themeMap = {
@@ -95,10 +93,10 @@ export default function ProjectsPage() {
     <>
         
         <div className="container mx-auto py-12 px-4 md:px-6 max-w-4xl">
-         <div className="space-y-4 mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold animate-fade-in-up">Explore Projects</h1>
-            <p className="text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Join Project and Events across different colleges/universities</p>
-        </div>
+        <AnimatedHeader 
+            title="Explore Projects"
+            description="Join Project and Events across different colleges/universities"
+        />
         <div className="flex justify-end mb-6 gap-2">
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
