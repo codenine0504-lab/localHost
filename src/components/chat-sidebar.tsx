@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
@@ -198,17 +198,20 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 throw new Error("Join request not found.");
             }
             const requestData = requestDoc.data() as JoinRequest;
+            const projectCollection = requestData.projectCollection || (project.isPrivate ? 'privateProjects' : 'projects');
+            const projectRef = doc(db, projectCollection, project.id);
 
             if (action === 'approve') {
-                const projectCollection = requestData.projectCollection || (project.isPrivate ? 'privateProjects' : 'projects');
-                
-                const projectRef = doc(db, projectCollection, project.id);
                 await updateDoc(projectRef, {
-                    members: arrayUnion(userId)
+                    members: arrayUnion(userId),
+                    applicantCount: increment(-1)
                 });
                 await updateDoc(requestRef, { status: 'approved' });
                 toast({ title: 'User Approved', description: 'The user has been added to the project.' });
             } else {
+                await updateDoc(projectRef, { 
+                    applicantCount: increment(-1)
+                });
                 await updateDoc(requestRef, { status: 'declined' });
                 toast({ title: 'User Declined', description: 'The join request has been declined.' });
             }

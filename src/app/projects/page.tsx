@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Filter } from 'lucide-react';
+import { Filter, Users, Eye } from 'lucide-react';
 import Link from 'next/link';
 
 
@@ -31,6 +31,8 @@ interface Project {
   isPrivate?: boolean;
   budget?: number | null;
   requiresRequestToJoin?: boolean;
+  views?: number;
+  applicantCount?: number;
 }
 
 function ProjectCardSkeleton() {
@@ -57,7 +59,7 @@ export default function ProjectsPage() {
   const [themeFilter, setThemeFilter] = useState<Project['theme'] | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'), limit(4));
+    const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
     const unsubscribeProjects = onSnapshot(q, (querySnapshot) => {
       const projs: Project[] = [];
       querySnapshot.forEach((doc) => {
@@ -140,7 +142,7 @@ export default function ProjectsPage() {
                         <CardTitle>{project.title}</CardTitle>
                         <CardDescription>{project.college}</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-grow">
+                        <CardContent className="flex-grow space-y-4">
                         <div className="flex flex-wrap gap-2">
                             <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
                             {project.budget && (
@@ -148,6 +150,16 @@ export default function ProjectsPage() {
                                     Budget: ₹{project.budget.toLocaleString()}
                                 </Badge>
                             )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                                <Eye className="h-4 w-4" />
+                                <span>{project.views || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Users className="h-4 w-4" />
+                                <span>{project.applicantCount || 0}</span>
+                            </div>
                         </div>
                         </CardContent>
                         <CardFooter>

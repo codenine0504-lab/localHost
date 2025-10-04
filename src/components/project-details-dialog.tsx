@@ -17,8 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
-import { Share2 } from 'lucide-react';
+import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { Share2, Eye, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Project {
@@ -31,6 +31,8 @@ interface Project {
   isPrivate?: boolean;
   requiresRequestToJoin?: boolean;
   budget?: number;
+  views?: number;
+  applicantCount?: number;
 }
 
 interface ProjectDetailsDialogProps {
@@ -52,8 +54,16 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }, []);
   
   useEffect(() => {
+      if (open) {
+        const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
+        const projectRef = doc(db, projectCollection, project.id);
+        updateDoc(projectRef, { views: increment(1) });
+      }
+  }, [open, project.id, project.isPrivate]);
+
+  useEffect(() => {
       const checkExistingRequest = async () => {
-          if (!user || (!project.isPrivate && !project.requiresRequestToJoin)) return;
+          if (!user || !project.requiresRequestToJoin) return;
 
           const q = query(
               collection(db, 'joinRequests'),
@@ -73,7 +83,7 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
       if (user) {
         checkExistingRequest();
       }
-  }, [user, project.id, project.isPrivate, project.requiresRequestToJoin]);
+  }, [user, project.id, project.requiresRequestToJoin]);
 
 
   const handleJoinOrRequest = async () => {
@@ -129,6 +139,10 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
             status: 'pending',
             createdAt: serverTimestamp(),
         });
+        
+        const projectRef = doc(db, collectionName, project.id);
+        await updateDoc(projectRef, { applicantCount: increment(1) });
+
         setRequestStatus('sent');
         toast({
             title: 'Request Sent',
@@ -204,6 +218,16 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
                     <DialogTitle className="text-2xl md:text-3xl font-bold">{project.title}</DialogTitle>
                     <p className="text-base text-muted-foreground pt-1">{project.college}</p>
                 </DialogHeader>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-4">
+                    <div className="flex items-center gap-1.5">
+                        <Eye className="h-4 w-4" />
+                        <span>{project.views || 0} views</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4" />
+                        <span>{project.applicantCount || 0} applicants</span>
+                    </div>
+                </div>
             </div>
         </div>
         <div className="md:w-1/2 flex flex-col p-6">
