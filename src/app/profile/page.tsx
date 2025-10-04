@@ -14,6 +14,7 @@ import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -45,6 +46,10 @@ function ProfileSkeleton() {
                             <Skeleton className="h-10 w-full" />
                         </div>
                         <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div className="space-y-2">
                             <Label htmlFor="city">City</Label>
                             <Skeleton className="h-10 w-full" />
                         </div>
@@ -68,6 +73,7 @@ export default function ProfilePage() {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [colleges, setColleges] = useState<string[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<string>('');
+  const [status, setStatus] = useState<'seeking' | 'active' | 'none'>('none');
   const { toast } = useToast();
 
    useEffect(() => {
@@ -75,20 +81,9 @@ export default function ProfilePage() {
       setUser(currentUser);
       if (currentUser) {
         setDisplayName(currentUser.displayName || '');
-        // Fetch user's saved data from Firestore
         const userDocRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userDocRef);
         
-        if (!userDoc.exists()) {
-            // Create user document if it doesn't exist
-            await setDoc(userDocRef, {
-                uid: currentUser.uid,
-                email: currentUser.email,
-                displayName: currentUser.displayName,
-                photoURL: currentUser.photoURL,
-            }, { merge: true });
-        }
-
         if (userDoc.exists()) {
           const userData = userDoc.data();
           if (userData.city) {
@@ -98,6 +93,17 @@ export default function ProfilePage() {
           if (userData.college) {
             setSelectedCollege(userData.college);
           }
+          if (userData.status) {
+            setStatus(userData.status);
+          }
+        } else {
+             await setDoc(userDocRef, {
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: currentUser.displayName,
+                photoURL: currentUser.photoURL,
+                status: 'none',
+            }, { merge: true });
         }
       }
       setLoading(false);
@@ -118,16 +124,15 @@ export default function ProfilePage() {
     }
 
     try {
-        // Update Firebase Auth profile
         if(displayName !== user.displayName) {
             await updateProfile(user, { displayName });
         }
         
-        // Update Firestore document
         await setDoc(doc(db, "users", user.uid), {
             displayName: displayName,
             city: selectedCity,
-            college: selectedCollege
+            college: selectedCollege,
+            status: status
         }, { merge: true });
 
         toast({
@@ -191,6 +196,25 @@ export default function ProfilePage() {
                         <Label htmlFor="displayName">Display Name</Label>
                         <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
                     </div>
+
+                    <div className="space-y-3">
+                        <Label>Status</Label>
+                        <RadioGroup defaultValue={status} onValueChange={(value) => setStatus(value as 'seeking' | 'active' | 'none')} className="flex flex-col space-y-1">
+                            <div className="flex items-center space-x-3">
+                                <RadioGroupItem value="seeking" id="seeking" />
+                                <Label htmlFor="seeking" className="font-normal">Seeking Collaboration</Label>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <RadioGroupItem value="active" id="active" />
+                                <Label htmlFor="active" className="font-normal">Actively Building</Label>
+                            </div>
+                             <div className="flex items-center space-x-3">
+                                <RadioGroupItem value="none" id="none" />
+                                <Label htmlFor="none" className="font-normal">Not Specified</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
                         <Select onValueChange={handleCityChange} value={selectedCity}>

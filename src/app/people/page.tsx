@@ -2,16 +2,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { AnimatedHeader } from '@/components/animated-header';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from '@/components/ui/badge';
 
 interface AppUser {
   id: string;
@@ -19,19 +19,20 @@ interface AppUser {
   photoURL: string | null;
   college?: string;
   email?: string;
+  status?: 'seeking' | 'active' | 'none';
 }
 
 function PeopleSkeleton() {
     return (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-                <Card key={i}>
-                    <CardHeader className="flex flex-col items-center text-center">
-                        <Skeleton className="h-24 w-24 rounded-full mb-4" />
-                        <Skeleton className="h-6 w-3/4 mb-2" />
-                        <Skeleton className="h-4 w-full" />
-                    </CardHeader>
-                </Card>
+        <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                        <Skeleton className="h-5 w-1/3" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </div>
+                </div>
             ))}
         </div>
     );
@@ -41,9 +42,18 @@ export default function PeoplePage() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    const q = query(collection(db, 'users'), orderBy('displayName'));
+    let q;
+    if (activeTab === 'all') {
+        q = query(collection(db, 'users'), orderBy('displayName'));
+    } else {
+        q = query(collection(db, 'users'), where('status', '==', activeTab), orderBy('displayName'));
+    }
+    
+    setLoading(true);
+
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userList: AppUser[] = [];
       querySnapshot.forEach((doc) => {
@@ -57,7 +67,7 @@ export default function PeoplePage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [activeTab]);
 
   const filteredUsers = users.filter((user) =>
     user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -71,6 +81,17 @@ export default function PeoplePage() {
     }
     return name.substring(0, 2).toUpperCase();
   };
+
+  const getStatusBadge = (status: AppUser['status']) => {
+      switch (status) {
+          case 'seeking':
+              return <Badge variant="software">Seeking Collaboration</Badge>;
+          case 'active':
+              return <Badge variant="hardware">Actively Building</Badge>;
+          default:
+              return null;
+      }
+  }
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
@@ -92,30 +113,42 @@ export default function PeoplePage() {
             </div>
         </div>
 
-        {loading ? (
-            <PeopleSkeleton />
-        ) : filteredUsers.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredUsers.map((user) => (
-                    <Card key={user.id} className="text-center hover:shadow-lg transition-shadow">
-                        <Link href={`/profile/${user.id}`}>
-                            <CardHeader className="flex flex-col items-center">
-                                 <Avatar className="h-24 w-24 mb-4 border-2 border-primary/50">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-8">
+            <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="seeking">Seeking</TabsTrigger>
+                <TabsTrigger value="active">Active</TabsTrigger>
+            </TabsList>
+        </Tabs>
+
+
+        <div className="max-w-4xl mx-auto">
+            {loading ? (
+                <PeopleSkeleton />
+            ) : filteredUsers.length > 0 ? (
+                <div className="space-y-4">
+                    {filteredUsers.map((user) => (
+                        <Link href={`/profile/${user.id}`} key={user.id} className="block">
+                            <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200">
+                                <Avatar className="h-12 w-12">
                                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'}/>
                                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                                 </Avatar>
-                                <CardTitle>{user.displayName || 'Anonymous User'}</CardTitle>
-                                {user.college && <CardDescription>{user.college}</CardDescription>}
-                            </CardHeader>
+                                <div className="flex-1">
+                                    <h3 className="font-semibold">{user.displayName || 'Anonymous User'}</h3>
+                                    {user.college && <p className="text-sm text-muted-foreground">{user.college}</p>}
+                                </div>
+                                {getStatusBadge(user.status)}
+                            </div>
                         </Link>
-                    </Card>
-                ))}
-            </div>
-        ) : (
-            <div className="text-center text-muted-foreground py-10 col-span-full border rounded-lg">
-                <p>No users found matching your search.</p>
-            </div>
-        )}
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center text-muted-foreground py-10 col-span-full border rounded-lg">
+                    <p>No users found for this category.</p>
+                </div>
+            )}
+        </div>
     </div>
   );
 }
