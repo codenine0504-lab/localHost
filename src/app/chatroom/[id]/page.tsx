@@ -3,18 +3,19 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Ban } from 'lucide-react';
+import { Send, Ban, Lock } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
@@ -96,12 +97,14 @@ export default function ChatPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [isMember, setIsMember] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ChatTab>('general');
   const [notifications, setNotifications] = useState({ general: false, team: false });
+  const { toast } = useToast();
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
-  const initialLoadHandled = useRef(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -119,12 +122,24 @@ export default function ChatPage() {
     window.dispatchEvent(new Event('storage')); // Notify other components like the footer
   }
 
+  const handleTabChange = (value: string) => {
+      const newTab = value as ChatTab;
+      if (newTab === 'team' && !isMember) {
+          toast({
+              title: "Members Only",
+              description: "You need to join the project to access the team chat.",
+          });
+          return;
+      }
+      setActiveTab(newTab);
+  }
+
   // Mark chat as read when tab changes
   useEffect(() => {
-    if(projectId) {
+    if(projectId && (activeTab === 'general' || isMember)) {
         clearTabNotification(activeTab);
     }
-  }, [projectId, activeTab]);
+  }, [projectId, activeTab, isMember]);
 
   const fetchProjectAndMembers = useCallback(async () => {
     if (!projectId || !user) return;
@@ -163,8 +178,11 @@ export default function ChatPage() {
         };
         setProjectDetails(projDetails);
 
+        const isProjectMember = projDetails.admins?.includes(user.uid) || (projDetails.members && projDetails.members.includes(user.uid));
+        setIsMember(isProjectMember);
+
         // Access control
-        const canView = !isPrivate || projDetails.admins?.includes(user.uid) || (projDetails.members && projDetails.members.includes(user.uid));
+        const canView = !isPrivate || isProjectMember;
         setHasAccess(canView);
 
         if(!canView) {
@@ -218,6 +236,9 @@ export default function ChatPage() {
 
   const setupTabListener = (tab: ChatTab) => {
     if (!projectId || !hasAccess || !user) return () => {};
+
+    // Guests can't listen to team chat
+    if (tab === 'team' && !isMember) return () => {};
 
     const collectionName = tab === 'general' ? 'General' : 'Team';
     const q = query(collection(db, `chatRooms/${projectId}/${collectionName}`), orderBy('createdAt', 'asc'));
@@ -295,7 +316,7 @@ export default function ChatPage() {
           unsubGeneral();
           unsubTeam();
       }
-  }, [projectId, hasAccess, user, projectDetails, activeTab]);
+  }, [projectId, hasAccess, user, projectDetails, activeTab, isMember]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -313,7 +334,7 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !projectId || !user) return;
+    if (newMessage.trim() === '' || !projectId || !user || !isMember) return;
 
     const userMessage = newMessage;
     setNewMessage('');
@@ -375,10 +396,13 @@ export default function ChatPage() {
     return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
   };
 
-  const TabTriggerWithNotification = ({ value, label, hasNotification }: { value: string, label: string, hasNotification: boolean }) => (
-    <TabsTrigger value={value} className="relative">
-      {label}
-      {hasNotification && (
+  const TabTriggerWithNotification = ({ value, label, hasNotification, disabled = false }: { value: string, label: string, hasNotification: boolean, disabled?: boolean }) => (
+    <TabsTrigger value={value} className="relative" disabled={disabled}>
+      <div className="flex items-center gap-2">
+        {disabled && <Lock className="h-3 w-3" />}
+        {label}
+      </div>
+      {!disabled && hasNotification && (
         <span className="absolute top-1 right-1 flex h-2 w-2">
           <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
         </span>
@@ -388,10 +412,10 @@ export default function ChatPage() {
 
   return (
      <div className="h-screen flex flex-col bg-background">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ChatTab)} className="flex flex-col flex-grow">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-grow">
             <TabsList className="grid w-full grid-cols-2">
                  <TabTriggerWithNotification value="general" label="General" hasNotification={notifications.general} />
-                 <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} />
+                 <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} disabled={!isMember}/>
             </TabsList>
             <TabsContent value="general" className="flex-grow flex flex-col">
                  <ChatView key="general" />
@@ -407,11 +431,11 @@ export default function ChatPage() {
                 <Input
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                disabled={!user}
+                placeholder={isMember ? "Type a message..." : "Join project to send messages"}
+                disabled={!user || !isMember}
                 className="pr-12"
                 />
-                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user}>
+                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user || !isMember}>
                 <Send className="h-4 w-4" />
                 </Button>
             </div>
@@ -463,7 +487,6 @@ export default function ChatPage() {
         </ScrollArea>
     );
   }
-
 }
 
     
