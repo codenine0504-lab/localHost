@@ -3,28 +3,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, UserCircle, MessageSquare, Search, LogOut } from 'lucide-react';
+import { Home, Compass, UserCircle, MessageSquare, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
-import { signOut } from 'firebase/auth';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -34,21 +19,20 @@ const navItems = [
   { href: '/profile', label: 'Profile', icon: UserCircle },
 ];
 
-function MobileNav() {
+function BottomNav() {
   const pathname = usePathname();
-  const { isMobile } = useSidebar();
 
   const isChatPage = pathname.startsWith('/chatroom/');
 
-  if (!isMobile || (isChatPage && pathname !== '/chatroom')) {
+  if (isChatPage && pathname !== '/chatroom') {
     return null;
   }
 
   return (
-    <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-50 md:hidden">
+    <footer className="fixed bottom-0 left-0 right-0 w-full z-50 p-2 md:bottom-4">
       <motion.nav
         layout
-        className="flex h-16 w-full items-center justify-around rounded-full border bg-background/90 backdrop-blur-sm shadow-lg px-2"
+        className="flex h-16 max-w-md mx-auto items-center justify-around rounded-full border bg-background/90 backdrop-blur-sm shadow-lg px-2"
       >
         {navItems.map((item) => {
           const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
@@ -110,87 +94,6 @@ function MobileNav() {
   );
 }
 
-function DesktopNav() {
-    const pathname = usePathname();
-    const [user, setUser] = useState<User | null>(null);
-    const { toast } = useToast();
-    const router = useRouter();
-
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(setUser);
-        return () => unsubscribe();
-    }, []);
-
-    const getInitials = (name: string | null | undefined) => {
-        if (!name) return "U";
-        const nameParts = name.split(" ");
-        if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {
-        return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-        }
-        return name.substring(0, 2).toUpperCase();
-    };
-
-    const handleLogout = async () => {
-        try {
-          await signOut(auth);
-          toast({
-            title: "Logged Out",
-            description: "You have been successfully logged out.",
-          });
-          router.push('/');
-        } catch (error) {
-          console.error("Error signing out:", error);
-          toast({
-            title: "Error",
-            description: "Could not log out. Please try again.",
-            variant: "destructive",
-          });
-        }
-    };
-
-    return (
-        <Sidebar>
-            <SidebarHeader>
-                <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.photoURL || undefined} />
-                        <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                    </Avatar>
-                    <span className="truncate text-sm">{user?.displayName || 'Guest'}</span>
-                </div>
-            </SidebarHeader>
-            <SidebarContent>
-                <SidebarMenu>
-                    {navItems.map(item => {
-                        const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
-                        const navLink = (
-                             <Link href={item.href} className="w-full">
-                                <SidebarMenuButton isActive={isActive} icon={<item.icon />}>
-                                    {item.label}
-                                </SidebarMenuButton>
-                            </Link>
-                        );
-                        return (
-                            <SidebarMenuItem key={item.href}>
-                               {item.href === '/chatroom' ? (
-                                    <NotificationBadge>{navLink}</NotificationBadge>
-                                ) : (
-                                    navLink
-                                )}
-                            </SidebarMenuItem>
-                        )
-                    })}
-                </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter>
-                <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                </Button>
-            </SidebarFooter>
-        </Sidebar>
-    );
-}
 
 export function MainNav() {
   const [user, setUser] = useState<User | null>(null);
@@ -208,10 +111,5 @@ export function MainNav() {
     return null; 
   }
 
-  return (
-    <>
-        <DesktopNav />
-        <MobileNav />
-    </>
-  );
+  return <BottomNav />;
 }
