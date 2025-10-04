@@ -9,7 +9,6 @@ import { collection, query, onSnapshot, orderBy, limit } from 'firebase/firestor
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ProjectDetailsDialog } from '@/components/project-details-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Filter, Users, Eye } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 
 
 interface Project {
@@ -91,7 +89,7 @@ export default function ProjectsPage() {
   return (
     <>
         
-        <div className="container mx-auto py-12 px-4 md:px-6">
+        <div className="container mx-auto py-12 px-4 md:px-6 max-w-4xl">
         <div className="space-y-4 mb-8 text-center">
             <h1 className="text-base text-muted-foreground">Join Project and Events across different colleges/universities</h1>
         </div>
