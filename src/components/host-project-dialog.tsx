@@ -48,7 +48,7 @@ const projectSchema = z.object({
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
-export function HostProjectDialog() {
+export function HostProjectDialog({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
@@ -165,7 +165,7 @@ export function HostProjectDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
       <DialogTrigger asChild>
-        <Button size="lg">Host a project</Button>
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>

@@ -148,13 +148,13 @@ export default function Home() {
                         <CardDescription>Start your own project and invite collaborators to join your team.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button variant="ghost" className="text-primary group-hover:translate-x-1 transition-transform">
+                        <div className="text-primary group-hover:translate-x-1 transition-transform flex items-center">
                             Get Started <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </HostProjectDialog>
-            <Link href="/projects">
+            <Link href="/projects" className="block">
                 <Card className="group cursor-pointer hover:border-primary transition-all h-full flex flex-col justify-between">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-2xl">
@@ -164,9 +164,9 @@ export default function Home() {
                         <CardDescription>Explore existing projects and events to lend your skills and collaborate.</CardDescription>
                     </CardHeader>
                      <CardContent>
-                        <Button variant="ghost" className="text-primary group-hover:translate-x-1 transition-transform">
+                        <div className="text-primary group-hover:translate-x-1 transition-transform flex items-center">
                             Explore Projects <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </Link>
