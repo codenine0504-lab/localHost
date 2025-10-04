@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,10 @@ import { signUpWithEmail, loginWithEmail, loginWithGoogle } from '@/lib/auth-act
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeProvider } from '@/components/theme-provider';
+import { getRedirectResult } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
 
 const signUpSchema = z.object({
   displayName: z.string().min(1, 'Display name is required.'),
@@ -35,6 +39,33 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    startTransition(async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          const user = result.user;
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+            }, { merge: true });
+          }
+          router.push('/');
+        }
+      } catch (error: any) {
+        console.error("Error handling redirect result:", error);
+        setError(error.message || "Failed to sign in with Google.");
+      }
+    });
+  }, [router]);
+
 
   const {
     register: registerSignUp,
@@ -79,8 +110,6 @@ export default function LoginPage() {
       const result = await loginWithGoogle();
       if (result.error) {
         setError(result.error);
-      } else {
-        router.push('/');
       }
     });
   };
