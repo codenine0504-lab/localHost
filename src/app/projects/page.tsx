@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Filter, Users, Eye, List, Grid, Rows3 } from 'lucide-react';
+import { Filter, Users, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -37,18 +37,14 @@ interface Project {
 
 function ProjectCardSkeleton() {
     return (
-        <Card className="flex flex-col overflow-hidden">
-            <Skeleton className="h-48 w-full" />
-            <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent>
-                <Skeleton className="h-6 w-20" />
-            </CardContent>
-            <CardFooter>
+        <Card className="flex flex-row overflow-hidden">
+            <Skeleton className="h-full w-1/3" />
+            <div className="w-2/3 p-4">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <Skeleton className="h-6 w-20 mb-4" />
                 <Skeleton className="h-10 w-full" />
-            </CardFooter>
+            </div>
         </Card>
     )
 }
@@ -57,7 +53,6 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [themeFilter, setThemeFilter] = useState<Project['theme'] | null>(null);
-  const [layout, setLayout] = useState<'list' | 'grid' | 'linear'>('list');
 
   useEffect(() => {
     const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
@@ -101,17 +96,6 @@ export default function ProjectsPage() {
             <h1 className="text-base text-muted-foreground">Join Project and Events across different colleges/universities</h1>
         </div>
         <div className="flex justify-end mb-6 gap-2">
-             <div className="flex items-center gap-1 rounded-md border bg-background p-1">
-                <Button variant={layout === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setLayout('list')} className="h-8 w-8">
-                    <List className="h-4 w-4" />
-                </Button>
-                <Button variant={layout === 'grid' ? 'secondary' : 'ghost'} size="icon" onClick={() => setLayout('grid')} className="h-8 w-8">
-                    <Grid className="h-4 w-4" />
-                </Button>
-                <Button variant={layout === 'linear' ? 'secondary' : 'ghost'} size="icon" onClick={() => setLayout('linear')} className="h-8 w-8">
-                    <Rows3 className="h-4 w-4" />
-                </Button>
-            </div>
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline">
@@ -128,12 +112,7 @@ export default function ProjectsPage() {
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-        <div className={cn(
-            "grid gap-6",
-            layout === 'grid' && "md:grid-cols-2",
-            layout === 'list' && "grid-cols-1",
-            layout === 'linear' && "grid-cols-1"
-        )}>
+        <div className="grid grid-cols-1 gap-6">
              {loading ? (
                 <>
                     {[...Array(4)].map((_, i) => (
@@ -144,39 +123,22 @@ export default function ProjectsPage() {
                 filteredProjects.map((project) => (
                     <Card 
                         key={project.id} 
-                        className={cn(
-                            "overflow-hidden h-full transition-shadow duration-300 hover:shadow-lg",
-                            layout === 'list' && "md:flex md:flex-row"
-                        )}
+                        className="overflow-hidden h-full transition-shadow duration-300 hover:shadow-lg flex flex-row"
                     >
-                         {layout === 'list' ? (
-                            <Link href={`/projects/${project.id}`} className="block cursor-pointer md:w-1/3 w-full">
-                                <div className="relative h-48 md:h-full w-full">
-                                    <Image
-                                        src={project.imageUrl || 'https://placehold.co/400x400.png'}
-                                        alt={`Image for ${project.title}`}
-                                        layout="fill"
-                                        objectFit="cover"
-                                        data-ai-hint="project image"
-                                    />
-                                </div>
-                            </Link>
-                         ) : (
-                             <Link href={`/projects/${project.id}`} className="block cursor-pointer">
-                                <div className="relative h-48 w-full">
-                                        <Image
-                                            src={project.imageUrl || 'https://placehold.co/600x400.png'}
-                                            alt={`Image for ${project.title}`}
-                                            layout="fill"
-                                            objectFit="cover"
-                                            data-ai-hint="project image"
-                                        />
-                                    </div>
-                            </Link>
-                         )}
-                        <div className={cn("flex flex-col", layout === 'list' ? 'md:w-2/3 w-full' : 'w-full')}>
+                        <Link href={`/projects/${project.id}`} className="block cursor-pointer w-1/3">
+                            <div className="relative h-full w-full">
+                                <Image
+                                    src={project.imageUrl || 'https://placehold.co/400x400.png'}
+                                    alt={`Image for ${project.title}`}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    data-ai-hint="project image"
+                                />
+                            </div>
+                        </Link>
+                        <div className="flex flex-col w-2/3">
                             <CardHeader>
-                                <CardTitle className={cn(layout === 'list' ? 'text-lg' : '')}>{project.title}</CardTitle>
+                                <CardTitle className="text-lg">{project.title}</CardTitle>
                                 <CardDescription>{project.college}</CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow space-y-4">
@@ -188,12 +150,6 @@ export default function ProjectsPage() {
                                         </Badge>
                                     )}
                                 </div>
-                                <p className={cn("text-sm text-muted-foreground", {
-                                    "truncate": layout === 'grid',
-                                    "line-clamp-2": layout === 'list' || layout === 'linear',
-                                })}>
-                                    {project.description}
-                                </p>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-1.5">
                                         <Eye className="h-4 w-4" />
