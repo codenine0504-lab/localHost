@@ -6,7 +6,7 @@ import { signInAnonymously } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
-import { Layers, MessageCircle, User, Code } from 'lucide-react';
+import { Layers, MessageCircle, Users, Search } from 'lucide-react';
 import Autoplay from 'embla-carousel-autoplay';
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -33,24 +33,24 @@ const AnimatedLogo = () => (
 
 const features = [
   {
+    icon: <Search className="h-8 w-8 text-white" />,
+    title: 'Find Your Team',
+    description: 'Connect with students and creators who have the skills you need.',
+  },
+  {
     icon: <Layers className="h-8 w-8 text-white" />,
-    title: 'Host & Join Projects',
-    description: 'Create your own projects or discover and join exciting projects from others.',
+    title: 'Launch Your Vision',
+    description: 'Host your own project, build a team, and bring your ideas to life.',
+  },
+  {
+    icon: <Users className="h-8 w-8 text-white" />,
+    title: 'Join a Project',
+    description: 'Explore existing projects and contribute your skills to a growing team.',
   },
   {
     icon: <MessageCircle className="h-8 w-8 text-white" />,
-    title: 'Real-time Chat',
-    description: 'Collaborate with team members seamlessly with integrated real-time chat.',
-  },
-  {
-    icon: <User className="h-8 w-8 text-white" />,
-    title: 'Customize Your Profile',
-    description: 'Showcase your skills and college information on your personal profile.',
-  },
-  {
-    icon: <Code className="h-8 w-8 text-white" />,
-    title: 'Multiple Project Themes',
-    description: 'Find or create projects in software, hardware, events, or design.',
+    title: 'Collaborate Instantly',
+    description: 'Use integrated real-time chat to work seamlessly with your collaborators.',
   },
 ];
 
