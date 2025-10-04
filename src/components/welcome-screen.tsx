@@ -64,6 +64,9 @@ export function WelcomeScreen() {
     const handleSkip = async () => {
         try {
             await signInAnonymously(auth);
+            // Force a reload to ensure the auth state change is reflected correctly
+            // and the user is navigated away from the welcome screen.
+            window.location.reload();
         } catch (error) {
             console.error('Error during anonymous sign-in:', error);
         }
