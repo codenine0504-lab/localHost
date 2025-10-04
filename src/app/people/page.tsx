@@ -71,7 +71,8 @@ export default function PeoplePage() {
     } else if (isStatusFilter) {
         q = query(collection(db, 'users'), where('status', '==', activeTab), orderBy('displayName'));
     } else if (isThemeFilter) {
-        q = query(collection(db, 'users'), where('interests', 'array-contains', activeTab), orderBy('displayName'));
+        // Updated to query the `skills` array which contains skill names
+        q = query(collection(db, 'users'), where('skills', 'array-contains', { name: activeTab, isPrimary: false }), orderBy('displayName'));
     } else {
         q = query(collection(db, 'users'), orderBy('displayName'));
     }
@@ -218,6 +219,5 @@ export default function PeoplePage() {
     </div>
   );
 }
-
 
     
