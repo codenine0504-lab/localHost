@@ -186,6 +186,7 @@ export default function PeoplePage() {
                 <div className="space-y-4">
                     {filteredUsers.map((user) => {
                         const primarySkill = getPrimarySkill(user.skills);
+                        const hasSkills = user.skills && user.skills.length > 0;
                         return (
                         <Link href={`/profile/${user.id}`} key={user.id} className="block">
                             <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200">
@@ -195,17 +196,21 @@ export default function PeoplePage() {
                                 </Avatar>
                                 <div className="flex-1">
                                     <h3 className="font-semibold">{user.displayName || 'Anonymous User'}</h3>
-                                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                                        {primarySkill && (
-                                            <Badge variant="default" className="flex items-center gap-1.5">
-                                                <Star className="h-3 w-3" />
-                                                {primarySkill.name}
-                                            </Badge>
-                                        )}
-                                        {user.skills?.filter(s => !s.isPrimary).slice(0, 3).map(skill => (
-                                            <Badge key={skill.name} variant="secondary">{skill.name}</Badge>
-                                        ))}
-                                    </div>
+                                    {hasSkills ? (
+                                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                            {primarySkill && (
+                                                <Badge variant="default" className="flex items-center gap-1.5">
+                                                    <Star className="h-3 w-3" />
+                                                    {primarySkill.name}
+                                                </Badge>
+                                            )}
+                                            {user.skills?.filter(s => !s.isPrimary).slice(0, 3).map(skill => (
+                                                <Badge key={skill.name} variant="secondary">{skill.name}</Badge>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        user.college && <p className="text-sm text-muted-foreground mt-1">{user.college}</p>
+                                    )}
                                 </div>
                                 <div className='flex flex-col items-end gap-2'>
                                   {getStatusBadge(user.status)}
