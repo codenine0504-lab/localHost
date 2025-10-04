@@ -61,7 +61,11 @@ export default function LoginPage() {
         }
       } catch (error: any) {
         console.error("Error handling redirect result:", error);
-        setError(error.message || "Failed to sign in with Google.");
+        if (error.code === 'auth/operation-not-supported-in-this-environment') {
+             setError('Google Sign-In is not supported in this environment. Please use email and password.');
+        } else {
+             setError(error.message || "Failed to sign in with Google.");
+        }
       }
     });
   }, [router]);

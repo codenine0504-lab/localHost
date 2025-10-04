@@ -78,8 +78,8 @@ export async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithRedirect(auth, provider);
-      // This part is not reached on success, as the page redirects.
-      // It's here for type consistency.
+      // The redirect will cause the page to unload, so this part is not typically reached.
+      // The result is handled on the page the user is redirected back to.
       return { success: "Redirecting for Google Sign-In." };
     } catch (error: any) {
       if (error.code === 'auth/operation-not-supported-in-this-environment') {
