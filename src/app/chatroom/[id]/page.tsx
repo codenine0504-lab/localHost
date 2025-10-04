@@ -15,6 +15,7 @@ import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { ChatHeader } from '@/components/chat-header';
 
 interface Message {
   id: string;
@@ -50,6 +51,9 @@ interface Member {
 function ChatSkeleton() {
     return (
         <div className="flex flex-col h-full bg-background">
+            <div className="p-4 border-b">
+                 <Skeleton className="h-6 w-1/2" />
+            </div>
             <div className="flex-grow p-4 space-y-6 max-w-4xl mx-auto w-full">
                 <div className="flex items-start gap-3">
                     <Skeleton className="h-8 w-8 rounded-full" />
@@ -187,6 +191,7 @@ export default function ChatPage() {
                 memberCache.current.set(docSnapshot.id, member);
             }
         });
+        setMembers(fetchedMembers);
 
     } catch(error) {
         console.error("Error fetching project details:", error);
@@ -391,11 +396,17 @@ export default function ChatPage() {
 
   return (
      <div className="h-screen flex flex-col bg-background">
-        <div className="flex flex-col flex-grow">
+        {projectDetails && (
+            <ChatHeader 
+                projectTitle={projectDetails.title}
+                onHeaderClick={() => setIsSidebarOpen(true)}
+            />
+        )}
+        <div className="flex flex-col flex-grow min-h-0">
             <ChatView />
         </div>
         
-        <div className={cn("fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative", isSidebarOpen && "pr-[var(--sidebar-width)]")}>
+        <div className="p-4 bg-background border-t">
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
             <div className="relative">
                  {user?.isAnonymous ? (
