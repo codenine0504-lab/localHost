@@ -57,14 +57,6 @@ interface Member {
     isAdmin: boolean;
 }
 
-interface JoinRequest {
-    id: string;
-    userId: string;
-    userDisplayName: string | null;
-    userPhotoURL: string | null;
-    projectCollection: 'projects' | 'privateProjects';
-}
-
 interface ChatSidebarProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
@@ -89,8 +81,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     });
     
     const [isDeleting, setIsDeleting] = useState(false);
-    const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
-    const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const { toast } = useToast();
@@ -107,39 +97,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             budget: project.budget,
         });
     }, [project]);
-    
-    useEffect(() => {
-        if (!isCurrentUserAdmin || !project.id) {
-            setJoinRequests([]);
-            return;
-        }
-
-        const q = query(
-            collection(db, 'joinRequests'),
-            where('projectId', '==', project.id),
-            where('status', '==', 'pending')
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
-            setJoinRequests(requests);
-            
-            if (currentUser) {
-                const notificationKey = `hasNewJoinRequests_${currentUser.uid}`;
-                if (requests.length > 0) {
-                    localStorage.setItem(notificationKey, 'true');
-                } else {
-                    localStorage.removeItem(notificationKey);
-                }
-                window.dispatchEvent(new Event('storage'));
-            }
-        }, (error) => {
-            console.error("Error fetching join requests:", error);
-            toast({ title: "Error", description: "Could not fetch join requests.", variant: "destructive" });
-        });
-
-        return () => unsubscribe();
-    }, [isCurrentUserAdmin, project.id, toast, currentUser]);
 
 
     const handleInputChange = (field: keyof typeof formState, value: string | number | undefined) => {
@@ -184,43 +141,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
             imageUrl: project.imageUrl || '',
             budget: project.budget,
         });
-    };
-
-    const handleRequestAction = async (requestId: string, userId: string, action: 'approve' | 'decline') => {
-        if (!isCurrentUserAdmin) return;
-        setProcessingRequestId(requestId);
-
-        const requestRef = doc(db, 'joinRequests', requestId);
-
-        try {
-            const requestDoc = await getDoc(requestRef);
-            if (!requestDoc.exists()) {
-                throw new Error("Join request not found.");
-            }
-            const requestData = requestDoc.data() as JoinRequest;
-            const projectCollection = requestData.projectCollection || (project.isPrivate ? 'privateProjects' : 'projects');
-            const projectRef = doc(db, projectCollection, project.id);
-
-            if (action === 'approve') {
-                await updateDoc(projectRef, {
-                    members: arrayUnion(userId)
-                });
-                await updateDoc(requestRef, { status: 'approved' });
-                toast({ title: 'User Approved', description: 'The user has been added to the project.' });
-            } else {
-                await updateDoc(projectRef, { 
-                    applicantCount: increment(-1)
-                });
-                await updateDoc(requestRef, { status: 'declined' });
-                toast({ title: 'User Declined', description: 'The join request has been declined.' });
-            }
-            onProjectUpdate(); 
-        } catch(error) {
-            console.error(`Error ${action === 'approve' ? 'approving' : 'declining'} request:`, error);
-            toast({ title: "Error", description: "Could not process the request.", variant: 'destructive' });
-        } finally {
-            setProcessingRequestId(null);
-        }
     };
     
     const handleSettingToggle = async (setting: 'isPrivate', value: boolean) => {
@@ -521,37 +441,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                             <Link2 className="mr-2 h-4 w-4" />
                             Invite Members
                          </Button>
-
-                        {/* Join Requests */}
-                        {isCurrentUserAdmin && joinRequests.length > 0 && (
-                            <div className="space-y-3 pt-4">
-                                <h4 className="text-sm font-medium flex items-center text-muted-foreground">
-                                    <UserPlus className="mr-2 h-4 w-4" />
-                                    Join Requests ({joinRequests.length})
-                                </h4>
-                                <ul className="space-y-3">
-                                    {joinRequests.map(req => (
-                                        <li key={req.id} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <Avatar className="h-9 w-9">
-                                                    <AvatarImage src={req.userPhotoURL || undefined} alt="User avatar" />
-                                                    <AvatarFallback>{getInitials(req.userDisplayName)}</AvatarFallback>
-                                                </Avatar>
-                                                <span className="text-sm font-medium">{req.userDisplayName}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button size="icon" variant="outline" className="h-8 w-8 border-green-500 text-green-500 hover:bg-green-500 hover:text-white" onClick={() => handleRequestAction(req.id, req.userId, 'approve')} disabled={processingRequestId === req.id}>
-                                                    {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                                                </Button>
-                                                <Button size="icon" variant="outline" className="h-8 w-8 border-red-500 text-red-500 hover:bg-red-500 hover:text-white" onClick={() => handleRequestAction(req.id, req.userId, 'decline')} disabled={processingRequestId === req.id}>
-                                                    {processingRequestId === req.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                                                </Button>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
 
                         {/* Members List */}
                         <div className="space-y-3 pt-4">

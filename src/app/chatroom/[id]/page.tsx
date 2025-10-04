@@ -3,19 +3,22 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc, arrayUnion, increment, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Ban, MessagesSquare } from 'lucide-react';
+import { Send, Ban, MessagesSquare, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { ChatHeader } from '@/components/chat-header';
+import { JoinRequestCard } from '@/components/join-request-card';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface Message {
   id: string;
@@ -47,6 +50,15 @@ interface Member {
     photoURL: string | null;
     isAdmin: boolean;
 }
+
+interface JoinRequest {
+    id: string;
+    userId: string;
+    userDisplayName: string | null;
+    userPhotoURL: string | null;
+    projectCollection: 'projects' | 'privateProjects';
+}
+
 
 function ChatSkeleton() {
     return (
@@ -100,6 +112,10 @@ export default function ChatPage() {
   const [hasAccess, setHasAccess] = useState(false);
   const [isMember, setIsMember] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
@@ -151,7 +167,10 @@ export default function ChatPage() {
         };
         setProjectDetails(projDetails);
 
-        const isProjectMember = user ? (projDetails.admins?.includes(user.uid) || (projDetails.members && projDetails.members.includes(user.uid))) : false;
+        const isUserAdmin = user ? (projDetails.admins?.includes(user.uid) ?? false) : false;
+        setIsCurrentUserAdmin(isUserAdmin);
+
+        const isProjectMember = user ? (isUserAdmin || (projDetails.members && projDetails.members.includes(user.uid))) : false;
 
         setIsMember(isProjectMember);
 
@@ -172,6 +191,7 @@ export default function ChatPage() {
         // Fetch member details
         const memberIds = new Set(projDetails.members);
         memberIds.add(projDetails.owner);
+        (projDetails.admins || []).forEach(id => memberIds.add(id));
         const uniqueMemberIds = Array.from(memberIds);
         
         const fetchPromises = uniqueMemberIds.map(id => getDoc(doc(db, 'users', id)));
@@ -204,6 +224,40 @@ export default function ChatPage() {
   useEffect(() => {
     fetchProjectAndMembers();
   }, [fetchProjectAndMembers]);
+  
+  
+   useEffect(() => {
+        if (!isCurrentUserAdmin || !projectId) {
+            setJoinRequests([]);
+            return;
+        }
+
+        const q = query(
+            collection(db, 'joinRequests'),
+            where('projectId', '==', projectId),
+            where('status', '==', 'pending')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
+            setJoinRequests(requests);
+            
+            if (user) {
+                const notificationKey = `hasNewJoinRequests_${user.uid}`;
+                if (requests.length > 0) {
+                    localStorage.setItem(notificationKey, 'true');
+                } else {
+                    localStorage.removeItem(notificationKey);
+                }
+                window.dispatchEvent(new Event('storage'));
+            }
+        }, (error) => {
+            console.error("Error fetching join requests:", error);
+            toast({ title: "Error", description: "Could not fetch join requests.", variant: "destructive" });
+        });
+
+        return () => unsubscribe();
+    }, [isCurrentUserAdmin, projectId, toast, user]);
 
 
   useEffect(() => {
@@ -299,6 +353,44 @@ export default function ChatPage() {
         console.error("Error sending message:", error);
     }
   };
+  
+  const handleRequestAction = async (requestId: string, userId: string, action: 'approve' | 'decline') => {
+        if (!isCurrentUserAdmin) return;
+        setProcessingRequestId(requestId);
+
+        const requestRef = doc(db, 'joinRequests', requestId);
+
+        try {
+            const requestDoc = await getDoc(requestRef);
+            if (!requestDoc.exists()) {
+                throw new Error("Join request not found.");
+            }
+            const requestData = requestDoc.data() as JoinRequest;
+            const projectCollection = requestData.projectCollection || (projectDetails?.isPrivate ? 'privateProjects' : 'projects');
+            const projectRef = doc(db, projectCollection, projectId);
+
+            if (action === 'approve') {
+                await updateDoc(projectRef, {
+                    members: arrayUnion(userId)
+                });
+                await updateDoc(requestRef, { status: 'approved' });
+                toast({ title: 'User Approved', description: 'The user has been added to the project.' });
+            } else {
+                await updateDoc(projectRef, { 
+                    applicantCount: increment(-1)
+                });
+                await updateDoc(requestRef, { status: 'declined' });
+                toast({ title: 'User Declined', description: 'The join request has been declined.' });
+            }
+            fetchProjectAndMembers();
+        } catch(error) {
+            console.error(`Error ${action === 'approve' ? 'approving' : 'declining'} request:`, error);
+            toast({ title: "Error", description: "Could not process the request.", variant: 'destructive' });
+        } finally {
+            setProcessingRequestId(null);
+        }
+    };
+  
   
   if (loading) {
     return (
@@ -402,6 +494,15 @@ export default function ChatPage() {
                 onHeaderClick={() => setIsSidebarOpen(true)}
             />
         )}
+        
+        {isCurrentUserAdmin && joinRequests.length > 0 && (
+            <JoinRequestCard 
+                requests={joinRequests}
+                onAction={handleRequestAction}
+                processingId={processingRequestId}
+            />
+        )}
+        
         <div className="flex flex-col flex-grow min-h-0">
             <ChatView />
         </div>
@@ -454,3 +555,4 @@ export default function ChatPage() {
     
 
     
+
