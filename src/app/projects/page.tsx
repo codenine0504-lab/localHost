@@ -15,9 +15,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Filter, Users, Eye } from 'lucide-react';
+import { Filter, Users, Eye, List, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import { AnimatedHeader } from '@/components/animated-header';
+import { cn } from '@/lib/utils';
 
 
 interface Project {
@@ -53,10 +54,30 @@ function ProjectCardSkeleton() {
     )
 }
 
+function ProjectGridSkeleton() {
+    return (
+        <Card className="flex flex-col">
+            <Skeleton className="aspect-video w-full" />
+            <div className="p-4 flex flex-col justify-between flex-grow">
+                <div>
+                    <Skeleton className="h-5 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2 mb-4" />
+                </div>
+                <div className="flex justify-between items-center mt-4">
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-8 w-16" />
+                </div>
+            </div>
+        </Card>
+    )
+}
+
+
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [themeFilter, setThemeFilter] = useState<Project['theme'] | null>(null);
+  const [layout, setLayout] = useState<'list' | 'grid'>('list');
 
   useEffect(() => {
     const q = query(collection(db, 'projects'), orderBy('createdAt', 'desc'));
@@ -92,13 +113,13 @@ export default function ProjectsPage() {
   return (
     <>
         
-        <div className="container mx-auto py-12 px-4 md:px-6 max-w-4xl">
+        <div className="container mx-auto py-12 px-4 md:px-6 max-w-6xl">
         <AnimatedHeader 
             title="Explore Projects"
             description="Join Project and Events across different colleges/universities"
         />
         <div className="flex justify-end mb-6 gap-2">
-             <DropdownMenu>
+            <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline">
                         <Filter className="mr-2 h-4 w-4" />
@@ -113,66 +134,98 @@ export default function ProjectsPage() {
                     <DropdownMenuItem onClick={() => setThemeFilter('design')}>Design</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            <Button variant="outline" size="icon" onClick={() => setLayout(layout === 'list' ? 'grid' : 'list')}>
+                {layout === 'list' ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+                <span className="sr-only">Toggle Layout</span>
+            </Button>
         </div>
-        <div className="grid grid-cols-1 gap-6">
+        
+        <div className={cn(
+            "grid gap-6",
+            layout === 'list' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+        )}>
              {loading ? (
                 <>
                     {[...Array(4)].map((_, i) => (
-                        <ProjectCardSkeleton key={i} />
+                        layout === 'list' ? <ProjectCardSkeleton key={i} /> : <ProjectGridSkeleton key={i} />
                     ))}
                 </>
              ) : filteredProjects.length > 0 ? (
                 filteredProjects.map((project) => (
-                    <Card 
-                        key={project.id} 
-                        className="overflow-hidden h-full transition-shadow duration-300 hover:shadow-lg flex flex-row"
-                    >
-                        <Link href={`/projects/${project.id}`} className="block cursor-pointer w-1/3">
-                            <div className="relative h-full w-full">
-                                <Image
-                                    src={project.imageUrl || 'https://placehold.co/400x400.png'}
-                                    alt={`Image for ${project.title}`}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    data-ai-hint="project image"
-                                />
+                    layout === 'list' ? (
+                        <Card 
+                            key={project.id} 
+                            className="overflow-hidden h-full transition-shadow duration-300 hover:shadow-lg flex flex-row"
+                        >
+                            <Link href={`/projects/${project.id}`} className="block cursor-pointer w-1/3">
+                                <div className="relative h-full w-full">
+                                    <Image
+                                        src={project.imageUrl || 'https://placehold.co/400x400.png'}
+                                        alt={`Image for ${project.title}`}
+                                        layout="fill"
+                                        objectFit="cover"
+                                        data-ai-hint="project image"
+                                    />
+                                </div>
+                            </Link>
+                            <div className="flex flex-col w-2/3">
+                                <CardHeader>
+                                    <CardTitle className="text-lg">{project.title}</CardTitle>
+                                    <CardDescription>{project.college}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow space-y-4">
+                                    <div className="flex flex-wrap gap-2">
+                                        <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
+                                        {project.budget && (
+                                            <Badge variant="secondary">
+                                                Budget: ₹{project.budget.toLocaleString()}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </CardContent>
+                                <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-1.5">
+                                        <Eye className="h-4 w-4" />
+                                        <span>{project.views || 0}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Users className="h-4 w-4" />
+                                        <span>{project.applicantCount || 0}</span>
+                                    </div>
+                                    <Button className="ml-auto" size="sm" variant="outline" asChild>
+                                        <Link href={`/projects/${project.id}`}>
+                                            View
+                                        </Link>
+                                    </Button>
+                                </CardFooter>
                             </div>
-                        </Link>
-                        <div className="flex flex-col w-2/3">
-                            <CardHeader>
-                                <CardTitle className="text-lg">{project.title}</CardTitle>
-                                <CardDescription>{project.college}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow space-y-4">
-                                <div className="flex flex-wrap gap-2">
-                                    <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
-                                    {project.budget && (
-                                        <Badge variant="secondary">
-                                            Budget: ₹{project.budget.toLocaleString()}
-                                        </Badge>
-                                    )}
+                        </Card>
+                    ) : (
+                         <Card key={project.id} className="overflow-hidden h-full transition-shadow duration-300 hover:shadow-lg flex flex-col">
+                            <Link href={`/projects/${project.id}`} className="block cursor-pointer">
+                                <div className="relative aspect-video w-full">
+                                    <Image
+                                        src={project.imageUrl || 'https://placehold.co/600x400.png'}
+                                        alt={`Image for ${project.title}`}
+                                        layout="fill"
+                                        objectFit="cover"
+                                        data-ai-hint="project image landscape"
+                                    />
                                 </div>
-                            </CardContent>
-                             <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1.5">
-                                    <Eye className="h-4 w-4" />
-                                    <span>{project.views || 0}</span>
+                                <div className="p-4">
+                                     <CardTitle className="text-base font-semibold truncate">{project.title}</CardTitle>
+                                     <CardDescription className="text-xs mt-1">{project.college}</CardDescription>
+                                      <div className="mt-4 flex flex-wrap gap-2">
+                                         <Badge variant={getThemeBadgeVariant(project.theme)}>{project.theme}</Badge>
+                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Users className="h-4 w-4" />
-                                    <span>{project.applicantCount || 0}</span>
-                                </div>
-                                 <Button className="ml-auto" size="sm" variant="outline" asChild>
-                                    <Link href={`/projects/${project.id}`}>
-                                        View
-                                    </Link>
-                                 </Button>
-                            </CardFooter>
-                        </div>
-                    </Card>
+                            </Link>
+                         </Card>
+                    )
                 ))
             ) : (
-                 <div className="text-center text-muted-foreground py-10 col-span-full">
+                 <div className="text-center text-muted-foreground py-10 col-span-full border rounded-lg">
                     <p>No projects found for the selected theme.</p>
                 </div>
             )}
