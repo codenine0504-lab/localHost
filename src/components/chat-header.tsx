@@ -8,9 +8,10 @@ import { useRouter } from 'next/navigation';
 interface ChatHeaderProps {
   projectTitle: string;
   onHeaderClick: () => void;
+  isDm?: boolean;
 }
 
-export function ChatHeader({ projectTitle, onHeaderClick }: ChatHeaderProps) {
+export function ChatHeader({ projectTitle, onHeaderClick, isDm = false }: ChatHeaderProps) {
   const router = useRouter();
 
   return (
@@ -20,13 +21,13 @@ export function ChatHeader({ projectTitle, onHeaderClick }: ChatHeaderProps) {
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <div
-          className="flex items-center gap-2 cursor-pointer group"
+          className={`flex items-center gap-2 ${!isDm ? 'cursor-pointer group' : ''}`}
           onClick={onHeaderClick}
         >
-          <h1 className="text-lg font-semibold truncate group-hover:text-primary transition-colors">
+          <h1 className={`text-lg font-semibold truncate ${!isDm ? 'group-hover:text-primary transition-colors' : ''}`}>
             {projectTitle}
           </h1>
-          <Info className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          {!isDm && <Info className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />}
         </div>
       </div>
     </header>

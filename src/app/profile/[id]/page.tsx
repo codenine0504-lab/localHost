@@ -114,8 +114,6 @@ export default function PublicProfilePage() {
                 isDm: true,
                 members: [currentUser.uid, profileUser.id],
                 createdAt: serverTimestamp(),
-                name: `DM: ${currentUser.displayName} & ${profileUser.displayName}`,
-                // We can add more details like user photos here
             });
             
             const messagesCollectionRef = doc(collection(chatRoomRef, 'messages'));

@@ -13,7 +13,6 @@ import { Send, Ban, MessagesSquare, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { ChatHeader } from '@/components/chat-header';
 import { JoinRequestCard } from '@/components/join-request-card';
@@ -115,6 +114,7 @@ export default function ChatPage() {
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+  const [isDm, setIsDm] = useState(false);
   const { toast } = useToast();
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -135,63 +135,93 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-        const publicProjectDoc = await getDoc(doc(db, "projects", projectId));
-        const privateProjectDoc = await getDoc(doc(db, "privateProjects", projectId));
-        
-        let projectDoc;
-        let isPrivate = false;
-
-        if (publicProjectDoc.exists()) {
-            projectDoc = publicProjectDoc;
-            isPrivate = false;
-        } else if (privateProjectDoc.exists()) {
-            projectDoc = privateProjectDoc;
-            isPrivate = true;
-        } else {
+        const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
+        if (!chatRoomDoc.exists()) {
              setLoading(false);
              setHasAccess(false);
              return;
         }
 
-        const projectData = projectDoc.data();
-        const projDetails: ProjectDetails = {
-            id: projectDoc.id,
-            title: projectData.title,
-            description: projectData.description,
-            imageUrl: projectData.imageUrl,
-            owner: projectData.owner,
-            isPrivate: isPrivate,
-            members: projectData.members || [],
-            admins: projectData.admins || [projectData.owner],
-            requiresRequestToJoin: projectData.requiresRequestToJoin,
-        };
+        const chatRoomData = chatRoomDoc.data();
+        setIsDm(chatRoomData.isDm || false);
+
+        setChatRoom({ id: chatRoomDoc.id, ...chatRoomData } as ChatRoom);
+
+        let projDetails: ProjectDetails | null = null;
+
+        if (chatRoomData.isDm) {
+             const canView = user ? (chatRoomData.members?.includes(user.uid) ?? false) : false;
+             setHasAccess(canView);
+             if (!canView) {
+                setLoading(false);
+                return;
+             }
+             setIsMember(true); // For DMs, if you have access, you are a "member"
+             const memberIds = chatRoomData.members || [];
+             projDetails = {
+                id: projectId,
+                title: chatRoomData.name,
+                description: 'Direct Message',
+                owner: '',
+                isPrivate: true,
+                admins: [],
+                members: memberIds,
+             }
+        } else {
+            const publicProjectDoc = await getDoc(doc(db, "projects", projectId));
+            const privateProjectDoc = await getDoc(doc(db, "privateProjects", projectId));
+            
+            let projectDoc;
+            let isPrivate = false;
+
+            if (publicProjectDoc.exists()) {
+                projectDoc = publicProjectDoc;
+                isPrivate = false;
+            } else if (privateProjectDoc.exists()) {
+                projectDoc = privateProjectDoc;
+                isPrivate = true;
+            } else {
+                setLoading(false);
+                setHasAccess(false);
+                return;
+            }
+
+            const projectData = projectDoc.data();
+            projDetails = {
+                id: projectDoc.id,
+                title: projectData.title,
+                description: projectData.description,
+                imageUrl: projectData.imageUrl,
+                owner: projectData.owner,
+                isPrivate: isPrivate,
+                members: projectData.members || [],
+                admins: projectData.admins || [projectData.owner],
+                requiresRequestToJoin: projectData.requiresRequestToJoin,
+            };
+            const isUserAdmin = user ? (projDetails.admins?.includes(user.uid) ?? false) : false;
+            setIsCurrentUserAdmin(isUserAdmin);
+
+            const isProjectMember = user ? (isUserAdmin || (projDetails.members && projDetails.members.includes(user.uid))) : false;
+
+            setIsMember(isProjectMember);
+
+            // Access control
+            const canView = !isPrivate || isProjectMember;
+            setHasAccess(canView);
+
+             if(!canView) {
+                setLoading(false);
+                return;
+            }
+        }
+        
         setProjectDetails(projDetails);
 
-        const isUserAdmin = user ? (projDetails.admins?.includes(user.uid) ?? false) : false;
-        setIsCurrentUserAdmin(isUserAdmin);
-
-        const isProjectMember = user ? (isUserAdmin || (projDetails.members && projDetails.members.includes(user.uid))) : false;
-
-        setIsMember(isProjectMember);
-
-        // Access control
-        const canView = !isPrivate || isProjectMember;
-        setHasAccess(canView);
-
-        if(!canView) {
-            setLoading(false);
-            return;
-        }
-
-        const chatRoomDoc = await getDoc(doc(db, "chatRooms", projectId));
-        if (chatRoomDoc.exists()) {
-            setChatRoom({ id: chatRoomDoc.id, ...chatRoomDoc.data() } as ChatRoom);
-        }
 
         // Fetch member details
-        const memberIds = new Set(projDetails.members);
-        memberIds.add(projDetails.owner);
-        (projDetails.admins || []).forEach(id => memberIds.add(id));
+        const memberIds = new Set(projDetails?.members);
+        if(projDetails?.owner) memberIds.add(projDetails.owner);
+        (projDetails?.admins || []).forEach(id => memberIds.add(id));
         const uniqueMemberIds = Array.from(memberIds);
         
         const fetchPromises = uniqueMemberIds.map(id => getDoc(doc(db, 'users', id)));
@@ -205,7 +235,7 @@ export default function ChatPage() {
                     id: docSnapshot.id,
                     displayName: userData?.displayName || 'Unknown User',
                     photoURL: userData?.photoURL || null,
-                    isAdmin: projDetails.admins?.includes(docSnapshot.id) ?? false
+                    isAdmin: projDetails?.admins?.includes(docSnapshot.id) ?? false
                 };
                 fetchedMembers.push(member);
                 memberCache.current.set(docSnapshot.id, member);
@@ -440,7 +470,7 @@ export default function ChatPage() {
     return (
         <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
             <MessagesSquare className="h-12 w-12 mb-4" />
-            <h2 className="text-xl font-semibold text-foreground">Welcome to the team chat!</h2>
+            <h2 className="text-xl font-semibold text-foreground">Welcome to the chat!</h2>
             <p>No messages here yet. Be the first to start the conversation.</p>
         </div>
     )
@@ -490,7 +520,8 @@ export default function ChatPage() {
         {projectDetails && (
             <ChatHeader 
                 projectTitle={projectDetails.title}
-                onHeaderClick={() => setIsSidebarOpen(true)}
+                onHeaderClick={() => !isDm && setIsSidebarOpen(true)}
+                isDm={isDm}
             />
         )}
         
@@ -537,7 +568,7 @@ export default function ChatPage() {
             </div>
             </form>
         </div>
-        {projectDetails && (
+        {projectDetails && !isDm && (
              <ChatSidebar 
                 isOpen={isSidebarOpen} 
                 onOpenChange={setIsSidebarOpen}

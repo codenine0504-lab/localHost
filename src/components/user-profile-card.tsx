@@ -62,7 +62,6 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
                 isDm: true,
                 members: [currentUser.uid, user.id],
                 createdAt: serverTimestamp(),
-                name: `DM between ${currentUser.displayName} and ${user.displayName}`,
             });
 
             const messagesCollectionRef = doc(collection(chatRoomRef, 'messages'));
