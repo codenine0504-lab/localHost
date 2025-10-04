@@ -203,8 +203,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
             if (action === 'approve') {
                 await updateDoc(projectRef, {
-                    members: arrayUnion(userId),
-                    applicantCount: increment(-1)
+                    members: arrayUnion(userId)
                 });
                 await updateDoc(requestRef, { status: 'approved' });
                 toast({ title: 'User Approved', description: 'The user has been added to the project.' });
@@ -340,7 +339,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
     
      const handleShare = async () => {
-        const shareUrl = `${window.location.origin}/projects`;
+        const shareUrl = `${window.location.origin}/projects/${project.id}`;
         const shareData = {
             title: `Check out projects on LocalHost!`,
             text: `Join and collaborate on projects on LocalHost!`,
