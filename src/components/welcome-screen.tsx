@@ -69,16 +69,8 @@ export function WelcomeScreen() {
                 
                 <div className="mt-8">
                     <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-blue-400 to-purple-500">
-                        LocalHost is for
+                       LocalHost is for Innovators, Creators, Collaborators, and You.
                     </h1>
-                    <div className="h-12 md:h-16 mt-2 overflow-hidden">
-                        <div className="animate-slide">
-                            <h2 className="text-3xl md:text-5xl font-bold text-slate-100 h-12 md:h-16 flex items-center justify-center">Innovators</h2>
-                            <h2 className="text-3xl md:text-5xl font-bold text-slate-100 h-12 md:h-16 flex items-center justify-center">Creators</h2>
-                            <h2 className="text-3xl md:text-5xl font-bold text-slate-100 h-12 md:h-16 flex items-center justify-center">Collaborators</h2>
-                            <h2 className="text-3xl md:text-5xl font-bold text-slate-100 h-12 md:h-16 flex items-center justify-center">You.</h2>
-                        </div>
-                    </div>
                 </div>
 
                 <p className="mt-6 max-w-lg text-lg text-slate-400">

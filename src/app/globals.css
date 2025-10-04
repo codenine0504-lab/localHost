@@ -70,31 +70,6 @@
 }
 
 @layer utilities {
-  @keyframes slide {
-    0% {
-      transform: translateY(0);
-    }
-    20% {
-      transform: translateY(-100%);
-    }
-    40% {
-      transform: translateY(-100%);
-    }
-    60% {
-      transform: translateY(-200%);
-    }
-    80% {
-      transform: translateY(-200%);
-    }
-    100% {
-      transform: translateY(-300%);
-    }
-  }
-
-  .animate-slide {
-    animation: slide 12s cubic-bezier(0.86, 0, 0.07, 1) infinite;
-  }
-
   @keyframes float {
     0%, 100% {
       transform: translateY(0px);
