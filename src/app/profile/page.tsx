@@ -234,35 +234,39 @@ export default function ProfilePage() {
                     <CardTitle>Profile Details</CardTitle>
                     <CardDescription>Update your personal and university information.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="displayName">Display Name</Label>
-                        <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                    </div>
+                    <CardContent className="space-y-8">
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="displayName">Display Name</Label>
+                                <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                            </div>
 
-                    <div className="space-y-3">
-                        <Label>Status</Label>
-                        <RadioGroup defaultValue={status} onValueChange={(value) => setStatus(value as 'seeking' | 'active' | 'none')} className="flex flex-col space-y-2 pt-1">
-                            <div className="flex items-center space-x-3">
-                                <RadioGroupItem value="seeking" id="seeking" />
-                                <Label htmlFor="seeking" className="font-normal">Seeking Collaboration</Label>
+                            <div className="space-y-3">
+                                <Label>Status</Label>
+                                <RadioGroup defaultValue={status} onValueChange={(value) => setStatus(value as 'seeking' | 'active' | 'none')} className="flex flex-col space-y-2 pt-1">
+                                    <div className="flex items-center space-x-3">
+                                        <RadioGroupItem value="seeking" id="seeking" />
+                                        <Label htmlFor="seeking" className="font-normal">Seeking Collaboration</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        <RadioGroupItem value="active" id="active" />
+                                        <Label htmlFor="active" className="font-normal">Actively Building</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        <RadioGroupItem value="none" id="none" />
+                                        <Label htmlFor="none" className="font-normal">Not Specified</Label>
+                                    </div>
+                                </RadioGroup>
                             </div>
-                            <div className="flex items-center space-x-3">
-                                <RadioGroupItem value="active" id="active" />
-                                <Label htmlFor="active" className="font-normal">Actively Building</Label>
-                            </div>
-                             <div className="flex items-center space-x-3">
-                                <RadioGroupItem value="none" id="none" />
-                                <Label htmlFor="none" className="font-normal">Not Specified</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
+                        </div>
 
                     <Separator />
 
-                    <div className="space-y-3">
-                        <Label>Interests / Skills</Label>
-                        <p className="text-sm text-muted-foreground">Select themes that match your interests.</p>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Interests / Skills</Label>
+                            <p className="text-sm text-muted-foreground">Select themes that match your interests. This helps others find you for projects.</p>
+                        </div>
                         <div className="grid grid-cols-2 gap-4 pt-2">
                             {interests.map((interest) => (
                                 <div key={interest.id} className="flex items-center space-x-2">
@@ -284,33 +288,35 @@ export default function ProfilePage() {
                     
                     <Separator />
 
-                    <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
-                        <Select onValueChange={handleCityChange} value={selectedCity}>
-                        <SelectTrigger id="city">
-                            <SelectValue placeholder="Select a city" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="raipur">Raipur</SelectItem>
-                            <SelectItem value="bilaspur">Bilaspur</SelectItem>
-                            <SelectItem value="bhilai">Bhilai</SelectItem>
-                        </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="college">University/College</Label>
-                        <Select disabled={!selectedCity} onValueChange={setSelectedCollege} value={selectedCollege}>
-                        <SelectTrigger id="college">
-                            <SelectValue placeholder="Select your university/college" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {colleges.map((college) => (
-                            <SelectItem key={college} value={college}>
-                                {college}
-                            </SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
+                    <div className="space-y-4">
+                         <div className="space-y-2">
+                            <Label htmlFor="city">City</Label>
+                            <Select onValueChange={handleCityChange} value={selectedCity}>
+                            <SelectTrigger id="city">
+                                <SelectValue placeholder="Select a city" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="raipur">Raipur</SelectItem>
+                                <SelectItem value="bilaspur">Bilaspur</SelectItem>
+                                <SelectItem value="bhilai">Bhilai</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="college">University/College</Label>
+                            <Select disabled={!selectedCity} onValueChange={setSelectedCollege} value={selectedCollege}>
+                            <SelectTrigger id="college">
+                                <SelectValue placeholder="Select your university/college" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {colleges.map((college) => (
+                                <SelectItem key={college} value={college}>
+                                    {college}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                     <Button className="w-full" onClick={handleUpdate}>Update Profile</Button>
                     </CardContent>
