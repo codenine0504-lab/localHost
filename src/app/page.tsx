@@ -16,6 +16,7 @@ import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Users, Code, Brush, Milestone, Cpu, Eye, Compass } from 'lucide-react';
+import { ThemeProvider } from '@/components/theme-provider';
 
 
 interface Project {
@@ -119,7 +120,11 @@ export default function Home() {
   }
 
   if (!user) {
-    return <WelcomeScreen />;
+    return (
+        <ThemeProvider forcedTheme="dark">
+            <WelcomeScreen />
+        </ThemeProvider>
+    );
   }
 
   return (
