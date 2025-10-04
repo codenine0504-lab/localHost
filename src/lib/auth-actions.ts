@@ -7,7 +7,7 @@ import {
     signInWithEmailAndPassword, 
     updateProfile, 
     GoogleAuthProvider, 
-    signInWithPopup 
+    signInWithRedirect
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { z } from 'zod';
@@ -78,33 +78,16 @@ export async function loginWithEmail(values: z.infer<typeof loginSchema>) {
 export async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-            await setDoc(userDocRef, {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-            }, { merge: true });
-        }
-        
-        return { success: "Google Sign-In successful." };
+        // This begins the redirect flow. The result is handled on the client.
+        await signInWithRedirect(auth, provider);
+        // This function won't return a value here because of the redirect.
+        // The result is handled by getRedirectResult() on the login page.
+        return { success: "Redirecting for Google Sign-In..." };
     } catch (error: any) {
-        if (error.code === 'auth/popup-closed-by-user') {
-            return { error: 'Sign-in popup closed by user.' };
-        }
-        if (error.code === 'auth/cancelled-popup-request') {
-            return { error: 'Multiple sign-in attempts. Please try again.'}
-        }
-        if (error.code === 'auth/operation-not-supported-in-this-environment') {
+        console.error('Error during Google sign-in initiation:', error);
+         if (error.code === 'auth/operation-not-supported-in-this-environment') {
             return { error: 'Google Sign-In is not supported in this environment. Please use email/password.' };
         }
-        console.error('Error during Google sign-in:', error);
         return { error: error.message || 'An unexpected error occurred during Google sign-in.' };
     }
 };

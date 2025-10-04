@@ -2,22 +2,71 @@
 'use client';
 
 import { AuthDialog } from '@/components/auth-dialog';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getRedirectResult, User } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
-// This component is primarily a wrapper to present the AuthDialog.
-// The dedicated page is useful for handling redirects or specific auth-related routes.
 export default function LoginPage() {
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // A potential place to handle redirects in the future if needed,
-    // but for now, the main purpose is to show the dialog.
-  }, []);
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          const user = result.user;
+          // User signed in.
+          toast({ title: "Signed In", description: "Welcome back!" });
+
+          // Check if user exists in DB, if not create them
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+            }, { merge: true });
+          }
+          router.push('/');
+        } else {
+          setLoading(false);
+        }
+      } catch (error: any) {
+        console.error("Error getting redirect result:", error);
+        toast({
+          title: "Sign-in Error",
+          description: error.message || "Could not sign in with Google.",
+          variant: "destructive"
+        });
+        setLoading(false);
+      }
+    };
+
+    handleRedirect();
+  }, [router, toast]);
+
+  if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Please wait...</p>
+            </div>
+        </div>
+      );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md">
-             {/* The AuthDialog is now the main UI for this page */}
-             {/* The trigger is a button, but we can have it open by default if we want */}
             <AuthDialog>
                 <div className="text-center">
                     <h1 className="text-2xl font-semibold tracking-tight">
