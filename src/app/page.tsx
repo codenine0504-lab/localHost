@@ -137,18 +137,18 @@ export default function Home() {
         </div>
 
         {/* Action Cards */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-4">
             <HostProjectDialog>
                  <Card className="group cursor-pointer hover:border-primary transition-all h-full flex flex-col justify-between">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-2xl">
+                        <CardTitle className="flex items-center gap-3 text-xl md:text-2xl">
                             <Users className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                             Host a Project
                         </CardTitle>
-                        <CardDescription>Start your own project and invite collaborators to join your team.</CardDescription>
+                        <CardDescription className="text-xs md:text-sm">Start your own project and invite collaborators.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-primary group-hover:translate-x-1 transition-transform flex items-center">
+                        <div className="text-primary group-hover:translate-x-1 transition-transform flex items-center text-sm">
                             Get Started <ArrowRight className="ml-2 h-4 w-4" />
                         </div>
                     </CardContent>
@@ -157,14 +157,14 @@ export default function Home() {
             <Link href="/projects" className="block">
                 <Card className="group cursor-pointer hover:border-primary transition-all h-full flex flex-col justify-between">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-2xl">
+                        <CardTitle className="flex items-center gap-3 text-xl md:text-2xl">
                              <Compass className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                             Join a Project
                         </CardTitle>
-                        <CardDescription>Explore existing projects and events to lend your skills and collaborate.</CardDescription>
+                        <CardDescription className="text-xs md:text-sm">Explore existing projects and collaborate.</CardDescription>
                     </CardHeader>
                      <CardContent>
-                        <div className="text-primary group-hover:translate-x-1 transition-transform flex items-center">
+                        <div className="text-primary group-hover:translate-x-1 transition-transform flex items-center text-sm">
                             Explore Projects <ArrowRight className="ml-2 h-4 w-4" />
                         </div>
                     </CardContent>
