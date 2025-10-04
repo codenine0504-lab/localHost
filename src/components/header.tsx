@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { auth, db } from '@/lib/firebase';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -17,10 +17,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ArrowLeft, LogOut, Settings, User as UserIcon, Home, Compass, UserCircle, MessageSquare } from 'lucide-react';
 import { usePathname, useRouter, useParams } from 'next/navigation';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { InstallPwaButton } from './install-pwa-button';
 import { NotificationBadge } from './notification-badge';
+import { AuthDialog } from './auth-dialog';
 
 
 interface HeaderProps {
@@ -65,29 +66,6 @@ export function Header({ onTitleClick }: HeaderProps) {
     };
     fetchChatRoomName();
   }, [pathname, params, isChatPage]);
-
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const loggedInUser = result.user;
-      
-      const userDocRef = doc(db, "users", loggedInUser.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
-            uid: loggedInUser.uid,
-            email: loggedInUser.email,
-            displayName: loggedInUser.displayName,
-            photoURL: loggedInUser.photoURL,
-        }, { merge: true });
-      }
-
-    } catch (error) {
-      console.error('Error during sign-in:', error);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -182,9 +160,11 @@ export function Header({ onTitleClick }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={handleGoogleLogin} variant="outline" size="sm" className="ml-auto">
-              Login
-            </Button>
+            <AuthDialog>
+                <Button variant="outline" size="sm" className="ml-auto">
+                    Login
+                </Button>
+            </AuthDialog>
           )}
         </div>
       </div>

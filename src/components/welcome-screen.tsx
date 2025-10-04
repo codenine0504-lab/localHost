@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Layers, MessageCircle, User, Code } from 'lucide-react';
 import Autoplay from 'embla-carousel-autoplay';
 import React, { useState } from 'react';
+import { AuthDialog } from './auth-dialog';
 
 const AnimatedLogo = () => (
     <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
@@ -83,18 +84,17 @@ export function WelcomeScreen() {
         }
     };
 
-    return (
-        <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-x-hidden py-16">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,#102E4A,transparent)]"></div>
-            
-            {!showFeatures ? (
-                <div className="relative z-10 flex flex-col items-center justify-center text-center p-4">
+    if (!showFeatures) {
+        return (
+            <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-x-hidden py-16">
+                 <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,#102E4A,transparent)]"></div>
+                 <div className="relative z-10 flex flex-col items-center justify-center text-center p-4">
                     <AnimatedLogo />
                     
                     <div className="mt-8">
-                        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
-                            Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-blue-400 to-purple-500">LocalHost</span>
-                        </h1>
+                         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
+                             Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-blue-400 to-purple-500">LocalHost</span>
+                         </h1>
                     </div>
 
                     <p className="mt-6 max-w-lg text-lg text-slate-400">
@@ -109,50 +109,56 @@ export function WelcomeScreen() {
                         Get Started
                     </Button>
                 </div>
-            ) : (
-                <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl p-4">
-                    <h2 className="text-3xl font-bold text-white mb-8">Features</h2>
-                        <Carousel
-                        plugins={[plugin.current]}
-                        className="w-full"
-                        onMouseEnter={plugin.current.stop}
-                        onMouseLeave={plugin.current.reset}
-                    >
-                        <CarouselContent>
-                            {features.map((feature, index) => (
-                                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                                    <div className="p-1">
-                                        <Card className="bg-slate-900/50 border-slate-800">
-                                            <CardContent className="flex flex-col items-center justify-center p-6 text-center h-48">
-                                                {feature.icon}
-                                                <h3 className="text-xl font-semibold text-white mt-4">{feature.title}</h3>
-                                                <p className="text-slate-400 mt-2 text-sm">{feature.description}</p>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                    </Carousel>
-                    <div className="mt-8 flex gap-4">
+            </div>
+        )
+    }
+
+    return (
+        <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-x-hidden py-16">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,#102E4A,transparent)]"></div>
+            <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl p-4">
+                <h2 className="text-3xl font-bold text-white mb-8">Features</h2>
+                    <Carousel
+                    plugins={[plugin.current]}
+                    className="w-full"
+                    onMouseEnter={plugin.current.stop}
+                    onMouseLeave={plugin.current.reset}
+                >
+                    <CarouselContent>
+                        {features.map((feature, index) => (
+                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                                <div className="p-1">
+                                    <Card className="bg-slate-900/50 border-slate-800">
+                                        <CardContent className="flex flex-col items-center justify-center p-6 text-center h-48">
+                                            {feature.icon}
+                                            <h3 className="text-xl font-semibold text-white mt-4">{feature.title}</h3>
+                                            <p className="text-slate-400 mt-2 text-sm">{feature.description}</p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                </Carousel>
+                <div className="mt-8 flex gap-4">
+                    <AuthDialog>
                         <Button 
                             size="lg" 
                             className="bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
-                            onClick={handleGoogleLogin}
                         >
-                            Login with Google
+                            Login / Sign Up
                         </Button>
-                        <Button
-                            size="lg"
-                            variant="ghost"
-                            className="text-white hover:bg-slate-800 hover:text-white"
-                            onClick={handleGoogleLogin}
-                        >
-                            Skip
-                        </Button>
-                    </div>
+                    </AuthDialog>
+                    <Button
+                        size="lg"
+                        variant="ghost"
+                        className="text-white hover:bg-slate-800 hover:text-white"
+                        onClick={handleGoogleLogin}
+                    >
+                        Skip
+                    </Button>
                 </div>
-            )}
+            </div>
         </div>
     );
 }
