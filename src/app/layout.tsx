@@ -30,12 +30,12 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap"
           rel="stylesheet"
         />
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#0a192f" />
       </head>
       <body className="font-body antialiased overflow-x-hidden">
          <ThemeProvider
             attribute="class"
-            defaultTheme="light"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
         >
