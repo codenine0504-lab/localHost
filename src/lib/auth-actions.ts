@@ -2,8 +2,8 @@
 'use server';
 
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
-import { doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
+import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 
 const signUpSchema = z.object({
@@ -78,13 +78,8 @@ export async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithRedirect(auth, provider);
-      // The redirect will cause the page to unload, so this part is not typically reached.
-      // The result is handled on the page the user is redirected back to.
       return { success: "Redirecting for Google Sign-In." };
     } catch (error: any) {
-      if (error.code === 'auth/operation-not-supported-in-this-environment') {
-        return { error: 'Google Sign-In is not supported in this environment. Please use email and password.' };
-      }
       console.error('Error during Google sign-in redirect:', error);
       return { error: error.message || 'An unexpected error occurred.' };
     }
