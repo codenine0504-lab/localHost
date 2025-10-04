@@ -17,6 +17,7 @@ import { AnimatedHeader } from "@/components/animated-header";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Instagram, Github, Linkedin, Link as LinkIcon } from "lucide-react";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -36,7 +37,7 @@ function ProfileSkeleton() {
         <div className="grid gap-8 md:grid-cols-3">
             <div className="md:col-span-1">
                 <Card className="overflow-hidden">
-                    <CardHeader className="flex flex-row items-center gap-4 p-6">
+                    <CardHeader className="flex flex-row items-center gap-4 p-6 bg-transparent relative z-10">
                         <Skeleton className="h-20 w-20 rounded-full" />
                         <div className="space-y-2">
                             <Skeleton className="h-6 w-32" />
@@ -74,6 +75,13 @@ function ProfileSkeleton() {
                                 <Skeleton className="h-5 w-24" />
                             </div>
                         </div>
+                        <Separator />
+                        <div className="space-y-4">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
                          <Separator />
                         <div className="space-y-2">
                             <Label htmlFor="city">City</Label>
@@ -101,6 +109,10 @@ export default function ProfilePage() {
   const [selectedCollege, setSelectedCollege] = useState<string>('');
   const [status, setStatus] = useState<'seeking' | 'active' | 'none'>('none');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [instagram, setInstagram] = useState('');
+  const [github, setGithub] = useState('');
+  const [linkedin, setLinkedin] = useState('');
+  const [otherLink, setOtherLink] = useState('');
   const { toast } = useToast();
 
    useEffect(() => {
@@ -113,19 +125,17 @@ export default function ProfilePage() {
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
+          setSelectedCity(userData.city || '');
           if (userData.city) {
-            setSelectedCity(userData.city);
             setColleges(collegesByCity[userData.city] || []);
           }
-          if (userData.college) {
-            setSelectedCollege(userData.college);
-          }
-          if (userData.status) {
-            setStatus(userData.status);
-          }
-          if (userData.interests) {
-            setSelectedInterests(userData.interests);
-          }
+          setSelectedCollege(userData.college || '');
+          setStatus(userData.status || 'none');
+          setSelectedInterests(userData.interests || []);
+          setInstagram(userData.instagram || '');
+          setGithub(userData.github || '');
+          setLinkedin(userData.linkedin || '');
+          setOtherLink(userData.otherLink || '');
         } else {
              await setDoc(userDocRef, {
                 uid: currentUser.uid,
@@ -172,7 +182,11 @@ export default function ProfilePage() {
             city: selectedCity,
             college: selectedCollege,
             status: status,
-            interests: selectedInterests
+            interests: selectedInterests,
+            instagram,
+            github,
+            linkedin,
+            otherLink,
         }, { merge: true });
 
         toast({
@@ -284,6 +298,33 @@ export default function ProfilePage() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                         <div className="space-y-2">
+                             <Label>Social Links</Label>
+                             <p className="text-sm text-muted-foreground">Add links to your social and professional profiles.</p>
+                         </div>
+                         <div className="space-y-4">
+                            <div className="relative">
+                                <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="Instagram username" className="pl-10" />
+                            </div>
+                            <div className="relative">
+                                <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input value={github} onChange={e => setGithub(e.target.value)} placeholder="GitHub username" className="pl-10" />
+                            </div>
+                            <div className="relative">
+                                <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="LinkedIn profile URL" className="pl-10" />
+                            </div>
+                            <div className="relative">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input value={otherLink} onChange={e => setOtherLink(e.target.value)} placeholder="Personal website or other link" className="pl-10" />
+                            </div>
+                         </div>
                     </div>
                     
                     <Separator />
