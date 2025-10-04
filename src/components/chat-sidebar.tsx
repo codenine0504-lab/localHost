@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion, arrayRemove, increment } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion, arrayRemove, increment, getDocs, writeBatch } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
@@ -268,6 +268,15 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
         }
     };
 
+    const deleteSubcollection = async (collectionRef: any) => {
+        const querySnapshot = await getDocs(collectionRef);
+        const batch = writeBatch(db);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+    };
+
     const handleDeleteProject = async () => {
         if (!isCurrentUserAdmin) return;
         setIsDeleting(true);
@@ -284,7 +293,15 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
             const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
             await deleteDoc(doc(db, projectCollection, project.id));
-            await deleteDoc(doc(db, 'chatRooms', project.id));
+            
+            const chatRoomRef = doc(db, 'chatRooms', project.id);
+            const generalChatRef = collection(chatRoomRef, 'General');
+            const projectChatRef = collection(chatRoomRef, 'Project');
+
+            await deleteSubcollection(generalChatRef);
+            await deleteSubcollection(projectChatRef);
+            
+            await deleteDoc(chatRoomRef);
 
             toast({ title: "Success", description: "Project has been deleted." });
             onOpenChange(false);

@@ -50,15 +50,19 @@ export default function ChatRoomPage() {
 
   const checkNotifications = (rooms: ChatRoom[]): ChatRoom[] => {
       return rooms.map(room => {
-          const lastMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}`);
-          const lastReadTimestampStr = localStorage.getItem(`lastRead_${room.id}`);
+          const lastGeneralMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}_general`);
+          const lastGeneralReadTimestampStr = localStorage.getItem(`lastRead_${room.id}_general`);
+          const lastProjectMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}_project`);
+          const lastProjectReadTimestampStr = localStorage.getItem(`lastRead_${room.id}_project`);
 
-          const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
-          const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : Date.now();
+          const lastGeneralMessageTimestamp = lastGeneralMessageTimestampStr ? parseInt(lastGeneralMessageTimestampStr, 10) : 0;
+          const lastGeneralReadTimestamp = lastGeneralReadTimestampStr ? parseInt(lastGeneralReadTimestampStr, 10) : Date.now();
+          const lastProjectMessageTimestamp = lastProjectMessageTimestampStr ? parseInt(lastProjectMessageTimestampStr, 10) : 0;
+          const lastProjectReadTimestamp = lastProjectReadTimestampStr ? parseInt(lastProjectReadTimestampStr, 10) : Date.now();
 
           return {
               ...room,
-              hasNotification: lastMessageTimestamp > lastReadTimestamp,
+              hasNotification: (lastGeneralMessageTimestamp > lastGeneralReadTimestamp) || (lastProjectMessageTimestamp > lastProjectReadTimestamp),
           };
       });
   };

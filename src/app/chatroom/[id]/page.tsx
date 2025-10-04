@@ -13,6 +13,7 @@ import { Send, Ban } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Message {
   id: string;
@@ -44,6 +45,8 @@ interface Member {
     photoURL: string | null;
     isAdmin: boolean;
 }
+
+type ChatTab = 'general' | 'project';
 
 function ChatSkeleton() {
     return (
@@ -93,6 +96,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ChatTab>('general');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
   const initialLoadHandled = useRef(false);
@@ -110,10 +114,10 @@ export default function ChatPage() {
   // Mark chat as read when component mounts
   useEffect(() => {
     if(projectId) {
-        localStorage.setItem(`lastRead_${projectId}`, Date.now().toString());
+        localStorage.setItem(`lastRead_${projectId}_${activeTab}`, Date.now().toString());
         window.dispatchEvent(new Event('storage')); // Notify other components
     }
-  }, [projectId]);
+  }, [projectId, activeTab]);
 
   const fetchProjectAndMembers = useCallback(async () => {
     if (!projectId || !user) return;
@@ -208,7 +212,8 @@ export default function ChatPage() {
   useEffect(() => {
     if (!projectId || !hasAccess || !user) return;
 
-    const q = query(collection(db, `Chat/${projectId}/Chats`), orderBy('createdAt', 'asc'));
+    const collectionName = activeTab === 'general' ? 'General' : 'Project';
+    const q = query(collection(db, `chatRooms/${projectId}/${collectionName}`), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs);
@@ -216,10 +221,9 @@ export default function ChatPage() {
       if (initialLoadHandled.current && msgs.length > 0) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.senderId !== user.uid) {
-            // Update localStorage with the timestamp of the last message for this specific chat
             const lastTimestamp = lastMessage.createdAt.toMillis();
-            localStorage.setItem(`lastMessageTimestamp_${projectId}`, lastTimestamp.toString());
-            window.dispatchEvent(new Event('storage')); // Notify other components
+            localStorage.setItem(`lastMessageTimestamp_${projectId}_${activeTab}`, lastTimestamp.toString());
+            window.dispatchEvent(new Event('storage')); 
 
             if(document.hidden) {
                 const audio = new Audio('/chatnotify.mp3');
@@ -258,7 +262,7 @@ export default function ChatPage() {
     });
 
     return () => unsubscribe();
-  }, [projectId, hasAccess, user, projectDetails]);
+  }, [projectId, hasAccess, user, projectDetails, activeTab]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -282,7 +286,8 @@ export default function ChatPage() {
     setNewMessage('');
 
     try {
-        await addDoc(collection(db, `Chat/${projectId}/Chats`), {
+        const collectionName = activeTab === 'general' ? 'General' : 'Project';
+        await addDoc(collection(db, `chatRooms/${projectId}/${collectionName}`), {
             text: userMessage,
             createdAt: serverTimestamp(),
             senderId: user.uid, 
@@ -341,36 +346,19 @@ export default function ChatPage() {
 
   return (
      <div className="h-screen flex flex-col bg-background">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ChatTab)} className="flex flex-col flex-grow">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="project">Project</TabsTrigger>
+            </TabsList>
+            <TabsContent value="general" className="flex-grow flex flex-col">
+                 <ChatView />
+            </TabsContent>
+            <TabsContent value="project" className="flex-grow flex flex-col">
+                 <ChatView />
+            </TabsContent>
+        </Tabs>
         
-        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
-            <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
-                {messages.length === 0 && (
-                <div className="text-center text-muted-foreground py-10">
-                        <p>Discuss Your project here</p>
-                </div>
-                )}
-                {messages.map((msg) => (
-                <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
-                    {msg.senderId !== user?.uid && (
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
-                        <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
-                    </Avatar>
-                    )}
-                    <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                    <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
-                    <p className="text-sm">{msg.text}</p>
-                    </div>
-                    {msg.senderId === user?.uid && (
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
-                        <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
-                    </Avatar>
-                    )}
-                </div>
-                ))}
-            </div>
-        </ScrollArea>
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative">
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
             <div className="relative">
@@ -399,6 +387,39 @@ export default function ChatPage() {
         )}
      </div>
   );
-}
+  
+  function ChatView() {
+    return (
+        <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+            <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
+                {messages.length === 0 && (
+                    <div className="text-center text-muted-foreground py-10">
+                        <p>No messages yet. Start the conversation!</p>
+                    </div>
+                )}
+                {messages.map((msg) => (
+                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
+                        {msg.senderId !== user?.uid && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
+                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                        </Avatar>
+                        )}
+                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                            <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
+                            <p className="text-sm">{msg.text}</p>
+                        </div>
+                        {msg.senderId === user?.uid && (
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
+                            <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
+                        </Avatar>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </ScrollArea>
+    );
+  }
 
-    
+}

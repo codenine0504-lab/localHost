@@ -37,9 +37,12 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('lastMessageTimestamp_')) {
-                    const roomId = key.substring('lastMessageTimestamp_'.length);
+                    const parts = key.split('_');
+                    const roomId = parts[2];
+                    const tab = parts[3];
+
                     const lastMessageTimestampStr = localStorage.getItem(key);
-                    const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}`);
+                    const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}_${tab}`);
                     
                     const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
                     const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : Date.now();
@@ -56,8 +59,11 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
         checkNotifications();
 
-        const handleStorageChange = () => {
-            checkNotifications();
+        const handleStorageChange = (event: StorageEvent) => {
+             // Only run check if the change is relevant to notifications
+            if (event.key?.includes('lastMessageTimestamp_') || event.key?.includes('lastRead_') || event.key?.includes('hasNewJoinRequests_')) {
+                checkNotifications();
+            }
         };
 
         window.addEventListener('storage', handleStorageChange);

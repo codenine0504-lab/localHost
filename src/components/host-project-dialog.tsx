@@ -26,7 +26,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { db, auth } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -135,12 +135,24 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
 
       const projectDocRef = await addDoc(collection(db, collectionName), projectPayload);
 
-      await setDoc(doc(db, 'chatRooms', projectDocRef.id), {
+      const chatRoomRef = doc(db, 'chatRooms', projectDocRef.id);
+      const batch = writeBatch(db);
+
+      batch.set(chatRoomRef, {
         name: data.title,
         createdAt: serverTimestamp(),
         imageUrl: data.imageUrl,
         isPrivate: data.isPrivate,
       });
+
+      // Create dummy docs to ensure subcollections are created.
+      const generalChatRef = doc(collection(chatRoomRef, 'General'));
+      batch.set(generalChatRef, {});
+      const projectChatRef = doc(collection(chatRoomRef, 'Project'));
+      batch.set(projectChatRef, {});
+
+      await batch.commit();
+
 
       const audio = new Audio('/upload.mp3');
       audio.play();
