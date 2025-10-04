@@ -6,9 +6,12 @@ import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
 import { AnimatedHeader } from '@/components/animated-header';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 
 interface AppUser {
   id: string;
@@ -37,6 +40,7 @@ function PeopleSkeleton() {
 export default function PeoplePage() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const q = query(collection(db, 'users'), orderBy('displayName'));
@@ -54,6 +58,10 @@ export default function PeoplePage() {
 
     return () => unsubscribe();
   }, []);
+
+  const filteredUsers = users.filter((user) =>
+    user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
@@ -73,11 +81,24 @@ export default function PeoplePage() {
             />
         </div>
 
+        <div className="flex justify-center my-8">
+            <div className="relative w-full max-w-lg">
+                <Input
+                    type="search"
+                    placeholder="Search for people..."
+                    className="w-full pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            </div>
+        </div>
+
         {loading ? (
             <PeopleSkeleton />
-        ) : users.length > 0 ? (
+        ) : filteredUsers.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                     <Card key={user.id} className="text-center hover:shadow-lg transition-shadow">
                         <Link href={`/profile/${user.id}`}>
                             <CardHeader className="flex flex-col items-center">
@@ -94,7 +115,7 @@ export default function PeoplePage() {
             </div>
         ) : (
             <div className="text-center text-muted-foreground py-10 col-span-full border rounded-lg">
-                <p>No users found.</p>
+                <p>No users found matching your search.</p>
             </div>
         )}
     </div>
