@@ -1,33 +1,19 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Link from 'next/link';
 import { AnimatedHeader } from '@/components/animated-header';
 import { Input } from '@/components/ui/input';
 import { Search, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-
-interface Skill {
-    name: string;
-    isPrimary: boolean;
-}
-
-interface AppUser {
-  id: string;
-  displayName: string | null;
-  photoURL: string | null;
-  college?: string;
-  email?: string;
-  status?: 'seeking' | 'active' | 'none';
-  skills?: Skill[];
-}
+import { UserProfileCard } from '@/components/user-profile-card';
+import type { AppUser, Skill } from '@/types';
 
 const tabs = [
     { id: 'all', label: 'All' },
@@ -60,12 +46,12 @@ export default function PeoplePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
 
   useEffect(() => {
     let q;
     const isStatusFilter = ['seeking', 'active'].includes(activeTab);
     
-    // Updated to check against a list of known skills/themes
     const skillThemes = ['software', 'hardware', 'design', 'event'];
     const isThemeFilter = skillThemes.includes(activeTab);
 
@@ -74,9 +60,6 @@ export default function PeoplePage() {
     } else if (isStatusFilter) {
         q = query(collection(db, 'users'), where('status', '==', activeTab), orderBy('displayName'));
     } else if (isThemeFilter) {
-        // This query checks if the `skills` array contains an object with the selected theme name.
-        // Note: Firestore's `array-contains` requires the full object to match if you're querying an array of objects.
-        // This is a simplified approach; for more complex skill queries, a different data structure might be needed.
         q = query(collection(db, 'users'), where('interests', 'array-contains', activeTab), orderBy('displayName'));
     } else {
         q = query(collection(db, 'users'), orderBy('displayName'));
@@ -129,6 +112,7 @@ export default function PeoplePage() {
   }
 
   return (
+    <>
     <div className="container mx-auto py-12 px-4 md:px-6">
         <AnimatedHeader 
             title="Discover People"
@@ -165,7 +149,7 @@ export default function PeoplePage() {
                                 {activeTab === tab.id && (
                                     <motion.span
                                         layoutId="bubble"
-                                        className="absolute inset-0 z-10 bg-blue-900 dark:bg-blue-500 shadow-sm"
+                                        className="absolute inset-0 z-10 bg-primary shadow-sm"
                                         style={{ borderRadius: 9999 }}
                                         transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                                     />
@@ -188,7 +172,7 @@ export default function PeoplePage() {
                         const primarySkill = getPrimarySkill(user.skills);
                         const hasSkills = user.skills && user.skills.length > 0;
                         return (
-                        <Link href={`/profile/${user.id}`} key={user.id} className="block">
+                        <div key={user.id} onClick={() => setSelectedUser(user)} className="cursor-pointer">
                             <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200">
                                 <Avatar className="h-12 w-12">
                                     <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'}/>
@@ -216,7 +200,7 @@ export default function PeoplePage() {
                                   {getStatusBadge(user.status)}
                                 </div>
                             </div>
-                        </Link>
+                        </div>
                     )})}
                 </div>
             ) : (
@@ -226,5 +210,13 @@ export default function PeoplePage() {
             )}
         </div>
     </div>
+    {selectedUser && (
+        <UserProfileCard
+            user={selectedUser}
+            isOpen={!!selectedUser}
+            onOpenChange={(isOpen) => !isOpen && setSelectedUser(null)}
+        />
+    )}
+    </>
   );
 }
