@@ -21,7 +21,7 @@ interface ChatRoom {
 }
 
 const tabs = [
-    { id: 'dms', label: 'DMs' },
+    { id: 'general', label: 'General' },
     { id: 'projects', label: 'Projects' },
 ];
 
@@ -61,13 +61,17 @@ export default function ChatRoomPage() {
       return rooms.map(room => {
           const lastMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}`);
           const lastReadTimestampStr = localStorage.getItem(`lastRead_${room.id}`);
+          const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${room.id}`);
           
           const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
           const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
+          const hasNewMessage = lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp;
+          const notFromCurrentUser = lastMessageSenderId !== user?.uid;
+
           return {
               ...room,
-              hasNotification: lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp
+              hasNotification: hasNewMessage && notFromCurrentUser
           };
       });
   };
@@ -97,7 +101,7 @@ export default function ChatRoomPage() {
             dms.push({ id: roomDoc.id, name: otherMemberName, imageUrl: otherMemberPhoto });
         }
         setDmRooms(checkNotifications(dms));
-        setLoading(false); // Can set loading false after first listener returns
+        if (projectRooms.length > 0 || dms.length > 0) setLoading(false);
     }, (error) => {
         console.error("Error fetching DMs:", error);
         setLoading(false);
@@ -108,7 +112,7 @@ export default function ChatRoomPage() {
     const unsubscribeProjects = onSnapshot(projectChatQuery, (snapshot) => {
         const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
         setProjectRooms(checkNotifications(projects));
-        setLoading(false);
+        if (projects.length > 0 || dmRooms.length > 0) setLoading(false);
     }, (error) => {
         console.error("Error fetching project chats:", error);
         setLoading(false);
@@ -169,8 +173,8 @@ export default function ChatRoomPage() {
                         <h3 className="text-lg font-semibold truncate flex-1">{room.name}</h3>
                         {room.hasNotification && (
                             <div className="h-3 w-3 relative">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                             </div>
                         )}
                     </div>
@@ -214,7 +218,7 @@ export default function ChatRoomPage() {
         </div>
       
         <div className="flex-1 min-h-0">
-            {activeTab === 'dms' ? renderRoomList(dmRooms, true) : renderRoomList(projectRooms, false)}
+            {activeTab === 'general' ? renderRoomList(dmRooms, true) : renderRoomList(projectRooms, false)}
         </div>
     </div>
   );
