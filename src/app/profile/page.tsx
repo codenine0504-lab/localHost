@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Instagram, Github, Linkedin, Link as LinkIcon, User as UserIcon, BookOpen, Brush, Link2 as LinksIcon, LogOut } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useRouter } from 'next/navigation';
+import { Separator } from "@/components/ui/separator";
 
 const collegesByCity: Record<string, string[]> = {
   raipur: ["NIT Raipur", "Government Engineering College, Raipur", "Shankarcharya Group of Institutions", "Amity University, Raipur", "RITEE - Raipur Institute of Technology"],
@@ -230,12 +231,6 @@ export default function ProfilePage() {
                             <CardDescription className="text-xs break-all">{user.email}</CardDescription>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6 pt-0">
-                        <Button variant="outline" className="w-full" onClick={handleLogout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Logout
-                        </Button>
-                    </CardContent>
                 </Card>
                 </div>
                 <div className="md:col-span-2">
@@ -376,6 +371,11 @@ export default function ProfilePage() {
                                 </AccordionItem>
                             </Accordion>
                             <Button className="w-full mt-6" onClick={handleUpdate}>Update Profile</Button>
+                             <Separator className="my-6" />
+                             <Button variant="outline" className="w-full" onClick={handleLogout}>
+                                <LogOut className="mr-2 h-4 w-4" />
+                                Logout
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -385,5 +385,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-    
