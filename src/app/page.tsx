@@ -16,7 +16,7 @@ import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Users, Code, Brush, Milestone, Cpu, Eye } from 'lucide-react';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 
 interface Project {
   id: string;
@@ -139,16 +139,16 @@ export default function Home() {
         {/* Action Cards */}
         <div className="grid grid-cols-2 gap-4">
             <HostProjectDialog>
-                 <Card className="group cursor-pointer hover:border-primary transition-all h-full flex flex-col justify-between">
+                 <Card className="group cursor-pointer bg-blue-500 text-white hover:bg-blue-600 transition-all h-full flex flex-col justify-between">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-xl md:text-2xl">
-                            <Users className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                            <Users className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
                             Host a Project
                         </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">Start your own project and invite collaborators.</CardDescription>
+                        <CardDescription className="text-blue-100 text-xs md:text-sm">Start your own project and invite collaborators.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-primary group-hover:translate-x-1 transition-transform flex items-center text-sm">
+                        <div className="text-white group-hover:translate-x-1 transition-transform flex items-center text-sm font-semibold">
                             Get Started <ArrowRight className="ml-2 h-4 w-4" />
                         </div>
                     </CardContent>
@@ -175,24 +175,21 @@ export default function Home() {
         {/* Themes Section */}
         <div>
             <h2 className="text-2xl font-bold mb-4">Explore by Theme</h2>
-            <div className="relative">
-                <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-                    <div className="flex w-max space-x-4 p-4">
-                        {themes.map((theme) => (
-                        <Card key={theme.name} className="w-40 flex-shrink-0 hover:shadow-lg transition-shadow">
-                             <Link href={`/projects?theme=${theme.name.toLowerCase()}`} className="block">
-                                <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
-                                     <div className={`p-3 rounded-full ${theme.color}`}>
-                                        <theme.icon className="h-6 w-6 text-white" />
-                                    </div>
-                                    <p className="font-semibold">{theme.name}</p>
-                                </CardContent>
-                            </Link>
-                        </Card>
-                        ))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+            <div className="relative overflow-hidden group w-full">
+                <div className="flex gap-4 scroller group-hover:[animation-play-state:paused]">
+                    {[...themes, ...themes].map((theme, index) => (
+                    <Card key={`${theme.name}-${index}`} className="w-40 flex-shrink-0 hover:shadow-lg transition-shadow">
+                            <Link href={`/projects?theme=${theme.name.toLowerCase()}`} className="block">
+                            <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
+                                    <div className={`p-3 rounded-full ${theme.color}`}>
+                                    <theme.icon className="h-6 w-6 text-white" />
+                                </div>
+                                <p className="font-semibold">{theme.name}</p>
+                            </CardContent>
+                        </Link>
+                    </Card>
+                    ))}
+                </div>
             </div>
         </div>
         
@@ -206,23 +203,20 @@ export default function Home() {
                     </Link>
                 </Button>
             </div>
-             <div className="relative">
-                <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-                    <div className="flex w-max space-x-6 p-4">
-                        {people.map((person) => (
-                        <Link href={`/profile/${person.id}`} key={person.id}>
-                            <div className="flex flex-col items-center gap-2 text-center w-20">
-                                <Avatar className="h-16 w-16 border-2 border-muted hover:border-primary transition-all">
-                                    <AvatarImage src={person.photoURL || undefined} alt={person.displayName || 'User'}/>
-                                    <AvatarFallback>{getInitials(person.displayName)}</AvatarFallback>
-                                </Avatar>
-                                <p className="text-xs font-medium truncate w-full">{person.displayName || 'User'}</p>
-                            </div>
-                         </Link>
-                        ))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+             <div className="relative overflow-hidden group w-full">
+                 <div className="flex gap-6 scroller group-hover:[animation-play-state:paused]">
+                    {[...people, ...people].map((person, index) => (
+                    <Link href={`/profile/${person.id}`} key={`${person.id}-${index}`}>
+                        <div className="flex flex-col items-center gap-2 text-center w-20 flex-shrink-0">
+                            <Avatar className="h-16 w-16 border-2 border-muted hover:border-primary transition-all">
+                                <AvatarImage src={person.photoURL || undefined} alt={person.displayName || 'User'}/>
+                                <AvatarFallback>{getInitials(person.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <p className="text-xs font-medium truncate w-full">{person.displayName || 'User'}</p>
+                        </div>
+                        </Link>
+                    ))}
+                </div>
             </div>
         </div>
 
