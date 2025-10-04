@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Compass } from 'lucide-react';
 import Link from 'next/link';
 import { HostProjectDialog } from '@/components/host-project-dialog';
 import { useEffect, useState } from 'react';
@@ -270,5 +270,4 @@ export default function Home() {
     </div>
   );
 }
-
     
