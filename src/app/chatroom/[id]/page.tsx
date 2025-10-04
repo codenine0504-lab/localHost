@@ -9,7 +9,7 @@ import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Ban, Lock } from 'lucide-react';
+import { Send, Ban, Lock, MessagesSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatSidebar } from '@/components/chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -101,6 +101,7 @@ export default function ChatPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ChatTab>('general');
   const [notifications, setNotifications] = useState({ general: false, team: false });
+  const [hasChatContent, setHasChatContent] = useState(false);
   const { toast } = useToast();
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -251,6 +252,11 @@ export default function ChatPage() {
       if (tab === activeTab) {
           setMessages(msgs);
       }
+      
+      if (msgs.length > 0) {
+        setHasChatContent(true);
+      }
+
 
       // Handle notifications
       if (msgs.length > 0) {
@@ -409,21 +415,37 @@ export default function ChatPage() {
       )}
     </TabsTrigger>
   );
+  
+  function NoChatView() {
+    return (
+        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
+            <MessagesSquare className="h-12 w-12 mb-4" />
+            <h2 className="text-xl font-semibold text-foreground">Welcome to the chat!</h2>
+            <p>No messages here yet. Be the first to start the conversation.</p>
+        </div>
+    )
+  }
 
   return (
      <div className="h-screen flex flex-col bg-background">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-grow">
-            <TabsList className="grid w-full grid-cols-2">
-                 <TabTriggerWithNotification value="general" label="General" hasNotification={notifications.general} />
-                 <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} disabled={!isMember}/>
-            </TabsList>
-            <TabsContent value="general" className="flex-grow flex flex-col">
-                 <ChatView key="general" />
-            </TabsContent>
-            <TabsContent value="team" className="flex-grow flex flex-col">
-                 <ChatView key="team" />
-            </TabsContent>
-        </Tabs>
+        {hasChatContent ? (
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col flex-grow">
+                <TabsList className="grid w-full grid-cols-2">
+                     <TabTriggerWithNotification value="general" label="General" hasNotification={notifications.general} />
+                     <TabTriggerWithNotification value="team" label="Team" hasNotification={notifications.team} disabled={!isMember}/>
+                </TabsList>
+                <TabsContent value="general" className="flex-grow flex flex-col">
+                     <ChatView key="general" />
+                </TabsContent>
+                <TabsContent value="team" className="flex-grow flex flex-col">
+                     <ChatView key="team" />
+                </TabsContent>
+            </Tabs>
+        ) : (
+            <div className="flex-grow">
+                <NoChatView />
+            </div>
+        )}
         
         <div className={cn("fixed bottom-0 left-0 right-0 p-4 bg-background border-t md:relative", isSidebarOpen && "pr-[var(--sidebar-width)]")}>
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
@@ -458,11 +480,6 @@ export default function ChatPage() {
     return (
         <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
             <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
-                {messages.length === 0 && (
-                    <div className="text-center text-muted-foreground py-10">
-                        <p>No messages yet. Start the conversation!</p>
-                    </div>
-                )}
                 {messages.map((msg) => (
                     <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
                         {msg.senderId !== user?.uid && (
@@ -488,5 +505,5 @@ export default function ChatPage() {
     );
   }
 }
-
+    
     
