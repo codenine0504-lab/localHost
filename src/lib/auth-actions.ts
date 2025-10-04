@@ -9,7 +9,7 @@ import {
     GoogleAuthProvider, 
     signInWithPopup 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { z } from 'zod';
 
 const signUpSchema = z.object({
@@ -68,7 +68,7 @@ export async function loginWithEmail(values: z.infer<typeof loginSchema>) {
         await signInWithEmailAndPassword(auth, email, password);
         return { success: "Logged in successfully." };
     } catch (error: any) {
-         if (error.code === 'auth/invalid-credential') {
+         if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
             return { error: 'Invalid email or password.' };
         }
         return { error: error.message || 'An unexpected error occurred.' };
@@ -81,7 +81,6 @@ export async function loginWithGoogle() {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        // Check if user document already exists
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
 
@@ -96,12 +95,14 @@ export async function loginWithGoogle() {
         
         return { success: "Google Sign-In successful." };
     } catch (error: any) {
-        // Handle specific auth errors
         if (error.code === 'auth/popup-closed-by-user') {
             return { error: 'Sign-in popup closed by user.' };
         }
         if (error.code === 'auth/cancelled-popup-request') {
             return { error: 'Multiple sign-in attempts. Please try again.'}
+        }
+        if (error.code === 'auth/operation-not-supported-in-this-environment') {
+            return { error: 'Google Sign-In is not supported in this environment. Please use email/password.' };
         }
         console.error('Error during Google sign-in:', error);
         return { error: error.message || 'An unexpected error occurred during Google sign-in.' };

@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,8 @@ import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { signUpWithEmail, loginWithEmail, loginWithGoogle } from '@/lib/auth-actions';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const signUpSchema = z.object({
   displayName: z.string().min(1, 'Display name is required.'),
@@ -46,6 +49,17 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            setIsOpen(false);
+            if(router) router.push('/');
+        }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const {
     register: registerSignUp,
@@ -67,7 +81,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
             setError(result.error);
         } else {
             toast({ title: 'Success', description: 'Account created! Welcome.' });
-            setIsOpen(false);
+            // The onAuthStateChanged listener will handle closing the dialog and redirecting.
         }
     });
   }
@@ -78,9 +92,8 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
         const result = await loginWithEmail(values);
         if (result.error) {
             setError(result.error);
-        } else {
-            setIsOpen(false);
         }
+        // The onAuthStateChanged listener will handle closing the dialog and redirecting.
     });
   }
 
@@ -90,15 +103,28 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
         const result = await loginWithGoogle();
         if (result.error) {
             setError(result.error);
-        } else {
-             setIsOpen(false);
         }
+        // The onAuthStateChanged listener will handle closing the dialog and redirecting.
     });
+  }
+
+  // Effect to automatically open the dialog if we are on the login page
+  useEffect(() => {
+    if (window.location.pathname === '/login') {
+        setIsOpen(true);
+    }
+  }, []);
+
+  const onOpenChange = (open: boolean) => {
+      setIsOpen(open);
+      if (!open && window.location.pathname === '/login') {
+          router.push('/');
+      }
   }
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

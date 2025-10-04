@@ -50,12 +50,12 @@ function BottomNav() {
                 layout
                 className="flex h-16 max-w-sm mx-auto items-center justify-center rounded-full border border-white/10 bg-black backdrop-blur-sm shadow-lg px-4"
             >
-                <AuthDialog>
-                    <Button className="bg-primary text-primary-foreground rounded-full w-full">
+                <Button asChild className="bg-primary text-primary-foreground rounded-full w-full">
+                    <Link href="/login">
                         <LogIn className="mr-2 h-5 w-5" />
                         Login to Get Started
-                    </Button>
-                </AuthDialog>
+                    </Link>
+                </Button>
             </motion.div>
         </footer>
       )
