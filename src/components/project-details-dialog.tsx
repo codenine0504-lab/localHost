@@ -21,6 +21,7 @@ import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, update
 import { Share2, Eye, Users, LogIn } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { AuthDialog } from './auth-dialog';
 
 interface Project {
   id: string;
@@ -210,14 +211,14 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }
   
    const renderJoinButton = () => {
-    if (user?.isAnonymous) {
+    if (!user || user.isAnonymous) {
         return (
-            <Button asChild className="w-full sm:w-auto">
-                <Link href="/login">
+            <AuthDialog>
+                <Button className="w-full sm:w-auto">
                     <LogIn className="mr-2 h-4 w-4" />
                     Login to Join
-                </Link>
-            </Button>
+                </Button>
+            </AuthDialog>
         )
     }
 
@@ -225,7 +226,7 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
         <Button
             className="w-full sm:w-auto"
             onClick={handleJoinOrRequest}
-            disabled={requestStatus === 'pending' || requestStatus === 'sent' || !user}
+            disabled={requestStatus === 'pending' || requestStatus === 'sent'}
         >
             {getButtonText()}
         </Button>
@@ -280,5 +281,3 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
     </Dialog>
   );
 }
-
-    

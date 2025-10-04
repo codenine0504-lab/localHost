@@ -2,8 +2,14 @@
 'use server';
 
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    updateProfile, 
+    GoogleAuthProvider, 
+    signInWithPopup 
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
 import { z } from 'zod';
 
 const signUpSchema = z.object({
@@ -32,18 +38,13 @@ export async function signUpWithEmail(values: z.infer<typeof signUpSchema>) {
 
         await updateProfile(user, { displayName });
         
-        const batch = writeBatch(db);
-
         const userDocRef = doc(db, "users", user.uid);
-        batch.set(userDocRef, {
+        await setDoc(userDocRef, {
             uid: user.uid,
             email: user.email,
             displayName: displayName,
             photoURL: user.photoURL,
         }, { merge: true });
-        
-        await batch.commit();
-
 
         return { success: "User created successfully." };
     } catch (error: any) {
@@ -77,13 +78,32 @@ export async function loginWithEmail(values: z.infer<typeof loginSchema>) {
 export async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithRedirect(auth, provider);
-      return { success: "Redirecting for Google Sign-In." };
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Check if user document already exists
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+            }, { merge: true });
+        }
+        
+        return { success: "Google Sign-In successful." };
     } catch (error: any) {
-      if (error.code === 'auth/operation-not-supported-in-this-environment') {
-        return { error: 'Google Sign-In is not supported in this environment. Please use email and password.' };
-      }
-      console.error('Error during Google sign-in redirect:', error);
-      return { error: error.message || 'An unexpected error occurred.' };
+        // Handle specific auth errors
+        if (error.code === 'auth/popup-closed-by-user') {
+            return { error: 'Sign-in popup closed by user.' };
+        }
+        if (error.code === 'auth/cancelled-popup-request') {
+            return { error: 'Multiple sign-in attempts. Please try again.'}
+        }
+        console.error('Error during Google sign-in:', error);
+        return { error: error.message || 'An unexpected error occurred during Google sign-in.' };
     }
 };

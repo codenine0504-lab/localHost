@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -67,7 +66,7 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
         if (result.error) {
             setError(result.error);
         } else {
-            toast({ title: 'Success', description: 'Account created! Please log in.' });
+            toast({ title: 'Success', description: 'Account created! Welcome.' });
             setIsOpen(false);
         }
     });
@@ -186,6 +185,3 @@ export function AuthDialog({ children }: { children: React.ReactNode }) {
 
       </DialogContent>
     </Dialog>
-  );
-}
-

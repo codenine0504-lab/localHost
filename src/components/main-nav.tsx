@@ -3,13 +3,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, UserCircle, MessageSquare, Search } from 'lucide-react';
+import { Home, Compass, UserCircle, MessageSquare, Search, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AuthDialog } from './auth-dialog';
+import { Button } from './ui/button';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -21,11 +23,42 @@ const navItems = [
 
 function BottomNav() {
   const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const isChatPage = pathname.startsWith('/chatroom/');
-
   if (isChatPage && pathname !== '/chatroom') {
     return null;
+  }
+  
+  if (loading) {
+    return null; // Don't show anything while loading auth state
+  }
+  
+  if (!user || user.isAnonymous) {
+      return (
+        <footer className="fixed bottom-0 left-0 right-0 w-full z-50 p-2 md:bottom-4">
+            <motion.div
+                layout
+                className="flex h-16 max-w-sm mx-auto items-center justify-center rounded-full border border-white/10 bg-black backdrop-blur-sm shadow-lg px-4"
+            >
+                <AuthDialog>
+                    <Button className="bg-primary text-primary-foreground rounded-full w-full">
+                        <LogIn className="mr-2 h-5 w-5" />
+                        Login to Get Started
+                    </Button>
+                </AuthDialog>
+            </motion.div>
+        </footer>
+      )
   }
 
   return (
@@ -94,7 +127,6 @@ function BottomNav() {
   );
 }
 
-
 export function MainNav() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,7 +139,7 @@ export function MainNav() {
     return () => unsubscribe();
   }, []);
 
-  if (loading || !user) {
+  if (loading) {
     return null; 
   }
 
