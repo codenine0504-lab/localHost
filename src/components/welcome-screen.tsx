@@ -32,27 +32,27 @@ const AnimatedLogo = () => (
 );
 
 const features = [
-  {
-    icon: <Search className="h-8 w-8 text-white" />,
-    title: 'Find Your Team',
-    description: 'Connect with students and creators who have the skills you need.',
-  },
-  {
-    icon: <Layers className="h-8 w-8 text-white" />,
-    title: 'Launch Your Vision',
-    description: 'Host your own project, build a team, and bring your ideas to life.',
-  },
-  {
-    icon: <Users className="h-8 w-8 text-white" />,
-    title: 'Join a Project',
-    description: 'Explore existing projects and contribute your skills to a growing team.',
-  },
-  {
-    icon: <MessageCircle className="h-8 w-8 text-white" />,
-    title: 'Collaborate Instantly',
-    description: 'Use integrated real-time chat to work seamlessly with your collaborators.',
-  },
-];
+    {
+      icon: <Search className="h-8 w-8 text-white" />,
+      title: "Find Your Team",
+      description: "Connect with people who have the skills you need.",
+    },
+    {
+      icon: <Layers className="h-8 w-8 text-white" />,
+      title: "Launch Your Vision",
+      description: "Host your own project and bring your ideas to life.",
+    },
+    {
+      icon: <Users className="h-8 w-8 text-white" />,
+      title: "Join a Project",
+      description: "Explore existing projects and contribute your skills.",
+    },
+    {
+      icon: <MessageCircle className="h-8 w-8 text-white" />,
+      title: "Collaborate Instantly",
+      description: "Use real-time chat to work with your collaborators.",
+    },
+  ];
 
 
 export function WelcomeScreen() {
@@ -118,7 +118,7 @@ export function WelcomeScreen() {
                             <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                                 <div className="p-1">
                                     <Card className="bg-slate-900/50 border-slate-800">
-                                        <CardContent className="flex flex-col items-center justify-center p-6 text-center h-48">
+                                        <CardContent className="flex flex-col items-center justify-center p-6 text-center h-56">
                                             {feature.icon}
                                             <h3 className="text-xl font-semibold text-white mt-4">{feature.title}</h3>
                                             <p className="text-slate-400 mt-2 text-sm">{feature.description}</p>
