@@ -123,7 +123,7 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 md:px-6 py-8 space-y-12">
+    <div className="container mx-auto px-4 md:px-6 py-8 space-y-16">
         {/* User Greeting */}
         <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-2 border-primary">
