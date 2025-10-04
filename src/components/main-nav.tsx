@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
+import { getRedirectResult } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const navItems = [
