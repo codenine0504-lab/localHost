@@ -33,6 +33,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -43,7 +44,6 @@ const projectSchema = z.object({
       message: 'Description must be 50 words or less.'
     }),
   imageUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
-  isPrivate: z.boolean().default(false),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -65,7 +65,6 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
       description: '',
       theme: 'software',
       imageUrl: '',
-      isPrivate: false,
     },
   });
 
@@ -123,10 +122,12 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
       }
       const college = userDoc.data().college;
 
-      const collectionName = data.isPrivate ? 'privateProjects' : 'projects';
+      const isPrivate = false; // Visibility switch removed
+      const collectionName = isPrivate ? 'privateProjects' : 'projects';
       
       const projectPayload: any = {
         ...data,
+        isPrivate,
         createdAt: serverTimestamp(),
         college: college, 
         owner: user.uid,
@@ -147,7 +148,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         name: data.title,
         createdAt: serverTimestamp(),
         imageUrl: data.imageUrl,
-        isPrivate: data.isPrivate,
+        isPrivate: isPrivate,
       });
 
       // Create dummy docs to ensure subcollections are created.
@@ -184,7 +185,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Host a Project</DialogTitle>
@@ -252,9 +253,16 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
                 name="imageUrl"
                 control={control}
                 render={({ field }) => (
-                  <Input id="imageUrl" type="url" placeholder="https://postimages.org/ a service to host image" {...field} />
+                  <Input id="imageUrl" type="url" placeholder="Paste image URL here" {...field} />
                 )}
               />
+               <p className="text-xs text-muted-foreground">
+                Need to host an image? Use{' '}
+                <Link href="https://postimages.org/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  postimages.org
+                </Link>
+                .
+              </p>
               {errors.imageUrl && <p className="text-red-500 text-xs">{errors.imageUrl.message}</p>}
             </div>
             
