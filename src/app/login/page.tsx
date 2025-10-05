@@ -42,8 +42,8 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="container mx-auto py-12 px-4 md:px-6 flex items-center justify-center min-h-screen">
-            <div className="max-w-md w-full">
+        <div className="container mx-auto py-12 px-4 md:px-6">
+            <div className="max-w-md w-full mx-auto">
                 <AnimatedHeader 
                     title="Join LocalHost"
                     description="Choose your role to get started."
