@@ -8,17 +8,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnimatedHeader } from '@/components/animated-header';
 import { Input } from '@/components/ui/input';
-import { Search, Star, CheckCircle2, LogIn } from 'lucide-react';
+import { Search, Star, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { UserProfileCard } from '@/components/user-profile-card';
 import type { AppUser, Skill } from '@/types';
-import { useAuth } from '@/components/auth-provider';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { signInWithGoogle } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
 
 const tabs = [
     { id: 'all', label: 'All' },
@@ -47,13 +42,11 @@ function PeopleSkeleton() {
 }
 
 export default function PeoplePage() {
-  const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     let q;
@@ -115,23 +108,6 @@ export default function PeoplePage() {
               return null;
       }
   }
-  
-  const handleSignIn = async () => {
-    try {
-        await signInWithGoogle('student');
-        toast({
-            title: "Signed In",
-            description: "You have successfully signed in.",
-        });
-    } catch (error) {
-        console.error(error);
-        toast({
-            title: "Sign in failed",
-            description: "Could not sign in with Google. Please try again.",
-            variant: "destructive"
-        });
-    }
-  };
 
   const getPrimarySkill = (skills: Skill[] | undefined) => {
       if (!skills) return null;
