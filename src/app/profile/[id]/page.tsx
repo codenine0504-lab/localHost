@@ -9,13 +9,14 @@ import { doc, getDoc, collection, query, where, getDocs, serverTimestamp, writeB
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
-import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn } from "lucide-react";
 import { useRouter, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
 import type { AppUser } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
+import { signInWithGoogle } from "@/lib/auth";
 
 
 function ProfileSkeleton() {
@@ -82,6 +83,23 @@ export default function PublicProfilePage() {
 
     fetchUser();
   }, [userId]);
+  
+  const handleSignIn = async () => {
+        try {
+            await signInWithGoogle();
+            toast({
+                title: "Signed In",
+                description: "You have successfully signed in.",
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Sign in failed",
+                description: "Could not sign in with Google. Please try again.",
+                variant: "destructive"
+            });
+        }
+    };
 
   const handleSendMessage = async () => {
     if (!profileUser || !user) {
@@ -189,7 +207,7 @@ export default function PublicProfilePage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-6">
-                         {!isOwnProfile && (
+                         {!isOwnProfile && user && (
                              <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
                                  <MessageSquare className="mr-2 h-4 w-4" /> Message
                              </Button>
@@ -205,6 +223,20 @@ export default function PublicProfilePage() {
                          )}
                     </CardContent>
                 </Card>
+                {!user && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Get full access</CardTitle>
+                            <CardDescription>Sign in to message users and join projects.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button onClick={handleSignIn} className="w-full">
+                                <LogIn className="mr-2 h-4 w-4" />
+                                Sign In with Google
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
             <div className="md:col-span-2 space-y-6">
                 <Card>
