@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Ban, MessagesSquare, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChatSidebar } from '@/components/chat-sidebar';
+import { ProjectChatSidebar } from '@/components/project-chat-sidebar';
+import { DmChatSidebar } from '@/components/dm-chat-sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { ChatHeader } from '@/components/chat-header';
@@ -18,6 +19,7 @@ import { JoinRequestCard } from '@/components/join-request-card';
 import { useToast } from '@/hooks/use-toast';
 import { Linkify } from '@/components/Linkify';
 import { useAuth } from '@/components/auth-provider';
+import type { AppUser } from '@/types';
 
 
 interface Message {
@@ -108,9 +110,11 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState('');
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
+  const [otherUser, setOtherUser] = useState<AppUser | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProjectSidebarOpen, setIsProjectSidebarOpen] = useState(false);
+  const [isDmSidebarOpen, setIsDmSidebarOpen] = useState(false);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
   const [isDm, setIsDm] = useState(false);
@@ -166,6 +170,13 @@ export default function ChatPage() {
                 admins: [],
                 members: chatRoomData.members || [],
              }
+            if (otherUserId) {
+                const userDoc = await getDoc(doc(db, 'users', otherUserId));
+                if (userDoc.exists()) {
+                    setOtherUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+                }
+            }
+
         } else {
             const publicProjectDoc = await getDoc(doc(db, "projects", chatId));
             const privateProjectDoc = await getDoc(doc(db, "privateProjects", chatId));
@@ -486,13 +497,21 @@ export default function ChatPage() {
   
   const isMember = projectDetails?.members?.includes(user?.id || '') || projectDetails?.owner === user?.id;
   const showJoinRequests = user && projectDetails?.admins?.includes(user.id) && joinRequests.length > 0;
+  
+  const handleHeaderClick = () => {
+    if (isDm) {
+      setIsDmSidebarOpen(true);
+    } else if (isMember) {
+      setIsProjectSidebarOpen(true);
+    }
+  };
 
   return (
      <div className="h-screen flex flex-col bg-background">
         {projectDetails && (
             <ChatHeader 
                 projectTitle={projectDetails.title}
-                onHeaderClick={() => !isDm && isMember && setIsSidebarOpen(true)}
+                onHeaderClick={handleHeaderClick}
                 isDm={isDm}
             />
         )}
@@ -540,18 +559,22 @@ export default function ChatPage() {
         )}
 
         {projectDetails && !isDm && user && (
-             <ChatSidebar 
-                isOpen={isSidebarOpen} 
-                onOpenChange={setIsSidebarOpen}
+             <ProjectChatSidebar 
+                isOpen={isProjectSidebarOpen} 
+                onOpenChange={setIsProjectSidebarOpen}
                 project={projectDetails}
                 members={members}
                 onProjectUpdate={fetchProjectAndMembers}
             />
         )}
+        {otherUser && isDm && user && (
+            <DmChatSidebar 
+                isOpen={isDmSidebarOpen}
+                onOpenChange={setIsDmSidebarOpen}
+                chatId={chatId}
+                otherUser={otherUser}
+            />
+        )}
      </div>
   );
 }
-
-    
-
-    
