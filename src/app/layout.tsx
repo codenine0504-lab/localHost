@@ -2,9 +2,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { MainNav } from '@/components/main-nav';
 import { InstallPwaButton } from '@/components/install-pwa-button';
 import { AuthProvider } from '@/components/auth-provider';
+import AppLayout from '@/components/app-layout';
 
 export const metadata: Metadata = {
   title: 'LocalHost',
@@ -35,11 +35,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased overflow-x-hidden">
           <AuthProvider>
-            <div className="relative flex min-h-screen flex-col bg-background">
-                <InstallPwaButton />
-                <main className="flex-1 pb-24">{children}</main>
-                <MainNav />
-            </div>
+            <AppLayout>
+              {children}
+            </AppLayout>
             <Toaster />
           </AuthProvider>
       </body>

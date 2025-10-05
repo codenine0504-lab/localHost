@@ -83,12 +83,10 @@ export default function Home() {
     const hasVisited = localStorage.getItem('hasVisited');
     if (hasVisited) {
       setShowWelcome(false);
-    } else if (!authLoading && !user) {
-        setShowWelcome(true);
     } else {
-        setShowWelcome(false);
+      setShowWelcome(true);
     }
-  }, [user, authLoading]);
+  }, []);
 
   const handleWelcomeFinish = () => {
     setShowWelcome(false);
@@ -135,7 +133,7 @@ export default function Home() {
     return <AppSkeleton />;
   }
 
-  if (showWelcome && !user) {
+  if (showWelcome) {
     return (
       <WelcomeScreen onFinish={handleWelcomeFinish} />
     );

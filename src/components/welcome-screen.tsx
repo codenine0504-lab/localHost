@@ -60,7 +60,7 @@ const features = [
 
 
 export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
-    const [showFeatures, setShowFeatures] = useState(false);
+    const [step, setStep] = useState(0);
     const { toast } = useToast();
     const plugin = React.useRef(
         Autoplay({ delay: 2500, stopOnInteraction: true })
@@ -80,7 +80,7 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
         }
     };
 
-    if (!showFeatures) {
+    if (step === 0) {
         return (
             <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-x-hidden py-16">
                  <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.1),transparent)]"></div>
@@ -102,22 +102,11 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                         <Button 
                             size="lg" 
                             className="bg-primary text-primary-foreground hover:bg-primary/90 transition-transform duration-300 ease-in-out hover:scale-105"
-                            onClick={handleGoogleSignIn}
+                            onClick={() => setStep(1)}
                         >
-                            Sign in with Google
-                        </Button>
-                        <Button 
-                            size="lg" 
-                            variant="outline"
-                            onClick={() => setShowFeatures(true)}
-                        >
-                            Learn More
+                            Get Started
                         </Button>
                     </div>
-
-                    <Button variant="link" onClick={onFinish} className="mt-8 text-muted-foreground">
-                        Continue as Guest
-                    </Button>
                 </div>
             </div>
         )
@@ -127,31 +116,10 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
         <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-x-hidden py-16">
             <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.1),transparent)]"></div>
             <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl p-4">
-                <h2 className="text-3xl font-bold text-foreground mb-8">Features</h2>
-                    <Carousel
-                    plugins={[plugin.current]}
-                    className="w-full"
-                    onMouseEnter={plugin.current.stop}
-                    onMouseLeave={plugin.current.reset}
-                >
-                    <CarouselContent>
-                        {features.map((feature, index) => (
-                            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                                <div className="p-1">
-                                    <Card>
-                                        <CardContent className="flex flex-col items-center justify-center p-6 text-center h-56">
-                                            <div className="p-3 rounded-full bg-primary/10">
-                                                {feature.icon}
-                                            </div>
-                                            <h3 className="text-xl font-semibold text-foreground mt-4">{feature.title}</h3>
-                                            <p className="text-muted-foreground mt-2 text-sm">{feature.description}</p>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                            </CarouselItem>
-                        ))}
-                    </CarouselContent>
-                </Carousel>
+                <h2 className="text-3xl font-bold text-foreground mb-8">Ready to Dive In?</h2>
+                    <p className="text-muted-foreground text-center max-w-2xl mb-8">
+                        Sign in to create your profile, host projects, and collaborate with a vibrant community. Or, feel free to look around as a guest.
+                    </p>
                 <div className="mt-8 flex gap-4">
                      <Button
                         size="lg"
@@ -165,7 +133,7 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                         variant="outline"
                         onClick={onFinish}
                     >
-                        Explore the App
+                        Skip for now
                     </Button>
                 </div>
             </div>
