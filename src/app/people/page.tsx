@@ -60,7 +60,9 @@ export default function PeoplePage() {
     } else if (isStatusFilter) {
         q = query(collection(db, 'users'), where('status', '==', activeTab), orderBy('displayName'));
     } else if (isThemeFilter) {
-        q = query(collection(db, 'users'), where('interests', 'array-contains', activeTab), orderBy('displayName'));
+        // Firestore doesn't support inequality filters on one field and ordering on another
+        // without a composite index. We'll filter by interest and sort client-side.
+        q = query(collection(db, 'users'), where('interests', 'array-contains', activeTab));
     } else {
         q = query(collection(db, 'users'), orderBy('displayName'));
     }
@@ -70,11 +72,15 @@ export default function PeoplePage() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userList: AppUser[] = [];
       querySnapshot.forEach((doc) => {
-        // Exclude anonymous or incomplete profiles from the list
         if (doc.data().displayName) {
           userList.push({ id: doc.id, ...doc.data() } as AppUser);
         }
       });
+
+      if (isThemeFilter) {
+          userList.sort((a, b) => a.displayName?.localeCompare(b.displayName || '') || 0);
+      }
+      
       setUsers(userList);
       setLoading(false);
     }, (error) => {
