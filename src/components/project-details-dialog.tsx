@@ -56,43 +56,45 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
       if (open) {
         const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
         const projectRef = doc(db, projectCollection, project.id);
-        updateDoc(projectRef, { views: increment(1) });
+        updateDoc(projectRef, { views: increment(1) }).catch(console.error);
       }
   }, [open, project.id, project.isPrivate]);
 
   useEffect(() => {
       const checkRequestAndMembership = async () => {
-          if (!user || !project.requiresRequestToJoin) {
+          if (!user) {
               setRequestStatus('idle');
               return;
           }
-
+          
           if (project.members?.includes(user.id)) {
               setRequestStatus('member');
               return;
           }
 
-          const q = query(
-              collection(db, 'joinRequests'),
-              where('projectId', '==', project.id),
-              where('userId', '==', user.id)
-          );
-          
-          const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-              const request = querySnapshot.docs[0].data();
-              if (request.status === 'pending') {
-                  setRequestStatus('sent');
-              }
-          } else {
-              setRequestStatus('idle');
+          if (project.requiresRequestToJoin) {
+            const q = query(
+                collection(db, 'joinRequests'),
+                where('projectId', '==', project.id),
+                where('userId', '==', user.id)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const request = querySnapshot.docs[0].data();
+                if (request.status === 'pending') {
+                    setRequestStatus('sent');
+                }
+            } else {
+                setRequestStatus('idle');
+            }
           }
       };
 
-      if (open && user) {
+      if (open && !authLoading) {
         checkRequestAndMembership();
       }
-  }, [project.id, project.requiresRequestToJoin, open, user, project.members]);
+  }, [project.id, project.requiresRequestToJoin, open, user, project.members, authLoading]);
 
 
   const handleJoinOrRequest = async () => {
@@ -102,7 +104,7 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
             description: "You need to be logged in to join a project.",
             variant: "destructive"
         });
-        await signInWithGoogle();
+        await signInWithGoogle('student');
         return;
     }
 

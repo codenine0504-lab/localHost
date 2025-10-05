@@ -8,12 +8,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnimatedHeader } from '@/components/animated-header';
 import { Input } from '@/components/ui/input';
-import { Search, Star, CheckCircle2 } from 'lucide-react';
+import { Search, Star, CheckCircle2, LogIn } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { UserProfileCard } from '@/components/user-profile-card';
 import type { AppUser, Skill } from '@/types';
+import { useAuth } from '@/components/auth-provider';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { signInWithGoogle } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 const tabs = [
     { id: 'all', label: 'All' },
@@ -42,13 +47,25 @@ function PeopleSkeleton() {
 }
 
 export default function PeoplePage() {
+  const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+    if (!user) {
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
+    
     let q;
     const isStatusFilter = ['seeking', 'active'].includes(activeTab);
     
@@ -80,11 +97,11 @@ export default function PeoplePage() {
     });
 
     return () => unsubscribe();
-  }, [activeTab]);
+  }, [activeTab, user, authLoading]);
 
-  const filteredUsers = users.filter((user) =>
-    user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = user ? users.filter((u) =>
+    u.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
   const getInitials = (name: string | null | undefined): string => {
     if (!name) return "U";
@@ -105,10 +122,47 @@ export default function PeoplePage() {
               return null;
       }
   }
+  
+  const handleSignIn = async () => {
+    try {
+        await signInWithGoogle('student');
+        toast({
+            title: "Signed In",
+            description: "You have successfully signed in.",
+        });
+    } catch (error) {
+        console.error(error);
+        toast({
+            title: "Sign in failed",
+            description: "Could not sign in with Google. Please try again.",
+            variant: "destructive"
+        });
+    }
+  };
 
   const getPrimarySkill = (skills: Skill[] | undefined) => {
       if (!skills) return null;
       return skills.find(skill => skill.isPrimary);
+  }
+
+  if (!authLoading && !user) {
+    return (
+        <div className="container mx-auto py-12 px-4 md:px-6">
+            <AnimatedHeader title="Discover People" description="Sign in to connect with students and creators." />
+             <Card className="max-w-md mx-auto">
+                <CardHeader>
+                    <CardTitle>Get full access</CardTitle>
+                    <CardDescription>Sign in to discover and message other users.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={handleSignIn} className="w-full">
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Sign In with Google
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    )
   }
 
   return (
