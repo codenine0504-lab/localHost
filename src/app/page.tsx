@@ -78,19 +78,16 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [people, setPeople] = useState<AppUser[]>([]);
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     const hasVisited = localStorage.getItem('hasVisited');
     if (hasVisited) {
       setShowWelcome(false);
-    } else if (!authLoading && user) {
-        // If user is already logged in, don't show welcome, mark as visited
-        setShowWelcome(false);
-        localStorage.setItem('hasVisited', 'true');
     } else if (!authLoading && !user) {
-        // Only show welcome if not loading and not logged in
         setShowWelcome(true);
+    } else {
+        setShowWelcome(false);
     }
   }, [user, authLoading]);
 
@@ -121,8 +118,10 @@ export default function Home() {
             setLoading(false);
         }
     };
-    fetchData();
-  }, []);
+    if (!authLoading) {
+        fetchData();
+    }
+  }, [authLoading]);
   
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
@@ -137,7 +136,7 @@ export default function Home() {
     return <AppSkeleton />;
   }
 
-  if (showWelcome) {
+  if (showWelcome && !user) {
     return (
       <ThemeProvider forcedTheme="dark">
         <WelcomeScreen onFinish={handleWelcomeFinish} />

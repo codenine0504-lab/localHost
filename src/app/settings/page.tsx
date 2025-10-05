@@ -3,7 +3,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Label } from "@/components/ui/label";
 import { AnimatedHeader } from "@/components/animated-header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth-provider";
@@ -16,7 +15,9 @@ export default function SettingsPage() {
     const { toast } = useToast();
     
     const handleClearData = () => {
+        const hasVisited = localStorage.getItem('hasVisited');
         localStorage.clear();
+        if(hasVisited) localStorage.setItem('hasVisited', hasVisited);
         window.location.reload();
     }
     
@@ -107,7 +108,7 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent>
                              <p className="text-sm text-muted-foreground mb-4">
-                                Clearing local data will reset your welcome screen experience and remove chat read receipts.
+                                Clearing local data will reset chat read receipts. The welcome screen will show again if you sign out.
                             </p>
                             <Button variant="destructive" onClick={handleClearData}>Clear Local Data</Button>
                         </CardContent>
