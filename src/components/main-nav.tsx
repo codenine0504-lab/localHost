@@ -3,18 +3,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, UserCircle, MessageSquare, Search, LogIn, User } from 'lucide-react';
+import { Home, Compass, MessageSquare, Users, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from './auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, auth: false },
   { href: '/projects', label: 'Explore', icon: Compass, auth: false },
-  { href: '/people', label: 'Search', icon: Search, auth: true },
+  { href: '/people', label: 'People', icon: Users, auth: false },
   { href: '/chatroom', label: 'Chat', icon: MessageSquare, auth: true },
 ];
 
@@ -29,6 +28,10 @@ function BottomNav() {
   
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
+    const nameParts = name.split(" ");
+    if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {
+      return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+    }
     return name.substring(0, 2).toUpperCase();
   };
 
