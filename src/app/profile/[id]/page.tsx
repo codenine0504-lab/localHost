@@ -152,7 +152,16 @@ export default function PublicProfilePage() {
              batch.set(chatRoomRef, {
                 members: [user.id, profileUser.id],
                 createdAt: serverTimestamp(),
-                name: `DM between ${user.displayName} and ${profileUser.displayName}`
+                memberDetails: {
+                    [user.id]: {
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                    },
+                    [profileUser.id]: {
+                        displayName: profileUser.displayName,
+                        photoURL: profileUser.photoURL,
+                    }
+                }
             });
             
             await batch.commit();

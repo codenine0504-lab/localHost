@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDoc, onSnapshot, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,6 +10,7 @@ import Image from 'next/image';
 import { MessageSquare } from 'lucide-react';
 import { AnimatedHeader } from '@/components/animated-header';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/components/auth-provider';
 
 interface ChatRoom {
   id: string;
@@ -38,6 +39,7 @@ function ChatRoomListSkeleton() {
 }
 
 export default function ChatRoomPage() {
+  const { user } = useAuth();
   const [dmRooms, setDmRooms] = useState<ChatRoom[]>([]);
   const [projectRooms, setProjectRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,11 @@ export default function ChatRoomPage() {
   };
 
   useEffect(() => {
+    if (!user) {
+        setLoading(false);
+        return;
+    };
+    
     setLoading(true);
     let dmLoaded = false;
     let projectLoaded = false;
@@ -72,12 +79,20 @@ export default function ChatRoomPage() {
     }
 
     // Listener for DMs
-    const dmQuery = query(collection(db, 'General'));
+    const dmQuery = query(collection(db, 'General'), where('members', 'array-contains', user.id));
     const unsubscribeDms = onSnapshot(dmQuery, async (snapshot) => {
         const dms: ChatRoom[] = [];
         for (const roomDoc of snapshot.docs) {
             const roomData = roomDoc.data();
-            dms.push({ id: roomDoc.id, name: roomData.name || 'Direct Message', imageUrl: '' });
+            const otherUserId = roomData.members.find((id: string) => id !== user.id);
+            const otherUserData = roomData.memberDetails?.[otherUserId];
+            
+            dms.push({ 
+                id: roomDoc.id, 
+                name: otherUserData?.displayName || 'Direct Message', 
+                imageUrl: otherUserData?.photoURL || '',
+                isDm: true
+            });
         }
         setDmRooms(checkNotifications(dms));
         dmLoaded = true;
@@ -89,9 +104,9 @@ export default function ChatRoomPage() {
     });
 
     // Listener for Project Chats
-    const projectChatQuery = query(collection(db, 'ProjectChats'));
+    const projectChatQuery = query(collection(db, 'ProjectChats'), where('members', 'array-contains', user.id));
     const unsubscribeProjects = onSnapshot(projectChatQuery, (snapshot) => {
-        const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
+        const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), isDm: false } as ChatRoom));
         setProjectRooms(checkNotifications(projects));
         projectLoaded = true;
         checkLoadingDone();
@@ -112,16 +127,23 @@ export default function ChatRoomPage() {
       unsubscribeProjects();
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [user]);
 
   const renderRoomList = (rooms: ChatRoom[], isDm: boolean) => {
       if (loading) {
           return <ChatRoomListSkeleton />;
       }
+      if (!user) {
+         return (
+            <div className="text-center text-muted-foreground py-10 h-full flex flex-col items-center justify-center">
+                  <p>Please log in to see your chats.</p>
+              </div>
+         )
+      }
       if (rooms.length === 0) {
           return (
               <div className="text-center text-muted-foreground py-10 h-full flex flex-col items-center justify-center">
-                  <p>{isDm ? "There are no direct messages." : "There are no projects yet."}</p>
+                  <p>{isDm ? "You have no direct messages." : "You haven't joined any project chats yet."}</p>
               </div>
           );
       }

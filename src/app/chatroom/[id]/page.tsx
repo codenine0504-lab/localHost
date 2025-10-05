@@ -30,6 +30,7 @@ interface Message {
 interface ChatRoom {
     id: string;
     name: string;
+    memberDetails?: { [key: string]: { displayName: string; photoURL: string } };
 }
 
 interface ProjectDetails {
@@ -120,47 +121,48 @@ export default function ChatPage() {
   const memberCache = useRef<Map<string, Member>>(new Map());
 
   const fetchProjectAndMembers = useCallback(async () => {
-    if (!chatId) return;
+    if (!chatId || !user) return;
     setLoading(true);
 
     try {
         let chatRoomDoc;
         let chatRoomData;
+        let isDmChat = false;
 
-        // Determine if it's a DM or Project Chat
         const generalChatDoc = await getDoc(doc(db, "General", chatId));
         if (generalChatDoc.exists()) {
             chatRoomDoc = generalChatDoc;
             chatRoomData = generalChatDoc.data();
-            setIsDm(true);
+            isDmChat = true;
             setChatCollection('General');
         } else {
             const projectChatDoc = await getDoc(doc(db, "ProjectChats", chatId));
             if (projectChatDoc.exists()) {
                 chatRoomDoc = projectChatDoc;
                 chatRoomData = projectChatDoc.data();
-                setIsDm(false);
+                isDmChat = false;
                 setChatCollection('ProjectChats');
             } else {
                 setLoading(false);
                 return;
             }
         }
-
+        setIsDm(isDmChat);
         setChatRoom({ id: chatRoomDoc.id, ...chatRoomData } as ChatRoom);
 
         let projDetails: ProjectDetails | null = null;
-        const memberIdsToCheck = chatRoomData.members || [];
 
-        if (isDm) {
+        if (isDmChat) {
+             const otherUserId = chatRoomData.members.find((id: string) => id !== user.id);
+             const otherUserData = chatRoomData.memberDetails?.[otherUserId];
              projDetails = {
                 id: chatId,
-                title: chatRoomData.name,
+                title: otherUserData?.displayName || 'Direct Message',
                 description: 'Direct Message',
                 owner: '',
                 isPrivate: true,
                 admins: [],
-                members: memberIdsToCheck,
+                members: chatRoomData.members || [],
              }
         } else {
             const publicProjectDoc = await getDoc(doc(db, "projects", chatId));
@@ -225,7 +227,7 @@ export default function ChatPage() {
     } finally {
         setLoading(false);
     }
-  }, [chatId, isDm]);
+  }, [chatId, user]);
 
 
   useEffect(() => {

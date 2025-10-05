@@ -63,7 +63,16 @@ export function UserProfileCard({ user: profileUser, isOpen, onOpenChange }: Use
             batch.set(chatRoomRef, {
                 members: [user.id, profileUser.id],
                 createdAt: serverTimestamp(),
-                name: `DM with ${profileUser.displayName}`
+                memberDetails: {
+                    [user.id]: {
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                    },
+                    [profileUser.id]: {
+                        displayName: profileUser.displayName,
+                        photoURL: profileUser.photoURL,
+                    }
+                }
             });
 
             await batch.commit();
