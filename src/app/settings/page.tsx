@@ -9,6 +9,7 @@ import { signOut } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, LogIn, LogOut } from "lucide-react";
 import Link from "next/link";
+import { NotificationSettings } from "@/components/notification-settings";
 
 
 export default function SettingsPage() {
@@ -70,6 +71,7 @@ export default function SettingsPage() {
                             )}
                         </CardContent>
                     </Card>
+                    <NotificationSettings />
                 </div>
             </div>
         </>
