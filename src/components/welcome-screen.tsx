@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { signInWithGoogle } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from 'next-themes';
 
 interface WelcomeScreenProps {
   onFinish: () => void;
@@ -17,7 +18,7 @@ interface WelcomeScreenProps {
 
 const AnimatedLogo = () => (
     <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-blue-500 rounded-full blur-2xl opacity-50 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-full blur-2xl opacity-50 animate-pulse"></div>
         <svg
             className="relative w-full h-full"
             viewBox="0 0 200 200"
@@ -37,22 +38,22 @@ const AnimatedLogo = () => (
 
 const features = [
     {
-      icon: <Search className="h-8 w-8 text-white" />,
+      icon: <Search className="h-8 w-8 text-primary" />,
       title: "Find Your Team",
       description: "Connect with people who have the skills you need.",
     },
     {
-      icon: <Layers className="h-8 w-8 text-white" />,
+      icon: <Layers className="h-8 w-8 text-primary" />,
       title: "Launch Your Vision",
       description: "Host your own project and bring your ideas to life.",
     },
     {
-      icon: <Users className="h-8 w-8 text-white" />,
+      icon: <Users className="h-8 w-8 text-primary" />,
       title: "Join a Project",
       description: "Explore existing projects and contribute your skills.",
     },
     {
-      icon: <MessageCircle className="h-8 w-8 text-white" />,
+      icon: <MessageCircle className="h-8 w-8 text-primary" />,
       title: "Collaborate Instantly",
       description: "Use real-time chat to work with your collaborators.",
     },
@@ -62,6 +63,7 @@ const features = [
 export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
     const [showFeatures, setShowFeatures] = useState(false);
     const { toast } = useToast();
+    const { theme } = useTheme();
     const plugin = React.useRef(
         Autoplay({ delay: 2500, stopOnInteraction: true })
     );
@@ -82,26 +84,26 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
 
     if (!showFeatures) {
         return (
-            <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-x-hidden py-16">
-                 <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,#102E4A,transparent)]"></div>
+            <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-x-hidden py-16">
+                 <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.1),transparent)]"></div>
                  <div className="relative z-10 flex flex-col items-center justify-center text-center p-4">
                     <AnimatedLogo />
                     
                     <div className="mt-8">
-                         <p className="text-lg text-slate-300 mb-2 tracking-widest">A GEC startup</p>
-                         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
-                             Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-blue-400 to-purple-500">LocalHost</span>
+                         <p className="text-lg text-muted-foreground mb-2 tracking-widest">A GEC startup</p>
+                         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
+                             Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-blue-500">LocalHost</span>
                          </h1>
                     </div>
 
-                    <p className="mt-6 max-w-lg text-lg text-slate-400">
+                    <p className="mt-6 max-w-lg text-lg text-muted-foreground">
                         The ultimate platform to connect with peers, build amazing projects, and bring your ideas to life.
                     </p>
                     
                     <div className="mt-10 flex flex-col sm:flex-row gap-4">
                         <Button 
                             size="lg" 
-                            className="bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90 transition-transform duration-300 ease-in-out hover:scale-105"
                             onClick={handleGoogleSignIn}
                         >
                             Sign in with Google
@@ -109,14 +111,13 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                         <Button 
                             size="lg" 
                             variant="outline"
-                            className="text-white border-white/50 hover:bg-white/10 hover:text-white"
                             onClick={() => setShowFeatures(true)}
                         >
                             Learn More
                         </Button>
                     </div>
 
-                    <Button variant="link" onClick={onFinish} className="mt-8 text-slate-400">
+                    <Button variant="link" onClick={onFinish} className="mt-8 text-muted-foreground">
                         Continue as Guest
                     </Button>
                 </div>
@@ -125,10 +126,10 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
     }
 
     return (
-        <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-x-hidden py-16">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,#102E4A,transparent)]"></div>
+        <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-x-hidden py-16">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.1),transparent)]"></div>
             <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl p-4">
-                <h2 className="text-3xl font-bold text-white mb-8">Features</h2>
+                <h2 className="text-3xl font-bold text-foreground mb-8">Features</h2>
                     <Carousel
                     plugins={[plugin.current]}
                     className="w-full"
@@ -139,11 +140,13 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                         {features.map((feature, index) => (
                             <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                                 <div className="p-1">
-                                    <Card className="bg-slate-900/50 border-slate-800">
+                                    <Card>
                                         <CardContent className="flex flex-col items-center justify-center p-6 text-center h-56">
-                                            {feature.icon}
-                                            <h3 className="text-xl font-semibold text-white mt-4">{feature.title}</h3>
-                                            <p className="text-slate-400 mt-2 text-sm">{feature.description}</p>
+                                            <div className="p-3 rounded-full bg-primary/10">
+                                                {feature.icon}
+                                            </div>
+                                            <h3 className="text-xl font-semibold text-foreground mt-4">{feature.title}</h3>
+                                            <p className="text-muted-foreground mt-2 text-sm">{feature.description}</p>
                                         </CardContent>
                                     </Card>
                                 </div>
@@ -154,7 +157,7 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                 <div className="mt-8 flex gap-4">
                      <Button
                         size="lg"
-                        className="bg-white text-black hover:bg-slate-200"
+                        className="bg-primary text-primary-foreground"
                         onClick={handleGoogleSignIn}
                     >
                         Sign in with Google
@@ -162,7 +165,6 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                     <Button
                         size="lg"
                         variant="outline"
-                        className="text-white border-white/50 hover:bg-white/10 hover:text-white"
                         onClick={onFinish}
                     >
                         Explore the App

@@ -15,7 +15,6 @@ import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Users, Code, Brush, Milestone, Cpu, Eye, Compass } from 'lucide-react';
-import { ThemeProvider } from '@/components/theme-provider';
 import { useAuth } from '@/components/auth-provider';
 
 
@@ -138,9 +137,7 @@ export default function Home() {
 
   if (showWelcome && !user) {
     return (
-      <ThemeProvider forcedTheme="dark">
-        <WelcomeScreen onFinish={handleWelcomeFinish} />
-      </ThemeProvider>
+      <WelcomeScreen onFinish={handleWelcomeFinish} />
     );
   }
 
