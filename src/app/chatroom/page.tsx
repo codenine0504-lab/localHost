@@ -55,7 +55,7 @@ export default function ChatRoomPage() {
           const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
           const hasNewMessage = lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp && lastMessageSenderId !== currentUserId;
-          const hasNewJoinRequest = !!localStorage.getItem(`hasNewJoinRequests_${room.id}`);
+          const hasNewJoinRequest = !room.isDm && !!localStorage.getItem(`hasNewJoinRequests_${room.id}`);
 
           return {
               ...room,
@@ -125,8 +125,10 @@ export default function ChatRoomPage() {
     });
 
     const handleStorageChange = () => {
-        setProjectRooms(prevRooms => checkNotifications(prevRooms, user.id));
-        setDmRooms(prevRooms => checkNotifications(prevRooms, user.id));
+        if(user) {
+            setProjectRooms(prevRooms => checkNotifications(prevRooms, user.id));
+            setDmRooms(prevRooms => checkNotifications(prevRooms, user.id));
+        }
     }
     window.addEventListener('storage', handleStorageChange);
 
@@ -153,8 +155,8 @@ export default function ChatRoomPage() {
               <div className="text-center text-muted-foreground py-10 h-full flex flex-col items-center justify-center space-y-4">
                   <ThumbsUp className="h-16 w-16 text-muted-foreground/50" />
                   <div>
-                    <p className="font-semibold text-lg">{isDm ? "No direct messages yet." : "You're all caught up!"}</p>
-                    <p className="text-sm">{isDm ? "Start a conversation from someone's profile." : "You haven't joined any project chats yet."}</p>
+                    <p className="font-semibold text-lg">{isDm ? "No direct messages yet." : "You haven't joined any project chats yet."}</p>
+                    <p className="text-sm">{isDm ? "Start a conversation from someone's profile." : "Explore projects to join a chat."}</p>
                   </div>
               </div>
           );

@@ -256,12 +256,16 @@ export default function ChatPage() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
+            const isAdmin = user && projectDetails?.admins?.includes(user.id);
             setJoinRequests(requests);
             
-            if (requests.length > 0 && user && projectDetails?.admins?.includes(user.id)) {
+            if (requests.length > 0 && isAdmin) {
                 localStorage.setItem(`hasNewJoinRequests_${chatId}`, 'true');
             } else {
                 localStorage.removeItem(`hasNewJoinRequests_${chatId}`);
+            }
+            if (isAdmin && requests.length > 0) {
+                 localStorage.removeItem(`hasNewJoinRequests_${chatId}`);
             }
             window.dispatchEvent(new Event('storage'));
         }, (error) => {
