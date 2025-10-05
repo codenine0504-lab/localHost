@@ -34,6 +34,8 @@ interface ChatRoom {
     name: string;
     members: string[];
     memberDetails?: { [key: string]: { displayName: string; photoURL: string } };
+    lastMessageTimestamp?: Timestamp;
+    lastMessageSenderId?: string;
 }
 
 interface ProjectDetails {
@@ -288,22 +290,6 @@ export default function ChatPage() {
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs);
       
-      if (msgs.length > 0) {
-        const lastMessage = msgs[msgs.length - 1];
-        if (lastMessage.createdAt && user) {
-            // Check if the timestamp object is valid before calling toMillis
-            const lastTimestamp = lastMessage.createdAt.toMillis ? lastMessage.createdAt.toMillis() : Date.now();
-            localStorage.setItem(`lastMessageTimestamp_${chatId}`, lastTimestamp.toString());
-            localStorage.setItem(`lastMessageSenderId_${chatId}`, lastMessage.senderId);
-            window.dispatchEvent(new Event('storage'));
-
-            if(document.hidden && lastMessage.senderId !== user.id) {
-                const audio = new Audio('/chatnotify.mp3');
-                audio.play().catch(e => console.error("Audio play failed:", e));
-            }
-        }
-      }
-
       const senderIds = new Set(msgs.map(msg => msg.senderId));
       const newSenderIds = Array.from(senderIds).filter(id => !memberCache.current.has(id));
 
@@ -348,11 +334,13 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-      if(chatId) {
-          localStorage.setItem(`lastRead_${chatId}`, Date.now().toString());
-          window.dispatchEvent(new Event('storage'));
+      if(user && chatId) {
+          const userRef = doc(db, 'users', user.id);
+          updateDoc(userRef, {
+              [`lastRead.${chatId}`]: serverTimestamp()
+          }).catch(console.error);
       }
-  }, [chatId]);
+  }, [chatId, user]);
 
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -363,11 +351,18 @@ export default function ChatPage() {
     setNewMessage('');
 
     try {
-        await addDoc(collection(db, `${chatCollection}/${chatId}/messages`), {
+        const sentMessage = await addDoc(collection(db, `${chatCollection}/${chatId}/messages`), {
             text: userMessage,
             createdAt: serverTimestamp(),
             senderId: user.id, 
         });
+
+        const chatRef = doc(db, chatCollection, chatId);
+        await updateDoc(chatRef, {
+            lastMessageTimestamp: serverTimestamp(),
+            lastMessageSenderId: user.id
+        });
+
     } catch(error) {
         console.error("Error sending message:", error);
     }

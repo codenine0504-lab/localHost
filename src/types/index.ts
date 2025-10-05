@@ -1,4 +1,5 @@
 
+import { Timestamp } from 'firebase/firestore';
 
 export type PortStatus = 'Available' | 'In Use' | 'Listening';
 
@@ -31,6 +32,5 @@ export interface AppUser {
   otherLink?: string;
   role?: 'student' | 'organization';
   bio?: string;
+  lastRead?: { [chatId: string]: Timestamp };
 }
-
-    

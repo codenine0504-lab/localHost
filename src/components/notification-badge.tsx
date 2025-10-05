@@ -3,65 +3,73 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from './auth-provider';
+import { useUserLastRead } from '@/hooks/use-user-last-read';
+import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface NotificationBadgeProps {
     children: React.ReactNode;
 }
 
+interface ChatRoom {
+  id: string;
+  lastMessageTimestamp?: Timestamp;
+  lastMessageSenderId?: string;
+}
+
 export function NotificationBadge({ children }: NotificationBadgeProps) {
     const { user } = useAuth();
+    const { lastRead, loading: lastReadLoading } = useUserLastRead(user?.id);
     const [hasNotification, setHasNotification] = useState(false);
+    const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
 
     useEffect(() => {
         if (!user) {
             setHasNotification(false);
+            setChatRooms([]);
             return;
         }
 
-        const checkNotifications = () => {
-            let notificationFound = false;
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('lastMessageTimestamp_')) {
-                    const roomId = key.substring('lastMessageTimestamp_'.length);
-                    
-                    const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${roomId}`);
-                    if (lastMessageSenderId === user.id) {
-                        continue; // It's our own message, skip.
-                    }
+        const collectionsToQuery = ['General', 'ProjectChats'];
+        const unsubscribes = collectionsToQuery.map(coll => {
+            const q = query(collection(db, coll), where('members', 'array-contains', user.id));
+            return onSnapshot(q, (snapshot) => {
+                const rooms = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    lastMessageTimestamp: doc.data().lastMessageTimestamp,
+                    lastMessageSenderId: doc.data().lastMessageSenderId
+                }));
 
-                    const lastMessageTimestampStr = localStorage.getItem(key);
-                    const lastReadTimestampStr = localStorage.getItem(`lastRead_${roomId}`);
-                    
-                    const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
-                    const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
+                setChatRooms(prev => {
+                    const otherRooms = prev.filter(r => !rooms.some(nr => nr.id === r.id));
+                    return [...otherRooms, ...rooms];
+                });
+            });
+        });
+        
+        return () => unsubscribes.forEach(unsub => unsub());
 
-                    if (lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp) {
-                        notificationFound = true;
-                        break;
-                    }
-                }
-            }
-            setHasNotification(notificationFound);
-        };
-
-        checkNotifications();
-
-        const handleStorageChange = (event: Event) => {
-            // Check if the event is 'storage' to avoid reacting to other events.
-            if ((event as StorageEvent).key?.includes('lastMessage') || (event as StorageEvent).key?.includes('lastRead')) {
-                checkNotifications();
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        document.addEventListener('visibilitychange', checkNotifications);
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            document.removeEventListener('visibilitychange', checkNotifications);
-        };
     }, [user]);
+
+    useEffect(() => {
+        if (!user || lastReadLoading || chatRooms.length === 0) {
+            setHasNotification(false);
+            return;
+        }
+
+        let notificationFound = false;
+        for (const room of chatRooms) {
+            const lastReadTimestamp = lastRead[room.id]?.toMillis() || 0;
+            const lastMessageTimestamp = room.lastMessageTimestamp?.toMillis() || 0;
+
+            if (lastMessageTimestamp > lastReadTimestamp && room.lastMessageSenderId !== user.id) {
+                notificationFound = true;
+                break;
+            }
+        }
+        setHasNotification(notificationFound);
+
+    }, [user, lastRead, lastReadLoading, chatRooms]);
 
     return (
         <div className="relative">
@@ -75,5 +83,3 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
         </div>
     );
 }
-
-    

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, onSnapshot, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,12 +11,15 @@ import { MessageSquare, ThumbsUp } from 'lucide-react';
 import { AnimatedHeader } from '@/components/animated-header';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth-provider';
+import { useUserLastRead } from '@/hooks/use-user-last-read';
 
 interface ChatRoom {
   id: string;
   name: string;
   imageUrl?: string;
   hasNotification?: boolean;
+  lastMessageTimestamp?: Timestamp;
+  lastMessageSenderId?: string;
 }
 
 const tabs = [
@@ -39,23 +42,22 @@ function ChatRoomListSkeleton() {
 
 export default function ChatRoomPage() {
   const { user } = useAuth();
+  const { lastRead, loading: lastReadLoading } = useUserLastRead(user?.id);
   const [dmRooms, setDmRooms] = useState<ChatRoom[]>([]);
   const [projectRooms, setProjectRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('projects');
+  
+  const checkNotifications = (rooms: ChatRoom[]): ChatRoom[] => {
+      if (!user || !lastRead) return rooms;
 
-  const checkNotifications = (rooms: ChatRoom[], currentUserId: string | undefined): ChatRoom[] => {
       return rooms.map(room => {
-          const lastMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}`);
-          const lastReadTimestampStr = localStorage.getItem(`lastRead_${room.id}`);
-          const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${room.id}`);
-          
-          const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
-          const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
-
+          const lastReadTimestamp = lastRead[room.id]?.toMillis() || 0;
+          const lastMessageTimestamp = room.lastMessageTimestamp?.toMillis() || 0;
+          const hasNotification = lastMessageTimestamp > lastReadTimestamp && room.lastMessageSenderId !== user.id;
           return {
               ...room,
-              hasNotification: lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp && lastMessageSenderId !== currentUserId,
+              hasNotification
           };
       });
   };
@@ -68,14 +70,9 @@ export default function ChatRoomPage() {
         return;
     };
     
-    setLoading(true);
-    let dmLoaded = false;
-    let projectLoaded = false;
-
-    const checkLoadingDone = () => {
-        if (dmLoaded && projectLoaded) {
-            setLoading(false);
-        }
+    if (lastReadLoading) {
+        setLoading(true);
+        return;
     }
 
     // Listener for DMs
@@ -87,21 +84,19 @@ export default function ChatRoomPage() {
             const otherUserId = roomData.members.find((id: string) => id !== user.id);
             const otherUserData = roomData.memberDetails?.[otherUserId];
             
-            if (otherUserData?.displayName) { // Only add DMs with a valid other user
+            if (otherUserData?.displayName) {
                 dms.push({ 
                     id: roomDoc.id, 
                     name: otherUserData.displayName, 
-                    imageUrl: otherUserData.photoURL || ''
+                    imageUrl: otherUserData.photoURL || '',
+                    lastMessageTimestamp: roomData.lastMessageTimestamp,
+                    lastMessageSenderId: roomData.lastMessageSenderId,
                 });
             }
         }
-        setDmRooms(checkNotifications(dms, user.id));
-        dmLoaded = true;
-        checkLoadingDone();
+        setDmRooms(dms);
     }, (error) => {
         console.error("Error fetching DMs:", error);
-        dmLoaded = true;
-        checkLoadingDone();
     });
 
     // Listener for Project Chats
@@ -110,31 +105,33 @@ export default function ChatRoomPage() {
         const projects: ChatRoom[] = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            projects.push({ id: doc.id, name: data.name, imageUrl: data.imageUrl });
+            projects.push({ 
+                id: doc.id, 
+                name: data.name, 
+                imageUrl: data.imageUrl,
+                lastMessageTimestamp: data.lastMessageTimestamp,
+                lastMessageSenderId: data.lastMessageSenderId,
+            });
         });
-        setProjectRooms(checkNotifications(projects, user.id));
-        projectLoaded = true;
-        checkLoadingDone();
+        setProjectRooms(projects);
     }, (error) => {
         console.error("Error fetching project chats:", error);
-        projectLoaded = true;
-        checkLoadingDone();
     });
-
-    const handleStorageChange = () => {
-        if(user) {
-            setProjectRooms(prevRooms => checkNotifications(prevRooms, user.id));
-            setDmRooms(prevRooms => checkNotifications(prevRooms, user.id));
-        }
-    }
-    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       unsubscribeDms();
       unsubscribeProjects();
-      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [user]);
+  }, [user, lastRead, lastReadLoading]);
+  
+  useEffect(() => {
+    if (!lastReadLoading) {
+      setDmRooms(prev => checkNotifications(prev));
+      setProjectRooms(prev => checkNotifications(prev));
+      setLoading(false);
+    }
+  }, [lastRead, lastReadLoading, user, dmRooms.length, projectRooms.length]);
+
 
   const renderRoomList = (rooms: ChatRoom[], isDm: boolean) => {
       if (loading) {
@@ -235,5 +232,3 @@ export default function ChatRoomPage() {
     </div>
   );
 }
-
-    
