@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './auth-provider';
 import { useUserLastRead } from '@/hooks/use-user-last-read';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
@@ -24,6 +24,7 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
     const { requests: joinRequests, loading: requestsLoading } = useJoinRequests(user?.id);
     const [hasChatNotification, setHasChatNotification] = useState(false);
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+    const hasPlayedSoundRef = useRef(false);
 
     useEffect(() => {
         if (!user) {
@@ -75,6 +76,16 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
     const hasJoinRequestNotification = !requestsLoading && joinRequests.length > 0;
     const hasNotification = hasChatNotification || hasJoinRequestNotification;
+
+    useEffect(() => {
+        if (hasNotification && !hasPlayedSoundRef.current) {
+            const audio = new Audio('/new-notification.mp3');
+            audio.play().catch(error => console.log("Audio play was prevented:", error));
+            hasPlayedSoundRef.current = true;
+        } else if (!hasNotification) {
+            hasPlayedSoundRef.current = false;
+        }
+    }, [hasNotification]);
 
     return (
         <div className="relative">
