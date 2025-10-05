@@ -6,13 +6,12 @@ import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { HostProjectDialog } from '@/components/host-project-dialog';
 import { useEffect, useState } from 'react';
-import type { User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
 import { WelcomeScreen } from '@/components/welcome-screen';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Users, Code, Brush, Milestone, Cpu, Eye, Compass } from 'lucide-react';
@@ -74,16 +73,21 @@ function AppSkeleton() {
 }
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [people, setPeople] = useState<AppUser[]>([]);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      setUser(currentUser);
-      setLoading(false); // Set loading to false once auth state is determined
-      if (currentUser) { // Fetch data for both guest and logged-in users
+    const hasVisited = localStorage.getItem('hasVisited');
+    if (hasVisited) {
+      setShowWelcome(false);
+    } else {
+      localStorage.setItem('hasVisited', 'true');
+    }
+
+    const fetchData = async () => {
+        setLoading(true);
         try {
             // Fetch featured projects
             const projectsQuery = query(collection(db, 'projects'), orderBy('views', 'desc'), limit(6));
@@ -99,10 +103,11 @@ export default function Home() {
 
         } catch (error) {
             console.error("Error fetching homepage data:", error);
+        } finally {
+            setLoading(false);
         }
-      }
-    });
-    return () => unsubscribe();
+    };
+    fetchData();
   }, []);
   
   const getInitials = (name: string | null | undefined) => {
@@ -114,35 +119,27 @@ export default function Home() {
     return name.substring(0, 2).toUpperCase();
   };
 
-
   if (loading) {
     return <AppSkeleton />;
   }
 
-  if (!user) {
+  if (showWelcome) {
     return (
-        <ThemeProvider forcedTheme="dark">
-            <WelcomeScreen />
-        </ThemeProvider>
+      <ThemeProvider forcedTheme="dark">
+        <WelcomeScreen onFinish={() => setShowWelcome(false)} />
+      </ThemeProvider>
     );
   }
-  
-  if (user.isAnonymous) {
-      // You can customize a view for anonymous users here if needed in the future.
-      // For now, they see the main page.
-  }
-
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 space-y-16">
         {/* User Greeting */}
         <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-2 border-primary">
-                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'}/>
-                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                <AvatarFallback>G</AvatarFallback>
             </Avatar>
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Hi, {user.displayName || 'User'}!</h1>
+                <h1 className="text-2xl md:text-3xl font-bold">Hi, Guest!</h1>
                 <p className="text-muted-foreground">Let's create something amazing today.</p>
             </div>
         </div>
@@ -279,11 +276,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-    

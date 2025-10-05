@@ -3,12 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDoc, onSnapshot, doc } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { MessageSquare } from 'lucide-react';
-import type { User } from 'firebase/auth';
 import { AnimatedHeader } from '@/components/animated-header';
 import { motion } from 'framer-motion';
 
@@ -39,46 +38,29 @@ function ChatRoomListSkeleton() {
 }
 
 export default function ChatRoomPage() {
-  const [user, setUser] = useState<User | null>(null);
   const [dmRooms, setDmRooms] = useState<ChatRoom[]>([]);
   const [projectRooms, setProjectRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('projects');
 
-  useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-        setUser(currentUser);
-        if (!currentUser) {
-            setLoading(false);
-            setProjectRooms([]);
-            setDmRooms([]);
-        }
-    });
-    return () => unsubscribeAuth();
-  }, []);
-
   const checkNotifications = (rooms: ChatRoom[]): ChatRoom[] => {
       return rooms.map(room => {
           const lastMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}`);
           const lastReadTimestampStr = localStorage.getItem(`lastRead_${room.id}`);
-          const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${room.id}`);
           
           const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
           const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
           const hasNewMessage = lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp;
-          const notFromCurrentUser = lastMessageSenderId !== user?.uid;
 
           return {
               ...room,
-              hasNotification: hasNewMessage && notFromCurrentUser
+              hasNotification: hasNewMessage
           };
       });
   };
 
   useEffect(() => {
-    if (!user) return;
-
     setLoading(true);
     let dmLoaded = false;
     let projectLoaded = false;
@@ -90,23 +72,12 @@ export default function ChatRoomPage() {
     }
 
     // Listener for DMs
-    const dmQuery = query(collection(db, 'General'), where('members', 'array-contains', user.uid));
+    const dmQuery = query(collection(db, 'General'));
     const unsubscribeDms = onSnapshot(dmQuery, async (snapshot) => {
         const dms: ChatRoom[] = [];
         for (const roomDoc of snapshot.docs) {
             const roomData = roomDoc.data();
-            const otherMemberId = roomData.members.find((id: string) => id !== user.uid);
-            let otherMemberName = 'Direct Message';
-            let otherMemberPhoto = '';
-
-            if (otherMemberId) {
-                const userDoc = await getDoc(doc(db, 'users', otherMemberId));
-                if (userDoc.exists()) {
-                    otherMemberName = userDoc.data().displayName || otherMemberName;
-                    otherMemberPhoto = userDoc.data().photoURL || otherMemberPhoto;
-                }
-            }
-            dms.push({ id: roomDoc.id, name: otherMemberName, imageUrl: otherMemberPhoto });
+            dms.push({ id: roomDoc.id, name: roomData.name || 'Direct Message', imageUrl: '' });
         }
         setDmRooms(checkNotifications(dms));
         dmLoaded = true;
@@ -118,7 +89,7 @@ export default function ChatRoomPage() {
     });
 
     // Listener for Project Chats
-    const projectChatQuery = query(collection(db, 'ProjectChats'), where('members', 'array-contains', user.uid));
+    const projectChatQuery = query(collection(db, 'ProjectChats'));
     const unsubscribeProjects = onSnapshot(projectChatQuery, (snapshot) => {
         const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatRoom));
         setProjectRooms(checkNotifications(projects));
@@ -129,10 +100,6 @@ export default function ChatRoomPage() {
         projectLoaded = true;
         checkLoadingDone();
     });
-    
-    const joinRequestKey = `hasNewJoinRequests_${user.uid}`;
-    localStorage.removeItem(joinRequestKey);
-    window.dispatchEvent(new Event('storage'));
 
     const handleStorageChange = () => {
         setProjectRooms(prevRooms => checkNotifications(prevRooms));
@@ -145,7 +112,7 @@ export default function ChatRoomPage() {
       unsubscribeProjects();
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [user]);
+  }, []);
 
   const renderRoomList = (rooms: ChatRoom[], isDm: boolean) => {
       if (loading) {
@@ -154,7 +121,7 @@ export default function ChatRoomPage() {
       if (rooms.length === 0) {
           return (
               <div className="text-center text-muted-foreground py-10 h-full flex flex-col items-center justify-center">
-                  <p>{isDm ? "You have no direct messages." : "You haven't joined any projects yet."}</p>
+                  <p>{isDm ? "There are no direct messages." : "There are no projects yet."}</p>
               </div>
           );
       }

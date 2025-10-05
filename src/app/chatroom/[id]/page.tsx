@@ -4,8 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, Timestamp, updateDoc, arrayUnion, where } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
-import type { User } from 'firebase/auth';
+import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -102,17 +101,13 @@ export default function ChatPage() {
   const params = useParams();
   const router = useRouter();
   const chatId = params.id as string;
-  const [user, setUser] = useState<User | null>(auth.currentUser);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasAccess, setHasAccess] = useState(false);
-  const [isMember, setIsMember] = useState(isMember);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
   const [isDm, setIsDm] = useState(false);
@@ -122,16 +117,6 @@ export default function ChatPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const memberCache = useRef<Map<string, Member>>(new Map());
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-        setUser(currentUser);
-        if (!currentUser) {
-            setLoading(false);
-        }
-    });
-    return () => unsubscribe();
-  }, []);
-  
   const fetchProjectAndMembers = useCallback(async () => {
     if (!chatId) return;
     setLoading(true);
@@ -156,7 +141,6 @@ export default function ChatPage() {
                 setChatCollection('ProjectChats');
             } else {
                 setLoading(false);
-                setHasAccess(false);
                 return;
             }
         }
@@ -167,13 +151,6 @@ export default function ChatPage() {
         const memberIdsToCheck = chatRoomData.members || [];
 
         if (isDm) {
-             const canView = user ? (memberIdsToCheck.includes(user.uid)) : false;
-             setHasAccess(canView);
-             if (!canView) {
-                setLoading(false);
-                return;
-             }
-             setIsMember(true);
              projDetails = {
                 id: chatId,
                 title: chatRoomData.name,
@@ -198,7 +175,6 @@ export default function ChatPage() {
                 isPrivate = true;
             } else {
                 setLoading(false);
-                setHasAccess(false);
                 return;
             }
 
@@ -214,19 +190,6 @@ export default function ChatPage() {
                 admins: projectData.admins || [projectData.owner],
                 requiresRequestToJoin: projectData.requiresRequestToJoin,
             };
-            const isUserAdmin = user ? (projDetails.admins?.includes(user.uid) ?? false) : false;
-            setIsCurrentUserAdmin(isUserAdmin);
-
-            const isProjectMember = user ? (isUserAdmin || (projDetails.members && projDetails.members.includes(user.uid))) : false;
-            setIsMember(isProjectMember);
-
-            const canView = !isPrivate || isProjectMember;
-            setHasAccess(canView);
-
-             if(!canView) {
-                setLoading(false);
-                return;
-            }
         }
         
         setProjectDetails(projDetails);
@@ -260,7 +223,7 @@ export default function ChatPage() {
     } finally {
         setLoading(false);
     }
-  }, [chatId, user, isDm]);
+  }, [chatId, isDm]);
 
 
   useEffect(() => {
@@ -269,7 +232,7 @@ export default function ChatPage() {
   
   
    useEffect(() => {
-        if (!isCurrentUserAdmin || !chatId || isDm) {
+        if (!chatId || isDm) {
             setJoinRequests([]);
             return;
         }
@@ -284,26 +247,23 @@ export default function ChatPage() {
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
             setJoinRequests(requests);
             
-            if (user) {
-                const notificationKey = `hasNewJoinRequests_${user.uid}`;
-                if (requests.length > 0) {
-                    localStorage.setItem(notificationKey, 'true');
-                } else {
-                    localStorage.removeItem(notificationKey);
-                }
-                window.dispatchEvent(new Event('storage'));
+            if (requests.length > 0) {
+                localStorage.setItem(`hasNewJoinRequests_${chatId}`, 'true');
+            } else {
+                localStorage.removeItem(`hasNewJoinRequests_${chatId}`);
             }
+            window.dispatchEvent(new Event('storage'));
         }, (error) => {
             console.error("Error fetching join requests:", error);
             toast({ title: "Error", description: "Could not fetch join requests.", variant: "destructive" });
         });
 
         return () => unsubscribe();
-    }, [isCurrentUserAdmin, chatId, toast, user, isDm]);
+    }, [chatId, toast, isDm]);
 
 
   useEffect(() => {
-    if (!chatId || !hasAccess || !isMember || !chatCollection) return () => {};
+    if (!chatId || !chatCollection) return () => {};
 
     const q = query(collection(db, `${chatCollection}/${chatId}/messages`), orderBy('createdAt', 'asc'));
     
@@ -312,7 +272,7 @@ export default function ChatPage() {
       const msgs: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs);
       
-      if (msgs.length > 0 && user) {
+      if (msgs.length > 0) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.createdAt) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
@@ -320,7 +280,7 @@ export default function ChatPage() {
             localStorage.setItem(`lastMessageSenderId_${chatId}`, lastMessage.senderId);
             window.dispatchEvent(new Event('storage'));
 
-            if(document.hidden && lastMessage.senderId !== user.uid) {
+            if(document.hidden) {
                 const audio = new Audio('/chatnotify.mp3');
                 audio.play().catch(e => console.error("Audio play failed:", e));
             }
@@ -353,7 +313,7 @@ export default function ChatPage() {
     });
 
     return unsubscribe;
-  }, [chatId, hasAccess, user, projectDetails, isMember, chatCollection]);
+  }, [chatId, projectDetails, chatCollection]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -378,7 +338,7 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !chatId || !user || user.isAnonymous || !isMember || !chatCollection) return;
+    if (newMessage.trim() === '' || !chatId || !chatCollection) return;
 
     const userMessage = newMessage;
     setNewMessage('');
@@ -387,7 +347,7 @@ export default function ChatPage() {
         await addDoc(collection(db, `${chatCollection}/${chatId}/messages`), {
             text: userMessage,
             createdAt: serverTimestamp(),
-            senderId: user.uid, 
+            senderId: "guest", 
         });
     } catch(error) {
         console.error("Error sending message:", error);
@@ -395,7 +355,6 @@ export default function ChatPage() {
   };
   
   const handleRequestAction = async (requestId: string, userId: string, action: 'approve' | 'decline') => {
-        if (!isCurrentUserAdmin) return;
         setProcessingRequestId(requestId);
 
         const requestRef = doc(db, 'joinRequests', requestId);
@@ -437,30 +396,12 @@ export default function ChatPage() {
     );
   }
   
-  if (!user) {
-     router.push('/projects');
-     return null;
-  }
-  
-  if (!hasAccess) {
-    return (
-      <>
-        <div className="flex flex-col items-center justify-center h-[calc(100vh_-_65px)] text-center p-4">
-            <Ban className="h-16 w-16 text-destructive mb-4" />
-            <h1 className="text-2xl font-bold">Access Denied</h1>
-            <p className="text-muted-foreground max-w-md">You do not have permission to view this chat. If this is a private project, ask the admin for an invitation.</p>
-            <Button onClick={() => router.push('/projects')} className="mt-6">Back to Projects</Button>
-        </div>
-      </>
-    )
-  }
-  
   if (!chatRoom) {
     return <div className="text-center p-8">Chat room not found.</div>
   }
 
   const getSenderName = (senderId: string) => {
-      if (senderId === user?.uid) return 'You';
+      if (senderId === 'guest') return 'You';
       const member = memberCache.current.get(senderId);
       return member?.displayName || 'A member';
   }
@@ -469,7 +410,7 @@ export default function ChatPage() {
       return member?.photoURL;
   }
   const getSenderFallback = (senderId: string) => {
-    if (senderId === user?.uid) return user.displayName?.substring(0, 2).toUpperCase() || 'U';
+    if (senderId === 'guest') return "G";
     const member = memberCache.current.get(senderId);
     return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
   };
@@ -485,12 +426,6 @@ export default function ChatPage() {
   }
 
   const getPlaceholderText = () => {
-    if (user?.isAnonymous) {
-        return "Login to send messages";
-    }
-    if (!isMember) {
-        return "Join project to send messages";
-    }
     return "Type a message...";
   }
 
@@ -499,18 +434,18 @@ export default function ChatPage() {
         <ScrollArea className="h-full" ref={scrollAreaRef}>
             <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
                 {messages.length === 0 ? <NoChatView /> : messages.map((msg) => (
-                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.uid ? 'justify-end' : ''}`}>
-                        {msg.senderId !== user?.uid && (
+                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === 'guest' ? 'justify-end' : ''}`}>
+                        {msg.senderId !== 'guest' && (
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
                             <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
                         </Avatar>
                         )}
-                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === 'guest' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                             <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
                             <p className="text-sm"><Linkify text={msg.text} /></p>
                         </div>
-                        {msg.senderId === user?.uid && (
+                        {msg.senderId === 'guest' && (
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
                             <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
@@ -533,7 +468,7 @@ export default function ChatPage() {
             />
         )}
         
-        {isCurrentUserAdmin && joinRequests.length > 0 && (
+        {joinRequests.length > 0 && (
             <JoinRequestCard 
                 requests={joinRequests}
                 onAction={handleRequestAction}
@@ -548,31 +483,15 @@ export default function ChatPage() {
         <div className="p-4 bg-background border-t">
             <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
             <div className="relative">
-                 {user?.isAnonymous ? (
-                    <Link href="/login" className="block">
-                        <div className="relative">
-                            <Input
-                                placeholder={getPlaceholderText()}
-                                disabled={true}
-                                className="pr-12"
-                            />
-                            <div className="absolute top-0 right-0 bottom-0 left-0 cursor-pointer" />
-                        </div>
-                    </Link>
-                ) : (
-                    <>
-                        <Input
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder={getPlaceholderText()}
-                            disabled={!user || !isMember}
-                            className="pr-12"
-                        />
-                        <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user || !isMember}>
-                            <Send className="h-4 w-4" />
-                        </Button>
-                    </>
-                )}
+                <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder={getPlaceholderText()}
+                    className="pr-12"
+                />
+                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === ''}>
+                    <Send className="h-4 w-4" />
+                </Button>
             </div>
             </form>
         </div>
@@ -582,12 +501,9 @@ export default function ChatPage() {
                 onOpenChange={setIsSidebarOpen}
                 project={projectDetails}
                 members={members}
-                currentUser={user}
                 onProjectUpdate={fetchProjectAndMembers}
             />
         )}
      </div>
   );
 }
-
-    

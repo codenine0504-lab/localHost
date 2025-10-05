@@ -13,9 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Instagram, Github, Linkedin, Link as LinkIcon, MessageSquare, Briefcase, School } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db } from '@/lib/firebase';
-import type { User } from 'firebase/auth';
-import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { useState } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp, collection, writeBatch } from 'firebase/firestore';
 import type { AppUser } from '@/types';
 import Link from 'next/link';
@@ -27,29 +26,14 @@ interface UserProfileCardProps {
 }
 
 export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardProps) {
-  const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(setCurrentUser);
-    return () => unsubscribe();
-  }, []);
-
   const handleSendMessage = async () => {
-    if (!currentUser || !user || currentUser.uid === user.id) return;
+    if (!user) return;
 
-    if (currentUser.isAnonymous) {
-        toast({
-            title: "Authentication Required",
-            description: "Please create an account to message other users.",
-            action: <Button onClick={() => router.push('/login')}>Login</Button>,
-            variant: "destructive"
-        });
-        return;
-    }
-
-    const chatRoomId = [currentUser.uid, user.id].sort().join('_');
+    const guestId = "guest_user";
+    const chatRoomId = [guestId, user.id].sort().join('_');
     const chatRoomRef = doc(db, 'General', chatRoomId);
     
     try {
@@ -59,8 +43,9 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
             const batch = writeBatch(db);
             
             batch.set(chatRoomRef, {
-                members: [currentUser.uid, user.id],
+                members: [guestId, user.id],
                 createdAt: serverTimestamp(),
+                name: `DM with ${user.displayName}`
             });
 
             await batch.commit();
@@ -111,11 +96,9 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
                         {user.status === 'seeking' ? 'Seeking Collaboration' : 'Actively Building'}
                     </Badge>
                 )}
-                 {currentUser?.uid !== user.id && (
-                    <Button className="mt-4 w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
-                        <MessageSquare className="mr-2 h-4 w-4" /> Message
-                    </Button>
-                )}
+                 <Button className="mt-4 w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
+                     <MessageSquare className="mr-2 h-4 w-4" /> Message
+                 </Button>
                  {socialLinks.length > 0 && (
                     <div className="flex items-center justify-center gap-4 mt-4">
                         {socialLinks.map(link => (

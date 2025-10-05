@@ -13,7 +13,6 @@ import { db, storage } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, getDoc, setDoc, collection, query, where, onSnapshot, arrayUnion, arrayRemove, increment, getDocs, writeBatch } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
-import type { User } from 'firebase/auth';
 import { Pencil, Loader2, Trash2, UserPlus, Check, X, Shield, MoreVertical, UserX, Link2, Settings, Users, IndianRupee } from 'lucide-react';
 import {
   AlertDialog,
@@ -62,11 +61,10 @@ interface ChatSidebarProps {
     onOpenChange: (isOpen: boolean) => void;
     project: ProjectDetails;
     members: Member[];
-    currentUser: User | null;
     onProjectUpdate: () => void;
 }
 
-export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUser, onProjectUpdate }: ChatSidebarProps) {
+export function ChatSidebar({ isOpen, onOpenChange, project, members, onProjectUpdate }: ChatSidebarProps) {
     const [isEditing, setIsEditing] = useState({
         title: false,
         description: false,
@@ -86,8 +84,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     const { toast } = useToast();
     const router = useRouter();
 
-
-    const isCurrentUserAdmin = currentUser ? project.admins?.includes(currentUser.uid) ?? false : false;
 
     useEffect(() => {
         setFormState({
@@ -144,7 +140,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
     
     const handleSettingToggle = async (setting: 'isPrivate', value: boolean) => {
-        if (!isCurrentUserAdmin) return;
         setIsProcessing(true);
 
         try {
@@ -198,7 +193,6 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
 
     const handleDeleteProject = async () => {
-        if (!isCurrentUserAdmin) return;
         setIsDeleting(true);
 
         try {
@@ -233,7 +227,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     }
     
      const handleAdminToggle = async (memberId: string, shouldBeAdmin: boolean) => {
-        if (!isCurrentUserAdmin || memberId === project.owner) return;
+        if (memberId === project.owner) return;
 
         const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
         const projectRef = doc(db, projectCollection, project.id);
@@ -254,7 +248,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
     };
 
     const handleRemoveMember = async (memberId: string) => {
-        if (!isCurrentUserAdmin || memberId === project.owner) return;
+        if (memberId === project.owner) return;
 
         const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
         const projectRef = doc(db, projectCollection, project.id);
@@ -326,117 +320,115 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                 <div className="py-6 space-y-8">
 
                     {/* Project Settings Section */}
-                    {isCurrentUserAdmin && (
-                        <div className="space-y-4 px-4">
-                            <h3 className="font-semibold text-lg flex items-center"><Settings className="mr-2 h-5 w-5" /> Project Settings</h3>
-                            
-                            {/* Image URL */}
-                            <div className="space-y-2">
-                                <Label>Image URL</Label>
-                                {isEditing.imageUrl ? (
-                                    <div className="flex items-center gap-2">
-                                        <Input value={formState.imageUrl} onChange={(e) => handleInputChange('imageUrl', e.target.value)} placeholder="https://example.com/image.png" />
-                                        <Button onClick={() => handleUpdate('imageUrl')} size="sm">Save</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('imageUrl')}>Cancel</Button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between group">
-                                        <p className="text-sm text-muted-foreground truncate">{project.imageUrl || 'No image URL set'}</p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, imageUrl: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Project Title */}
-                            <div className="space-y-2">
-                                <Label>Title</Label>
-                                {isEditing.title ? (
-                                    <div className="flex items-center gap-2">
-                                        <Input value={formState.title} onChange={(e) => handleInputChange('title', e.target.value)} />
-                                        <Button onClick={() => handleUpdate('title')} size="sm">Save</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('title')}>Cancel</Button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between group">
-                                        <p className="text-sm text-muted-foreground">{project.title}</p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, title: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Project Description */}
-                            <div className="space-y-2">
-                                <Label>Description</Label>
-                                {isEditing.description ? (
-                                    <div className="flex flex-col gap-2">
-                                        <Textarea value={formState.description} onChange={(e) => handleInputChange('description', e.target.value)} rows={5} />
-                                        <div className="flex items-center gap-2">
-                                            <Button onClick={() => handleUpdate('description')} size="sm">Save</Button>
-                                            <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('description')}>Cancel</Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start justify-between group">
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, description: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-
-                             {/* Budget */}
-                            <div className="space-y-2">
-                                <Label>Budget</Label>
-                                {isEditing.budget ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="relative flex-grow">
-                                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input 
-                                                type="number" 
-                                                value={formState.budget ?? ''} 
-                                                onChange={(e) => handleInputChange('budget', e.target.value === '' ? undefined : Number(e.target.value))}
-                                                placeholder="e.g. 5000"
-                                                className="pl-8"
-                                            />
-                                        </div>
-                                        <Button onClick={() => handleUpdate('budget')} size="sm">Save</Button>
-                                        <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('budget')}>Cancel</Button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between group">
-                                        <p className="text-sm text-muted-foreground">
-                                            {project.budget ? `₹${project.budget.toLocaleString()}` : 'Not set'}
-                                        </p>
-                                        <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, budget: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-
-                            <Separator />
-
-                             {/* Privacy and Join Settings */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="isPrivate" className="flex flex-col gap-1">
-                                        <span>Project Visibility</span>
-                                        <span className="text-xs font-normal text-muted-foreground">
-                                             {project.isPrivate ? "Only approved members can join." : "Visible to everyone."}
-                                        </span>
-                                    </Label>
-                                    <Switch id="isPrivate" checked={project.isPrivate} onCheckedChange={(val) => handleSettingToggle('isPrivate', val)} disabled={isProcessing} />
+                    <div className="space-y-4 px-4">
+                        <h3 className="font-semibold text-lg flex items-center"><Settings className="mr-2 h-5 w-5" /> Project Settings</h3>
+                        
+                        {/* Image URL */}
+                        <div className="space-y-2">
+                            <Label>Image URL</Label>
+                            {isEditing.imageUrl ? (
+                                <div className="flex items-center gap-2">
+                                    <Input value={formState.imageUrl} onChange={(e) => handleInputChange('imageUrl', e.target.value)} placeholder="https://example.com/image.png" />
+                                    <Button onClick={() => handleUpdate('imageUrl')} size="sm">Save</Button>
+                                    <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('imageUrl')}>Cancel</Button>
                                 </div>
-                                 {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
-                            </div>
-
+                            ) : (
+                                <div className="flex items-center justify-between group">
+                                    <p className="text-sm text-muted-foreground truncate">{project.imageUrl || 'No image URL set'}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, imageUrl: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
                         </div>
-                    )}
+
+                        {/* Project Title */}
+                        <div className="space-y-2">
+                            <Label>Title</Label>
+                            {isEditing.title ? (
+                                <div className="flex items-center gap-2">
+                                    <Input value={formState.title} onChange={(e) => handleInputChange('title', e.target.value)} />
+                                    <Button onClick={() => handleUpdate('title')} size="sm">Save</Button>
+                                    <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('title')}>Cancel</Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between group">
+                                    <p className="text-sm text-muted-foreground">{project.title}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, title: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Project Description */}
+                        <div className="space-y-2">
+                            <Label>Description</Label>
+                            {isEditing.description ? (
+                                <div className="flex flex-col gap-2">
+                                    <Textarea value={formState.description} onChange={(e) => handleInputChange('description', e.target.value)} rows={5} />
+                                    <div className="flex items-center gap-2">
+                                        <Button onClick={() => handleUpdate('description')} size="sm">Save</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('description')}>Cancel</Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-start justify-between group">
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.description}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, description: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                         {/* Budget */}
+                        <div className="space-y-2">
+                            <Label>Budget</Label>
+                            {isEditing.budget ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-grow">
+                                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input 
+                                            type="number" 
+                                            value={formState.budget ?? ''} 
+                                            onChange={(e) => handleInputChange('budget', e.target.value === '' ? undefined : Number(e.target.value))}
+                                            placeholder="e.g. 5000"
+                                            className="pl-8"
+                                        />
+                                    </div>
+                                    <Button onClick={() => handleUpdate('budget')} size="sm">Save</Button>
+                                    <Button variant="ghost" size="sm" onClick={() => handleCancelEdit('budget')}>Cancel</Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between group">
+                                    <p className="text-sm text-muted-foreground">
+                                        {project.budget ? `₹${project.budget.toLocaleString()}` : 'Not set'}
+                                    </p>
+                                    <Button variant="ghost" size="icon" onClick={() => setIsEditing(prev => ({...prev, budget: true}))} className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                        <Separator />
+
+                         {/* Privacy and Join Settings */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="isPrivate" className="flex flex-col gap-1">
+                                    <span>Project Visibility</span>
+                                    <span className="text-xs font-normal text-muted-foreground">
+                                         {project.isPrivate ? "Only approved members can join." : "Visible to everyone."}
+                                    </span>
+                                </Label>
+                                <Switch id="isPrivate" checked={project.isPrivate} onCheckedChange={(val) => handleSettingToggle('isPrivate', val)} disabled={isProcessing} />
+                            </div>
+                             {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
+                        </div>
+
+                    </div>
                     
                      <Separator />
 
@@ -470,46 +462,44 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
                                                  </div>
                                             </div>
                                         </div>
-                                        {isCurrentUserAdmin && currentUser?.uid !== member.id && (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    {member.isAdmin ? (
-                                                        member.id !== project.owner && (
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Remove as Admin</DropdownMenuItem></AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader><AlertDialogTitle>Remove Admin Privileges?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove admin privileges for this member?</AlertDialogDescription></AlertDialogHeader>
-                                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, false)}>Confirm</AlertDialogAction></AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        )
-                                                    ) : (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {member.isAdmin ? (
+                                                    member.id !== project.owner && (
                                                         <AlertDialog>
-                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Make Admin</DropdownMenuItem></AlertDialogTrigger>
-                             <AlertDialogContent>
-                                                                <AlertDialogHeader><AlertDialogTitle>Make Member an Admin?</AlertDialogTitle><AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription></AlertDialogHeader>
-                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction></AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    )}
-
-                                                    {member.id !== project.owner && (
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-500/10 focus:text-red-600"><UserX className="mr-2 h-4 w-4" />Remove Member</DropdownMenuItem></AlertDialogTrigger>
+                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Remove as Admin</DropdownMenuItem></AlertDialogTrigger>
                                                             <AlertDialogContent>
-                                                                <AlertDialogHeader><AlertDialogTitle>Remove Member?</AlertDialogTitle><AlertDialogDescription>This will permanently remove the member from the project. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction></AlertDialogFooter>
+                                                                <AlertDialogHeader><AlertDialogTitle>Remove Admin Privileges?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove admin privileges for this member?</AlertDialogDescription></AlertDialogHeader>
+                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, false)}>Confirm</AlertDialogAction></AlertDialogFooter>
                                                             </AlertDialogContent>
                                                         </AlertDialog>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        )}
+                                                    )
+                                                ) : (
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Make Admin</DropdownMenuItem></AlertDialogTrigger>
+                         <AlertDialogContent>
+                                                            <AlertDialogHeader><AlertDialogTitle>Make Member an Admin?</AlertDialogTitle><AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                )}
+
+                                                {member.id !== project.owner && (
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-500/10 focus:text-red-600"><UserX className="mr-2 h-4 w-4" />Remove Member</DropdownMenuItem></AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader><AlertDialogTitle>Remove Member?</AlertDialogTitle><AlertDialogDescription>This will permanently remove the member from the project. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction></AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </li>
                                 ))}
                             </ul>
@@ -518,38 +508,36 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, currentUse
 
 
                      {/* Delete Project */}
-                    {isCurrentUserAdmin && (
-                        <div className="pt-6 border-t border-destructive/20 px-4">
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" className="w-full">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete Project
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete your project,
-                                        chat room, and all associated data.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction 
-                                        onClick={handleDeleteProject} 
-                                        disabled={isDeleting}
-                                        className="bg-destructive hover:bg-destructive/90"
-                                    >
-                                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                        {isDeleting ? 'Deleting...' : 'Delete'}
-                                    </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
-                    )}
+                    <div className="pt-6 border-t border-destructive/20 px-4">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive" className="w-full">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Project
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your project,
+                                    chat room, and all associated data.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                    onClick={handleDeleteProject} 
+                                    disabled={isDeleting}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                >
+                                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    {isDeleting ? 'Deleting...' : 'Delete'}
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
                 </div>
             </SheetContent>
         </Sheet>

@@ -3,12 +3,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, UserCircle, MessageSquare, Search, LogIn } from 'lucide-react';
+import { Home, Compass, UserCircle, MessageSquare, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
-import { useEffect, useState } from 'react';
-import type { User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
@@ -16,33 +13,14 @@ const navItems = [
   { href: '/projects', label: 'Explore', icon: Compass },
   { href: '/people', label: 'Search', icon: Search },
   { href: '/chatroom', label: 'Chat', icon: MessageSquare },
-  { href: '/profile', label: 'Profile', icon: UserCircle },
+  { href: '/settings', label: 'Settings', icon: UserCircle },
 ];
 
 function BottomNav() {
   const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const isChatPage = pathname.startsWith('/chatroom/');
   if (isChatPage && pathname !== '/chatroom') {
-    return null;
-  }
-  
-  if (loading) {
-    return null; // Don't show anything while loading auth state
-  }
-  
-  // For guest users, show a login button
-  if (!user || user.isAnonymous) {
     return null;
   }
 
@@ -113,20 +91,5 @@ function BottomNav() {
 }
 
 export function MainNav() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) {
-    return null; 
-  }
-
   return <BottomNav />;
 }

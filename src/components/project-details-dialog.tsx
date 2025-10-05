@@ -14,14 +14,11 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db } from '@/lib/firebase';
-import type { User } from 'firebase/auth';
+import { db } from '@/lib/firebase';
 import { useEffect, useState } from 'react';
 import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion, increment } from 'firebase/firestore';
-import { Share2, Eye, Users, LogIn } from 'lucide-react';
+import { Share2, Eye, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import Link from 'next/link';
-import { AuthDialog } from './auth-dialog';
 
 interface Project {
   id: string;
@@ -45,16 +42,10 @@ interface ProjectDetailsDialogProps {
 }
 
 export function ProjectDetailsDialog({ project, children, open, onOpenChange }: ProjectDetailsDialogProps) {
-  const [user, setUser] = useState<User | null>(auth.currentUser);
   const [requestStatus, setRequestStatus] = useState<'idle' | 'pending' | 'sent'>('idle');
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(setUser);
-    return () => unsubscribe();
-  }, []);
-  
   useEffect(() => {
       if (open) {
         const projectCollection = project.isPrivate ? 'privateProjects' : 'projects';
@@ -65,48 +56,18 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
 
   useEffect(() => {
       const checkExistingRequest = async () => {
-          if (!user || user.isAnonymous || !project.requiresRequestToJoin) return;
+          if (!project.requiresRequestToJoin) return;
 
-          const q = query(
-              collection(db, 'joinRequests'),
-              where('projectId', '==', project.id),
-              where('userId', '==', user.uid)
-          );
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-              const request = querySnapshot.docs[0].data();
-              if (request.status === 'pending') {
-                setRequestStatus('sent');
-              }
-          }
+          // In a no-auth app, we can't check for a specific user's request.
+          // We can disable the button if any request is pending, but that's not ideal.
+          // For now, we'll assume a user can always request to join.
       };
 
-      if (user) {
-        checkExistingRequest();
-      }
-  }, [user, project.id, project.requiresRequestToJoin]);
+      checkExistingRequest();
+  }, [project.id, project.requiresRequestToJoin]);
 
 
   const handleJoinOrRequest = async () => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to join the project.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (user.isAnonymous) {
-        toast({
-            title: 'Account Required',
-            description: 'Please create a full account to join projects.',
-            variant: 'destructive',
-        });
-        return;
-    }
-
     if (project.requiresRequestToJoin) {
       handleRequestToJoin();
     } else {
@@ -115,11 +76,10 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   };
 
   const handleJoinPublicProject = async () => {
-    if (!user) return;
     try {
         const projectRef = doc(db, 'projects', project.id);
          await updateDoc(projectRef, {
-            members: arrayUnion(user.uid)
+            members: arrayUnion("guest_user")
         });
 
         const audio = new Audio('/join.mp3');
@@ -136,17 +96,22 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }
 
   const handleRequestToJoin = async () => {
-    if (!user || user.isAnonymous || requestStatus !== 'idle') return;
+    if (requestStatus !== 'idle') return;
     setRequestStatus('pending');
     try {
+        const guestUser = {
+            uid: 'guest_' + Date.now(),
+            displayName: 'Guest User',
+            photoURL: ''
+        };
         const collectionName = project.isPrivate ? 'privateProjects' : 'projects';
         await addDoc(collection(db, 'joinRequests'), {
             projectId: project.id,
             projectTitle: project.title,
             projectCollection: collectionName,
-            userId: user.uid,
-            userDisplayName: user.displayName,
-            userPhotoURL: user.photoURL,
+            userId: guestUser.uid,
+            userDisplayName: guestUser.displayName,
+            userPhotoURL: guestUser.photoURL,
             status: 'pending',
             createdAt: serverTimestamp(),
         });
@@ -211,17 +176,6 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }
   
    const renderJoinButton = () => {
-    if (!user || user.isAnonymous) {
-        return (
-            <AuthDialog>
-                <Button className="w-full sm:w-auto">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Login to Join
-                </Button>
-            </AuthDialog>
-        )
-    }
-
     return (
         <Button
             className="w-full sm:w-auto"

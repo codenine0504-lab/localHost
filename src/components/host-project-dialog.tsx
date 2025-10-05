@@ -25,11 +25,10 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp, setDoc, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
@@ -50,7 +49,6 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export function HostProjectDialog({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
   const {
     handleSubmit,
@@ -71,26 +69,11 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
   const descriptionValue = watch('description');
   const wordCount = descriptionValue.split(/\s+/).filter(Boolean).length;
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-  
   const handleReset = () => {
     reset();
   }
 
   const handleDialogOpen = (open: boolean) => {
-    if (open && !user) {
-        toast({
-            title: "Authentication Required",
-            description: "Please log in to host a project.",
-            variant: "destructive"
-        });
-        return;
-    }
     if (!open) {
        handleReset();
     }
@@ -98,29 +81,10 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
   }
   
   const onSubmit = async (data: ProjectFormValues) => {
-    if (!user) {
-        toast({ title: "Not Logged In", description: "You must be logged in to host a project.", variant: "destructive" });
-        return;
-    }
-    
-    if (user.isAnonymous) {
-         toast({ title: "Account Required", description: "Please create an account to host a project.", variant: "destructive" });
-        return;
-    }
-
     try {
-      const userDocRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (!userDoc.exists() || !userDoc.data()?.college) {
-        toast({
-          title: "Profile Incomplete",
-          description: "Please set your college on your profile page before hosting a project.",
-          variant: "destructive"
-        });
-        return;
-      }
-      const college = userDoc.data().college;
+      // For now, hardcode some user info. We will replace this with real user data later.
+      const ownerId = "guest_user";
+      const college = "Guest College";
 
       const isPrivate = false; // Visibility switch removed
       const collectionName = isPrivate ? 'privateProjects' : 'projects';
@@ -130,9 +94,9 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         isPrivate,
         createdAt: serverTimestamp(),
         college: college, 
-        owner: user.uid,
-        admins: [user.uid],
-        members: [user.uid], // Owner is always a member
+        owner: ownerId,
+        admins: [ownerId],
+        members: [ownerId], // Owner is always a member
         budget: null,
         requiresRequestToJoin: true,
         views: 0,
@@ -149,7 +113,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         createdAt: serverTimestamp(),
         imageUrl: data.imageUrl,
         isPrivate: isPrivate,
-        members: [user.uid]
+        members: [ownerId]
       });
 
       await batch.commit();

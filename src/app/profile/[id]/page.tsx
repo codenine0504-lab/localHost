@@ -6,8 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { doc, getDoc, collection, query, where, getDocs, serverTimestamp, writeBatch, setDoc } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
 import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare } from "lucide-react";
@@ -53,18 +52,12 @@ function ProfileSkeleton() {
 }
 
 export default function PublicProfilePage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [profileUser, setProfileUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const userId = params.id as string;
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setCurrentUser);
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -89,19 +82,11 @@ export default function PublicProfilePage() {
   }, [userId]);
 
   const handleSendMessage = async () => {
-    if (!currentUser || !profileUser || currentUser.uid === profileUser.id) return;
-
-    if (currentUser.isAnonymous) {
-        toast({
-            title: "Authentication Required",
-            description: "Please create an account to message other users.",
-            action: <Button onClick={() => router.push('/login')}>Login</Button>,
-            variant: "destructive"
-        });
-        return;
-    }
-
-    const chatRoomId = [currentUser.uid, profileUser.id].sort().join('_');
+    if (!profileUser) return;
+    
+    // In a no-auth app, we can create a DM with a guest user ID
+    const guestId = "guest_user";
+    const chatRoomId = [guestId, profileUser.id].sort().join('_');
     const chatRoomRef = doc(db, 'General', chatRoomId);
     
     try {
@@ -111,7 +96,7 @@ export default function PublicProfilePage() {
              const batch = writeBatch(db);
              
              batch.set(chatRoomRef, {
-                members: [currentUser.uid, profileUser.id],
+                members: [guestId, profileUser.id],
                 createdAt: serverTimestamp(),
             });
             
@@ -186,11 +171,9 @@ export default function PublicProfilePage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-6">
-                         {currentUser?.uid !== profileUser.id && (
-                             <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
-                                 <MessageSquare className="mr-2 h-4 w-4" /> Message
-                             </Button>
-                         )}
+                         <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
+                             <MessageSquare className="mr-2 h-4 w-4" /> Message
+                         </Button>
                          {socialLinks.length > 0 && (
                             <div className="flex items-center justify-center gap-4 mt-4">
                                 {socialLinks.map(link => (

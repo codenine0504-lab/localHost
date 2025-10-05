@@ -2,14 +2,16 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { signInAnonymously } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Layers, MessageCircle, Users, Search } from 'lucide-react';
 import Autoplay from 'embla-carousel-autoplay';
 import React, { useState } from 'react';
 import Link from 'next/link';
+
+interface WelcomeScreenProps {
+  onFinish: () => void;
+}
 
 const AnimatedLogo = () => (
     <div className="relative w-48 h-48 md:w-64 md:h-64 animate-float">
@@ -55,22 +57,11 @@ const features = [
   ];
 
 
-export function WelcomeScreen() {
+export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
     const [showFeatures, setShowFeatures] = useState(false);
     const plugin = React.useRef(
         Autoplay({ delay: 2500, stopOnInteraction: true })
     );
-
-    const handleSkip = async () => {
-        try {
-            await signInAnonymously(auth);
-            // Force a reload to ensure the auth state change is reflected correctly
-            // and the user is navigated away from the welcome screen.
-            window.location.reload();
-        } catch (error) {
-            console.error('Error during anonymous sign-in:', error);
-        }
-    };
 
     if (!showFeatures) {
         return (
@@ -130,20 +121,12 @@ export function WelcomeScreen() {
                     </CarouselContent>
                 </Carousel>
                 <div className="mt-8 flex gap-4">
-                    <Button 
-                        asChild
-                        size="lg" 
-                        className="bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
-                    >
-                        <Link href="/login">Login / Sign Up</Link>
-                    </Button>
                     <Button
                         size="lg"
-                        variant="ghost"
-                        className="text-white hover:bg-slate-800 hover:text-white"
-                        onClick={handleSkip}
+                        className="bg-white text-black hover:bg-slate-200"
+                        onClick={onFinish}
                     >
-                        Skip
+                        Explore the App
                     </Button>
                 </div>
             </div>
