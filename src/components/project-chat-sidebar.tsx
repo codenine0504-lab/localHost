@@ -90,13 +90,15 @@ export function ProjectChatSidebar({ isOpen, onOpenChange, project, members, onP
 
 
     useEffect(() => {
-        setFormState({
-            title: project.title,
-            description: project.description,
-            imageUrl: project.imageUrl || '',
-            budget: project.budget,
-        });
-    }, [project]);
+        if (isOpen) {
+            setFormState({
+                title: project.title,
+                description: project.description,
+                imageUrl: project.imageUrl || '',
+                budget: project.budget,
+            });
+        }
+    }, [project, isOpen]);
 
 
     const handleInputChange = (field: keyof typeof formState, value: string | number | undefined) => {
@@ -564,3 +566,5 @@ export function ProjectChatSidebar({ isOpen, onOpenChange, project, members, onP
         </Sheet>
     );
 }
+
+    
