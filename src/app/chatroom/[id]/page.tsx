@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Ban, MessagesSquare, Loader2 } from 'lucide-react';
+import { Send, Ban, MessagesSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ProjectChatSidebar } from '@/components/project-chat-sidebar';
 import { DmChatSidebar } from '@/components/dm-chat-sidebar';
@@ -32,6 +32,7 @@ interface Message {
 interface ChatRoom {
     id: string;
     name: string;
+    members: string[];
     memberDetails?: { [key: string]: { displayName: string; photoURL: string } };
 }
 
@@ -136,14 +137,14 @@ export default function ChatPage() {
         const generalChatDoc = await getDoc(doc(db, "General", chatId));
         if (generalChatDoc.exists()) {
             chatRoomDoc = generalChatDoc;
-            chatRoomData = generalChatDoc.data();
+            chatRoomData = generalChatDoc.data() as ChatRoom;
             isDmChat = true;
             setChatCollection('General');
         } else {
             const projectChatDoc = await getDoc(doc(db, "ProjectChats", chatId));
             if (projectChatDoc.exists()) {
                 chatRoomDoc = projectChatDoc;
-                chatRoomData = projectChatDoc.data();
+                chatRoomData = projectChatDoc.data() as ChatRoom;
                 isDmChat = false;
                 setChatCollection('ProjectChats');
             } else {
@@ -154,13 +155,13 @@ export default function ChatPage() {
             }
         }
         setIsDm(isDmChat);
-        setChatRoom({ id: chatRoomDoc.id, ...chatRoomData } as ChatRoom);
+        setChatRoom({ id: chatRoomDoc.id, ...chatRoomData });
 
         let projDetails: ProjectDetails | null = null;
 
         if (isDmChat) {
              const otherUserId = chatRoomData.members.find((id: string) => id !== user.id);
-             const otherUserData = roomData.memberDetails?.[otherUserId];
+             const otherUserData = chatRoomData.memberDetails?.[otherUserId || ''];
              projDetails = {
                 id: chatId,
                 title: otherUserData?.displayName || 'Direct Message',
@@ -211,7 +212,7 @@ export default function ChatPage() {
         
         setProjectDetails(projDetails);
 
-        if (!projDetails.members?.includes(user.id) && !isDm) {
+        if (!projDetails.members?.includes(user.id)) {
              setLoading(false);
              return;
         }
@@ -278,7 +279,7 @@ export default function ChatPage() {
 
 
   useEffect(() => {
-    if (!chatId || !chatCollection) return () => {};
+    if (!chatId || !chatCollection) return;
 
     const q = query(collection(db, `${chatCollection}/${chatId}/messages`), orderBy('createdAt', 'asc'));
     
@@ -290,7 +291,8 @@ export default function ChatPage() {
       if (msgs.length > 0) {
         const lastMessage = msgs[msgs.length - 1];
         if (lastMessage.createdAt && user) {
-            const lastTimestamp = lastMessage.createdAt.toMillis();
+            // Check if the timestamp object is valid before calling toMillis
+            const lastTimestamp = lastMessage.createdAt.toMillis ? lastMessage.createdAt.toMillis() : Date.now();
             localStorage.setItem(`lastMessageTimestamp_${chatId}`, lastTimestamp.toString());
             localStorage.setItem(`lastMessageSenderId_${chatId}`, lastMessage.senderId);
             window.dispatchEvent(new Event('storage'));
@@ -325,6 +327,8 @@ export default function ChatPage() {
         });
         setMembers(currentMembers);
       }
+    }, (error) => {
+        console.error("Error in message snapshot listener:", error);
     });
 
     return unsubscribe;
@@ -488,7 +492,7 @@ export default function ChatPage() {
     );
   }
   
-  const isMember = projectDetails?.members?.includes(user?.id || '') || projectDetails?.owner === user?.id;
+  const isMember = (projectDetails?.members?.includes(user?.id || '') || projectDetails?.owner === user?.id);
   const showJoinRequests = user && projectDetails?.admins?.includes(user.id) && joinRequests.length > 0;
   
   const handleHeaderClick = () => {
@@ -571,7 +575,3 @@ export default function ChatPage() {
      </div>
   );
 }
-
-    
-
-    
