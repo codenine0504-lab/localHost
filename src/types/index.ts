@@ -1,4 +1,5 @@
 
+
 export type PortStatus = 'Available' | 'In Use' | 'Listening';
 
 export interface Port {
@@ -19,8 +20,8 @@ export interface AppUser {
   id: string;
   displayName: string | null;
   photoURL: string | null;
+  email?: string | null;
   college?: string;
-  email?: string;
   status?: 'seeking' | 'active' | 'none';
   skills?: Skill[];
   instagram?: string;

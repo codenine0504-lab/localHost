@@ -33,6 +33,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from './auth-provider';
 
 const projectSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -48,6 +49,7 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export function HostProjectDialog({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const {
@@ -74,6 +76,14 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
   }
 
   const handleDialogOpen = (open: boolean) => {
+    if (!user) {
+        toast({
+            title: "Authentication Required",
+            description: "You need to be logged in to host a project.",
+            variant: "destructive"
+        });
+        return;
+    }
     if (!open) {
        handleReset();
     }
@@ -81,11 +91,15 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
   }
   
   const onSubmit = async (data: ProjectFormValues) => {
+    if (!user) {
+        toast({
+            title: "Authentication Required",
+            description: "You need to be logged in to host a project.",
+            variant: "destructive"
+        });
+        return;
+    }
     try {
-      // For now, hardcode some user info. We will replace this with real user data later.
-      const ownerId = "guest_user";
-      const college = "Guest College";
-
       const isPrivate = false; // Visibility switch removed
       const collectionName = isPrivate ? 'privateProjects' : 'projects';
       
@@ -93,10 +107,10 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         ...data,
         isPrivate,
         createdAt: serverTimestamp(),
-        college: college, 
-        owner: ownerId,
-        admins: [ownerId],
-        members: [ownerId], // Owner is always a member
+        college: user.college || "Unknown College", 
+        owner: user.id,
+        admins: [user.id],
+        members: [user.id], // Owner is always a member
         budget: null,
         requiresRequestToJoin: true,
         views: 0,
@@ -113,7 +127,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         createdAt: serverTimestamp(),
         imageUrl: data.imageUrl,
         isPrivate: isPrivate,
-        members: [ownerId]
+        members: [user.id]
       });
 
       await batch.commit();

@@ -35,6 +35,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAuth } from './auth-provider';
 
 
 interface ProjectDetails {
@@ -65,6 +66,7 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ isOpen, onOpenChange, project, members, onProjectUpdate }: ChatSidebarProps) {
+    const { user } = useAuth();
     const [isEditing, setIsEditing] = useState({
         title: false,
         description: false,
@@ -83,6 +85,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, onProjectU
 
     const { toast } = useToast();
     const router = useRouter();
+    const isProjectAdmin = user && project.admins?.includes(user.id);
 
 
     useEffect(() => {
@@ -318,8 +321,8 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, onProjectU
                     <SheetDescription>Project details and settings</SheetDescription>
                 </SheetHeader>
                 <div className="py-6 space-y-8">
-
-                    {/* Project Settings Section */}
+                    
+                    {isProjectAdmin && (
                     <div className="space-y-4 px-4">
                         <h3 className="font-semibold text-lg flex items-center"><Settings className="mr-2 h-5 w-5" /> Project Settings</h3>
                         
@@ -429,6 +432,7 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, onProjectU
                         </div>
 
                     </div>
+                    )}
                     
                      <Separator />
 
@@ -462,44 +466,46 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, onProjectU
                                                  </div>
                                             </div>
                                         </div>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {member.isAdmin ? (
-                                                    member.id !== project.owner && (
+                                        {isProjectAdmin && member.id !== user.id && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {member.isAdmin ? (
+                                                        member.id !== project.owner && (
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Remove as Admin</DropdownMenuItem></AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader><AlertDialogTitle>Remove Admin Privileges?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove admin privileges for this member?</AlertDialogDescription></AlertDialogHeader>
+                                                                    <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, false)}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        )
+                                                    ) : (
                                                         <AlertDialog>
-                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Remove as Admin</DropdownMenuItem></AlertDialogTrigger>
+                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Make Admin</DropdownMenuItem></AlertDialogTrigger>
                                                             <AlertDialogContent>
-                                                                <AlertDialogHeader><AlertDialogTitle>Remove Admin Privileges?</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove admin privileges for this member?</AlertDialogDescription></AlertDialogHeader>
-                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, false)}>Confirm</AlertDialogAction></AlertDialogFooter>
+                                                                <AlertDialogHeader><AlertDialogTitle>Make Member an Admin?</AlertDialogTitle><AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription></AlertDialogHeader>
+                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction></AlertDialogFooter>
                                                             </AlertDialogContent>
                                                         </AlertDialog>
-                                                    )
-                                                ) : (
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Shield className="mr-2 h-4 w-4" />Make Admin</DropdownMenuItem></AlertDialogTrigger>
-                         <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Make Member an Admin?</AlertDialogTitle><AlertDialogDescription>Admins can edit project details and manage members. Are you sure?</AlertDialogDescription></AlertDialogHeader>
-                                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleAdminToggle(member.id, true)}>Confirm</AlertDialogAction></AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                )}
+                                                    )}
 
-                                                {member.id !== project.owner && (
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-500/10 focus:text-red-600"><UserX className="mr-2 h-4 w-4" />Remove Member</DropdownMenuItem></AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Remove Member?</AlertDialogTitle><AlertDialogDescription>This will permanently remove the member from the project. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction></AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                                    {member.id !== project.owner && (
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild><DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:bg-red-500/10 focus:text-red-600"><UserX className="mr-2 h-4 w-4" />Remove Member</DropdownMenuItem></AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader><AlertDialogTitle>Remove Member?</AlertDialogTitle><AlertDialogDescription>This will permanently remove the member from the project. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">Remove</AlertDialogAction></AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
@@ -508,36 +514,38 @@ export function ChatSidebar({ isOpen, onOpenChange, project, members, onProjectU
 
 
                      {/* Delete Project */}
-                    <div className="pt-6 border-t border-destructive/20 px-4">
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="w-full">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Project
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete your project,
-                                    chat room, and all associated data.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                    onClick={handleDeleteProject} 
-                                    disabled={isDeleting}
-                                    className="bg-destructive hover:bg-destructive/90"
-                                >
-                                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {isDeleting ? 'Deleting...' : 'Delete'}
-                                </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
+                     { isProjectAdmin && (
+                        <div className="pt-6 border-t border-destructive/20 px-4">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" className="w-full">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete Project
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your project,
+                                        chat room, and all associated data.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                        onClick={handleDeleteProject} 
+                                        disabled={isDeleting}
+                                        className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        {isDeleting ? 'Deleting...' : 'Delete'}
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                     )}
                 </div>
             </SheetContent>
         </Sheet>

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
 import type { AppUser } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/components/auth-provider";
 
 
 function ProfileSkeleton() {
@@ -52,6 +53,7 @@ function ProfileSkeleton() {
 }
 
 export default function PublicProfilePage() {
+  const { user } = useAuth();
   const [profileUser, setProfileUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -82,11 +84,24 @@ export default function PublicProfilePage() {
   }, [userId]);
 
   const handleSendMessage = async () => {
-    if (!profileUser) return;
+    if (!profileUser || !user) {
+        toast({
+            title: "Please log in",
+            description: "You need to be logged in to send a message.",
+            variant: "destructive",
+        })
+        return;
+    };
     
-    // In a no-auth app, we can create a DM with a guest user ID
-    const guestId = "guest_user";
-    const chatRoomId = [guestId, profileUser.id].sort().join('_');
+    if (user.id === profileUser.id) {
+        toast({
+            title: "Cannot message yourself",
+            description: "You cannot start a conversation with yourself.",
+        });
+        return;
+    }
+    
+    const chatRoomId = [user.id, profileUser.id].sort().join('_');
     const chatRoomRef = doc(db, 'General', chatRoomId);
     
     try {
@@ -96,8 +111,9 @@ export default function PublicProfilePage() {
              const batch = writeBatch(db);
              
              batch.set(chatRoomRef, {
-                members: [guestId, profileUser.id],
+                members: [user.id, profileUser.id],
                 createdAt: serverTimestamp(),
+                name: `DM between ${user.displayName} and ${profileUser.displayName}`
             });
             
             await batch.commit();
@@ -147,6 +163,8 @@ export default function PublicProfilePage() {
     { platform: 'instagram', value: profileUser.instagram, icon: Instagram, urlPrefix: 'https://instagram.com/' },
     { platform: 'otherLink', value: profileUser.otherLink, icon: LinkIcon, urlPrefix: '' },
   ].filter(link => link.value);
+  
+  const isOwnProfile = user?.id === profileUser.id;
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
@@ -171,9 +189,11 @@ export default function PublicProfilePage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-6">
-                         <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
-                             <MessageSquare className="mr-2 h-4 w-4" /> Message
-                         </Button>
+                         {!isOwnProfile && (
+                             <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
+                                 <MessageSquare className="mr-2 h-4 w-4" /> Message
+                             </Button>
+                         )}
                          {socialLinks.length > 0 && (
                             <div className="flex items-center justify-center gap-4 mt-4">
                                 {socialLinks.map(link => (

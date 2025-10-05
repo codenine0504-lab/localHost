@@ -3,26 +3,36 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, UserCircle, MessageSquare, Search } from 'lucide-react';
+import { Home, Compass, UserCircle, MessageSquare, Search, LogIn, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from './auth-provider';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
 
 const navItems = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/projects', label: 'Explore', icon: Compass },
-  { href: '/people', label: 'Search', icon: Search },
-  { href: '/chatroom', label: 'Chat', icon: MessageSquare },
-  { href: '/settings', label: 'Settings', icon: UserCircle },
+  { href: '/', label: 'Home', icon: Home, auth: false },
+  { href: '/projects', label: 'Explore', icon: Compass, auth: false },
+  { href: '/people', label: 'Search', icon: Search, auth: true },
+  { href: '/chatroom', label: 'Chat', icon: MessageSquare, auth: true },
 ];
 
 function BottomNav() {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
 
   const isChatPage = pathname.startsWith('/chatroom/');
   if (isChatPage && pathname !== '/chatroom') {
     return null;
   }
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "U";
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const visibleNavItems = navItems.filter(item => !item.auth || !!user);
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 w-full z-50 p-2 md:bottom-4">
@@ -30,7 +40,7 @@ function BottomNav() {
         layout
         className="flex h-16 max-w-md mx-auto items-center justify-around rounded-full border border-white/10 bg-black backdrop-blur-sm shadow-lg px-2"
       >
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
           
           const navLink = (
@@ -85,6 +95,25 @@ function BottomNav() {
             </motion.div>
           )
         })}
+        
+        {/* Profile/Login Icon */}
+        <motion.div layout className="relative flex items-center justify-center">
+           {!loading && (
+             user ? (
+               <Link href={`/profile/${user.id}`} className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-accent-foreground w-12 h-12">
+                   <Avatar className="h-8 w-8">
+                       <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                       <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                   </Avatar>
+               </Link>
+             ) : (
+               <Link href="/settings" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-accent-foreground w-12 h-12">
+                   <UserCircle className="h-6 w-6" />
+               </Link>
+             )
+           )}
+        </motion.div>
+
       </motion.nav>
     </footer>
   );

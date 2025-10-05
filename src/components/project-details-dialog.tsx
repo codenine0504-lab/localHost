@@ -19,6 +19,8 @@ import { useEffect, useState } from 'react';
 import { addDoc, collection, doc, query, where, getDocs, serverTimestamp, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 import { Share2, Eye, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from './auth-provider';
+import { signInWithGoogle } from '@/lib/auth';
 
 interface Project {
   id: string;
@@ -32,6 +34,8 @@ interface Project {
   budget?: number;
   views?: number;
   applicantCount?: number;
+  owner: string;
+  members?: string[];
 }
 
 interface ProjectDetailsDialogProps {
@@ -42,7 +46,8 @@ interface ProjectDetailsDialogProps {
 }
 
 export function ProjectDetailsDialog({ project, children, open, onOpenChange }: ProjectDetailsDialogProps) {
-  const [requestStatus, setRequestStatus] = useState<'idle' | 'pending' | 'sent'>('idle');
+  const { user, loading: authLoading } = useAuth();
+  const [requestStatus, setRequestStatus] = useState<'idle' | 'pending' | 'sent' | 'member'>('idle');
   const router = useRouter();
   const { toast } = useToast();
 
@@ -55,19 +60,51 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }, [open, project.id, project.isPrivate]);
 
   useEffect(() => {
-      const checkExistingRequest = async () => {
-          if (!project.requiresRequestToJoin) return;
+      const checkRequestAndMembership = async () => {
+          if (!user || !project.requiresRequestToJoin) {
+              setRequestStatus('idle');
+              return;
+          }
 
-          // In a no-auth app, we can't check for a specific user's request.
-          // We can disable the button if any request is pending, but that's not ideal.
-          // For now, we'll assume a user can always request to join.
+          if (project.members?.includes(user.id)) {
+              setRequestStatus('member');
+              return;
+          }
+
+          const q = query(
+              collection(db, 'joinRequests'),
+              where('projectId', '==', project.id),
+              where('userId', '==', user.id)
+          );
+          
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+              const request = querySnapshot.docs[0].data();
+              if (request.status === 'pending') {
+                  setRequestStatus('sent');
+              }
+          } else {
+              setRequestStatus('idle');
+          }
       };
 
-      checkExistingRequest();
-  }, [project.id, project.requiresRequestToJoin]);
+      if (open && user) {
+        checkRequestAndMembership();
+      }
+  }, [project.id, project.requiresRequestToJoin, open, user, project.members]);
 
 
   const handleJoinOrRequest = async () => {
+    if (!user) {
+        toast({
+            title: "Please sign in",
+            description: "You need to be logged in to join a project.",
+            variant: "destructive"
+        });
+        await signInWithGoogle();
+        return;
+    }
+
     if (project.requiresRequestToJoin) {
       handleRequestToJoin();
     } else {
@@ -76,10 +113,11 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   };
 
   const handleJoinPublicProject = async () => {
+    if (!user) return;
     try {
         const projectRef = doc(db, 'projects', project.id);
          await updateDoc(projectRef, {
-            members: arrayUnion("guest_user")
+            members: arrayUnion(user.id)
         });
 
         const audio = new Audio('/join.mp3');
@@ -96,22 +134,17 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }
 
   const handleRequestToJoin = async () => {
-    if (requestStatus !== 'idle') return;
+    if (requestStatus !== 'idle' || !user) return;
     setRequestStatus('pending');
     try {
-        const guestUser = {
-            uid: 'guest_' + Date.now(),
-            displayName: 'Guest User',
-            photoURL: ''
-        };
         const collectionName = project.isPrivate ? 'privateProjects' : 'projects';
         await addDoc(collection(db, 'joinRequests'), {
             projectId: project.id,
             projectTitle: project.title,
             projectCollection: collectionName,
-            userId: guestUser.uid,
-            userDisplayName: guestUser.displayName,
-            userPhotoURL: guestUser.photoURL,
+            userId: user.id,
+            userDisplayName: user.displayName,
+            userPhotoURL: user.photoURL,
             status: 'pending',
             createdAt: serverTimestamp(),
         });
@@ -165,6 +198,7 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   };
 
   const getButtonText = () => {
+    if (requestStatus === 'member') return 'Open Chat';
     if (project.requiresRequestToJoin) {
         switch (requestStatus) {
             case 'pending': return 'Sending...';
@@ -176,11 +210,13 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
   }
   
    const renderJoinButton = () => {
+    const isMember = requestStatus === 'member';
+
     return (
         <Button
             className="w-full sm:w-auto"
-            onClick={handleJoinOrRequest}
-            disabled={requestStatus === 'pending' || requestStatus === 'sent'}
+            onClick={isMember ? () => router.push(`/chatroom/${project.id}`) : handleJoinOrRequest}
+            disabled={requestStatus === 'pending' || requestStatus === 'sent' || authLoading}
         >
             {getButtonText()}
         </Button>

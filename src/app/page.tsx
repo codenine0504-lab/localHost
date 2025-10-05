@@ -16,6 +16,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Users, Code, Brush, Milestone, Cpu, Eye, Compass } from 'lucide-react';
 import { ThemeProvider } from '@/components/theme-provider';
+import { useAuth } from '@/components/auth-provider';
 
 
 interface Project {
@@ -73,6 +74,7 @@ function AppSkeleton() {
 }
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [people, setPeople] = useState<AppUser[]>([]);
@@ -82,10 +84,22 @@ export default function Home() {
     const hasVisited = localStorage.getItem('hasVisited');
     if (hasVisited) {
       setShowWelcome(false);
-    } else {
-      localStorage.setItem('hasVisited', 'true');
+    } else if (!authLoading && user) {
+        // If user is already logged in, don't show welcome, mark as visited
+        setShowWelcome(false);
+        localStorage.setItem('hasVisited', 'true');
+    } else if (!authLoading && !user) {
+        // Only show welcome if not loading and not logged in
+        setShowWelcome(true);
     }
+  }, [user, authLoading]);
 
+  const handleWelcomeFinish = () => {
+    setShowWelcome(false);
+    localStorage.setItem('hasVisited', 'true');
+  }
+
+  useEffect(() => {
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -119,14 +133,14 @@ export default function Home() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return <AppSkeleton />;
   }
 
   if (showWelcome) {
     return (
       <ThemeProvider forcedTheme="dark">
-        <WelcomeScreen onFinish={() => setShowWelcome(false)} />
+        <WelcomeScreen onFinish={handleWelcomeFinish} />
       </ThemeProvider>
     );
   }
@@ -136,10 +150,11 @@ export default function Home() {
         {/* User Greeting */}
         <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-2 border-primary">
-                <AvatarFallback>G</AvatarFallback>
+                <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || 'User'}/>
+                <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
             </Avatar>
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Hi, Guest!</h1>
+                <h1 className="text-2xl md:text-3xl font-bold">Hi, {user?.displayName || 'Guest'}!</h1>
                 <p className="text-muted-foreground">Let's create something amazing today.</p>
             </div>
         </div>

@@ -17,6 +17,7 @@ import { ChatHeader } from '@/components/chat-header';
 import { JoinRequestCard } from '@/components/join-request-card';
 import { useToast } from '@/hooks/use-toast';
 import { Linkify } from '@/components/Linkify';
+import { useAuth } from '@/components/auth-provider';
 
 
 interface Message {
@@ -100,6 +101,7 @@ function ChatSkeleton() {
 export default function ChatPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const chatId = params.id as string;
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -247,7 +249,7 @@ export default function ChatPage() {
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
             setJoinRequests(requests);
             
-            if (requests.length > 0) {
+            if (requests.length > 0 && user && projectDetails?.admins?.includes(user.id)) {
                 localStorage.setItem(`hasNewJoinRequests_${chatId}`, 'true');
             } else {
                 localStorage.removeItem(`hasNewJoinRequests_${chatId}`);
@@ -259,7 +261,7 @@ export default function ChatPage() {
         });
 
         return () => unsubscribe();
-    }, [chatId, toast, isDm]);
+    }, [chatId, toast, isDm, user, projectDetails]);
 
 
   useEffect(() => {
@@ -274,13 +276,13 @@ export default function ChatPage() {
       
       if (msgs.length > 0) {
         const lastMessage = msgs[msgs.length - 1];
-        if (lastMessage.createdAt) {
+        if (lastMessage.createdAt && user) {
             const lastTimestamp = lastMessage.createdAt.toMillis();
             localStorage.setItem(`lastMessageTimestamp_${chatId}`, lastTimestamp.toString());
             localStorage.setItem(`lastMessageSenderId_${chatId}`, lastMessage.senderId);
             window.dispatchEvent(new Event('storage'));
 
-            if(document.hidden) {
+            if(document.hidden && lastMessage.senderId !== user.id) {
                 const audio = new Audio('/chatnotify.mp3');
                 audio.play().catch(e => console.error("Audio play failed:", e));
             }
@@ -313,7 +315,7 @@ export default function ChatPage() {
     });
 
     return unsubscribe;
-  }, [chatId, projectDetails, chatCollection]);
+  }, [chatId, projectDetails, chatCollection, user]);
 
   const scrollToBottom = () => {
      if (scrollAreaRef.current) {
@@ -338,7 +340,7 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !chatId || !chatCollection) return;
+    if (newMessage.trim() === '' || !chatId || !chatCollection || !user) return;
 
     const userMessage = newMessage;
     setNewMessage('');
@@ -347,7 +349,7 @@ export default function ChatPage() {
         await addDoc(collection(db, `${chatCollection}/${chatId}/messages`), {
             text: userMessage,
             createdAt: serverTimestamp(),
-            senderId: "guest", 
+            senderId: user.id, 
         });
     } catch(error) {
         console.error("Error sending message:", error);
@@ -401,18 +403,28 @@ export default function ChatPage() {
   }
 
   const getSenderName = (senderId: string) => {
-      if (senderId === 'guest') return 'You';
+      if (senderId === user?.id) return 'You';
       const member = memberCache.current.get(senderId);
       return member?.displayName || 'A member';
   }
   const getSenderAvatar = (senderId: string) => {
+      if (senderId === user?.id) return user.photoURL;
       const member = memberCache.current.get(senderId);
       return member?.photoURL;
   }
   const getSenderFallback = (senderId: string) => {
-    if (senderId === 'guest') return "G";
+    if (senderId === user?.id) return getInitials(user.displayName);
     const member = memberCache.current.get(senderId);
     return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
+  };
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "U";
+    const nameParts = name.split(" ");
+    if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {
+      return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
   
   function NoChatView() {
@@ -426,6 +438,7 @@ export default function ChatPage() {
   }
 
   const getPlaceholderText = () => {
+    if (!user) return 'You must be logged in to chat';
     return "Type a message...";
   }
 
@@ -434,18 +447,18 @@ export default function ChatPage() {
         <ScrollArea className="h-full" ref={scrollAreaRef}>
             <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
                 {messages.length === 0 ? <NoChatView /> : messages.map((msg) => (
-                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === 'guest' ? 'justify-end' : ''}`}>
-                        {msg.senderId !== 'guest' && (
+                    <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
+                        {msg.senderId !== user?.id && (
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="Sender avatar" />
                             <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
                         </Avatar>
                         )}
-                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === 'guest' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                        <div className={`rounded-lg px-4 py-2 max-w-[70%] break-words ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                             <p className="text-sm font-medium">{getSenderName(msg.senderId)}</p>
                             <p className="text-sm"><Linkify text={msg.text} /></p>
                         </div>
-                        {msg.senderId === 'guest' && (
+                        {msg.senderId === user?.id && (
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={getSenderAvatar(msg.senderId) || undefined} alt="User avatar" />
                             <AvatarFallback>{getSenderFallback(msg.senderId)}</AvatarFallback>
@@ -457,18 +470,21 @@ export default function ChatPage() {
         </ScrollArea>
     );
   }
+  
+  const isMember = projectDetails?.members?.includes(user?.id || '') || projectDetails?.owner === user?.id;
+  const showJoinRequests = user && projectDetails?.admins?.includes(user.id) && joinRequests.length > 0;
 
   return (
      <div className="h-screen flex flex-col bg-background">
         {projectDetails && (
             <ChatHeader 
                 projectTitle={projectDetails.title}
-                onHeaderClick={() => !isDm && setIsSidebarOpen(true)}
+                onHeaderClick={() => !isDm && isMember && setIsSidebarOpen(true)}
                 isDm={isDm}
             />
         )}
         
-        {joinRequests.length > 0 && (
+        {showJoinRequests && (
             <JoinRequestCard 
                 requests={joinRequests}
                 onAction={handleRequestAction}
@@ -477,7 +493,18 @@ export default function ChatPage() {
         )}
         
         <div className="flex-grow min-h-0">
-            <ChatView />
+            {isMember || isDm ? (
+                <ChatView />
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
+                    <Ban className="h-12 w-12 mb-4" />
+                    <h2 className="text-xl font-semibold text-foreground">Access Denied</h2>
+                    <p>You must be a member of this project to view the chat.</p>
+                     <Button asChild className="mt-4">
+                        <Link href={`/projects/${chatId}`}>View Project Details</Link>
+                    </Button>
+                </div>
+            )}
         </div>
         
         <div className="p-4 bg-background border-t">
@@ -488,14 +515,15 @@ export default function ChatPage() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder={getPlaceholderText()}
                     className="pr-12"
+                    disabled={!user || (!isMember && !isDm)}
                 />
-                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === ''}>
+                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user || (!isMember && !isDm)}>
                     <Send className="h-4 w-4" />
                 </Button>
             </div>
             </form>
         </div>
-        {projectDetails && !isDm && (
+        {projectDetails && !isDm && user && (
              <ChatSidebar 
                 isOpen={isSidebarOpen} 
                 onOpenChange={setIsSidebarOpen}

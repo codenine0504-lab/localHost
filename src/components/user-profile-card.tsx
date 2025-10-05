@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp, collection, writeBatch } from 'firebase/firestore';
 import type { AppUser } from '@/types';
 import Link from 'next/link';
+import { useAuth } from './auth-provider';
 
 interface UserProfileCardProps {
   user: AppUser;
@@ -25,15 +26,32 @@ interface UserProfileCardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardProps) {
+export function UserProfileCard({ user: profileUser, isOpen, onOpenChange }: UserProfileCardProps) {
+  const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const handleSendMessage = async () => {
-    if (!user) return;
+    if (!profileUser) return;
+    
+    if (!user) {
+        toast({
+            title: "Please log in",
+            description: "You need to be logged in to send a message.",
+            variant: "destructive",
+        })
+        return;
+    };
+    
+    if (user.id === profileUser.id) {
+        toast({
+            title: "Cannot message yourself",
+            description: "You cannot start a conversation with yourself.",
+        });
+        return;
+    }
 
-    const guestId = "guest_user";
-    const chatRoomId = [guestId, user.id].sort().join('_');
+    const chatRoomId = [user.id, profileUser.id].sort().join('_');
     const chatRoomRef = doc(db, 'General', chatRoomId);
     
     try {
@@ -43,9 +61,9 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
             const batch = writeBatch(db);
             
             batch.set(chatRoomRef, {
-                members: [guestId, user.id],
+                members: [user.id, profileUser.id],
                 createdAt: serverTimestamp(),
-                name: `DM with ${user.displayName}`
+                name: `DM with ${profileUser.displayName}`
             });
 
             await batch.commit();
@@ -72,11 +90,13 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
   };
 
   const socialLinks = [
-    { platform: 'github', value: user.github, icon: Github, urlPrefix: 'https://github.com/' },
-    { platform: 'linkedin', value: user.linkedin, icon: Linkedin, urlPrefix: '' },
-    { platform: 'instagram', value: user.instagram, icon: Instagram, urlPrefix: 'https://instagram.com/' },
-    { platform: 'otherLink', value: user.otherLink, icon: LinkIcon, urlPrefix: '' },
+    { platform: 'github', value: profileUser.github, icon: Github, urlPrefix: 'https://github.com/' },
+    { platform: 'linkedin', value: profileUser.linkedin, icon: Linkedin, urlPrefix: '' },
+    { platform: 'instagram', value: profileUser.instagram, icon: Instagram, urlPrefix: 'https://instagram.com/' },
+    { platform: 'otherLink', value: profileUser.otherLink, icon: LinkIcon, urlPrefix: '' },
   ].filter(link => link.value);
+
+  const isOwnProfile = user?.id === profileUser.id;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -85,20 +105,22 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
             <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-br from-primary/20 to-accent/20" />
             <div className="relative flex flex-col items-center pt-10 pb-6 px-6 text-center">
                  <Avatar className="h-24 w-24 border-4 border-background shadow-lg -mt-2">
-                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    <AvatarImage src={profileUser.photoURL || undefined} alt={profileUser.displayName || 'User'} />
+                    <AvatarFallback>{getInitials(profileUser.displayName)}</AvatarFallback>
                 </Avatar>
                 <DialogHeader className="mt-4">
-                    <DialogTitle className="text-2xl font-bold">{user.displayName}</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold">{profileUser.displayName}</DialogTitle>
                 </DialogHeader>
-                {user.status && user.status !== 'none' && (
-                    <Badge variant={user.status === 'seeking' ? 'default' : 'secondary'} className="mt-2">
-                        {user.status === 'seeking' ? 'Seeking Collaboration' : 'Actively Building'}
+                {profileUser.status && profileUser.status !== 'none' && (
+                    <Badge variant={profileUser.status === 'seeking' ? 'default' : 'secondary'} className="mt-2">
+                        {profileUser.status === 'seeking' ? 'Seeking Collaboration' : 'Actively Building'}
                     </Badge>
                 )}
-                 <Button className="mt-4 w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
-                     <MessageSquare className="mr-2 h-4 w-4" /> Message
-                 </Button>
+                 {!isOwnProfile && (
+                     <Button className="mt-4 w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
+                         <MessageSquare className="mr-2 h-4 w-4" /> Message
+                     </Button>
+                 )}
                  {socialLinks.length > 0 && (
                     <div className="flex items-center justify-center gap-4 mt-4">
                         {socialLinks.map(link => (
@@ -113,9 +135,9 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
             <div className="px-6 pb-6 space-y-4">
                  <div>
                     <h4 className="font-semibold flex items-center gap-2 text-sm text-muted-foreground mb-2"><Briefcase className="h-4 w-4" /> Skills</h4>
-                    {user.skills && user.skills.length > 0 ? (
+                    {profileUser.skills && profileUser.skills.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                            {user.skills.map(skill => (
+                            {profileUser.skills.map(skill => (
                                 <Badge key={skill.name} variant={skill.isPrimary ? 'default' : 'secondary'}>
                                     {skill.name}
                                 </Badge>
@@ -127,8 +149,8 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
                  </div>
                  <div>
                     <h4 className="font-semibold flex items-center gap-2 text-sm text-muted-foreground mb-2"><School className="h-4 w-4" /> Education</h4>
-                     {user.college ? (
-                        <p className="text-sm">{user.college}</p>
+                     {profileUser.college ? (
+                        <p className="text-sm">{profileUser.college}</p>
                     ) : (
                             <p className="text-sm text-muted-foreground">No college information provided.</p>
                     )}
@@ -136,7 +158,7 @@ export function UserProfileCard({ user, isOpen, onOpenChange }: UserProfileCardP
             </div>
              <div className="px-6 pb-6 text-center">
                  <Button variant="link" asChild>
-                     <Link href={`/profile/${user.id}`}>View Full Profile</Link>
+                     <Link href={`/profile/${profileUser.id}`}>View Full Profile</Link>
                  </Button>
             </div>
          </div>

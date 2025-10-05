@@ -8,6 +8,8 @@ import { Layers, MessageCircle, Users, Search } from 'lucide-react';
 import Autoplay from 'embla-carousel-autoplay';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { signInWithGoogle } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface WelcomeScreenProps {
   onFinish: () => void;
@@ -59,9 +61,24 @@ const features = [
 
 export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
     const [showFeatures, setShowFeatures] = useState(false);
+    const { toast } = useToast();
     const plugin = React.useRef(
         Autoplay({ delay: 2500, stopOnInteraction: true })
     );
+
+    const handleGoogleSignIn = async () => {
+        try {
+            await signInWithGoogle();
+            onFinish();
+        } catch (error) {
+            console.error("Google sign-in error:", error);
+            toast({
+                title: "Sign-in Failed",
+                description: "Could not sign in with Google. Please try again.",
+                variant: "destructive"
+            })
+        }
+    };
 
     if (!showFeatures) {
         return (
@@ -80,13 +97,27 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                     <p className="mt-6 max-w-lg text-lg text-slate-400">
                         The ultimate platform to connect with peers, build amazing projects, and bring your ideas to life.
                     </p>
+                    
+                    <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                        <Button 
+                            size="lg" 
+                            className="bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
+                            onClick={handleGoogleSignIn}
+                        >
+                            Sign in with Google
+                        </Button>
+                        <Button 
+                            size="lg" 
+                            variant="outline"
+                            className="text-white border-white/50 hover:bg-white/10 hover:text-white"
+                            onClick={() => setShowFeatures(true)}
+                        >
+                            Learn More
+                        </Button>
+                    </div>
 
-                    <Button 
-                        size="lg" 
-                        className="mt-10 bg-white text-black hover:bg-slate-200 transition-transform duration-300 ease-in-out hover:scale-105"
-                        onClick={() => setShowFeatures(true)}
-                    >
-                        Get Started
+                    <Button variant="link" onClick={onFinish} className="mt-8 text-slate-400">
+                        Continue as Guest
                     </Button>
                 </div>
             </div>
@@ -121,9 +152,17 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                     </CarouselContent>
                 </Carousel>
                 <div className="mt-8 flex gap-4">
-                    <Button
+                     <Button
                         size="lg"
                         className="bg-white text-black hover:bg-slate-200"
+                        onClick={handleGoogleSignIn}
+                    >
+                        Sign in with Google
+                    </Button>
+                    <Button
+                        size="lg"
+                        variant="outline"
+                        className="text-white border-white/50 hover:bg-white/10 hover:text-white"
                         onClick={onFinish}
                     >
                         Explore the App

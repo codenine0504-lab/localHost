@@ -2,15 +2,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from './auth-provider';
 
 interface NotificationBadgeProps {
     children: React.ReactNode;
 }
 
 export function NotificationBadge({ children }: NotificationBadgeProps) {
+    const { user } = useAuth();
     const [hasNotification, setHasNotification] = useState(false);
 
     useEffect(() => {
+        if (!user) {
+            setHasNotification(false);
+            return;
+        }
+
         const checkNotifications = () => {
              // Check for new join requests
             const hasNewJoinRequestsKey = Object.keys(localStorage).find(key => key.startsWith('hasNewJoinRequests_'));
@@ -30,7 +37,7 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                     
                     const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${roomId}`);
                     // Only show notification if the last message was not from the current user
-                    if (lastMessageSenderId === "guest") {
+                    if (lastMessageSenderId === user.id) {
                         continue;
                     }
 
@@ -68,7 +75,7 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
             window.removeEventListener('storage', handleStorageChange);
             document.removeEventListener('visibilitychange', checkNotifications);
         };
-    }, []);
+    }, [user]);
 
     return (
         <div className="relative">

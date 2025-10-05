@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectDetailsDialog } from '@/components/project-details-dialog';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/auth-provider';
 
 interface Project {
   id: string;
@@ -19,6 +20,7 @@ interface Project {
   isPrivate?: boolean;
   requiresRequestToJoin?: boolean;
   budget?: number;
+  owner: string;
 }
 
 function ProjectPageSkeleton() {
@@ -41,6 +43,7 @@ function ProjectPageSkeleton() {
 }
 
 export default function ProjectPage() {
+    const { user } = useAuth();
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -56,23 +59,34 @@ export default function ProjectPage() {
             try {
                 setLoading(true);
                 let projectData;
+                let projectDoc;
                 const projectDocRef = doc(db, 'projects', projectId);
-                const projectDoc = await getDoc(projectDocRef);
+                projectDoc = await getDoc(projectDocRef);
 
                 if (projectDoc.exists()) {
                     projectData = { id: projectDoc.id, ...projectDoc.data() } as Project;
                 } else {
                     const privateProjectDocRef = doc(db, 'privateProjects', projectId);
-                    const privateProjectDoc = await getDoc(privateProjectDocRef);
+                    projectDoc = await getDoc(privateProjectDocRef);
 
-                    if (privateProjectDoc.exists()) {
-                         projectData = { id: privateProjectDoc.id, ...privateProjectDoc.data() } as Project;
+                    if (projectDoc.exists()) {
+                         projectData = { id: privateProjectDoc.id, ...projectDoc.data() } as Project;
                     } else {
                         setError('Project not found.');
                         setLoading(false);
                         return;
                     }
                 }
+                
+                const data = projectDoc.data();
+                if (data?.isPrivate) {
+                    if (!user || !data.members.includes(user.id)) {
+                         setError('This is a private project. You do not have access.');
+                         setLoading(false);
+                         return;
+                    }
+                }
+                
                 setProject(projectData);
                 setIsDialogOpen(true);
             } catch (err) {
@@ -84,7 +98,7 @@ export default function ProjectPage() {
         };
 
         fetchProject();
-    }, [projectId]);
+    }, [projectId, user]);
 
     const handleDialogClose = () => {
         setIsDialogOpen(false);
