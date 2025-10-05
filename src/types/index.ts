@@ -28,4 +28,5 @@ export interface AppUser {
   github?: string;
   linkedin?: string;
   otherLink?: string;
+  role?: 'student' | 'organization';
 }

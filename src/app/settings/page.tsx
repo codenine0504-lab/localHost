@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth-provider";
 import { signOut, signInWithGoogle } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, LogIn, LogOut } from "lucide-react";
+import { Loader2, LogIn, LogOut, Building, User } from "lucide-react";
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
     const { toast } = useToast();
     
-    const handleSignIn = async () => {
+    const handleSignIn = async (role: 'student' | 'organization') => {
         try {
-            await signInWithGoogle();
+            await signInWithGoogle(role);
             toast({
                 title: "Signed In",
                 description: "You have successfully signed in.",
@@ -76,10 +76,16 @@ export default function SettingsPage() {
                                     Sign Out
                                 </Button>
                             ) : (
-                                <Button onClick={handleSignIn} className="w-full">
-                                    <LogIn className="mr-2 h-4 w-4" />
-                                    Sign In with Google
-                                </Button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <Button onClick={() => handleSignIn('student')} className="w-full">
+                                        <User className="mr-2 h-4 w-4" />
+                                        Sign in as a Student
+                                    </Button>
+                                     <Button onClick={() => handleSignIn('organization')} className="w-full" variant="secondary">
+                                        <Building className="mr-2 h-4 w-4" />
+                                        Sign in as an Organization
+                                    </Button>
+                                </div>
                             )}
                         </CardContent>
                     </Card>

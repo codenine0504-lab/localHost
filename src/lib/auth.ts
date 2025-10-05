@@ -5,7 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const provider = new GoogleAuthProvider();
 
-async function handleUserDocument(firebaseUser: User) {
+async function handleUserDocument(firebaseUser: User, role: 'student' | 'organization') {
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userDoc = await getDoc(userRef);
 
@@ -18,15 +18,16 @@ async function handleUserDocument(firebaseUser: User) {
             createdAt: serverTimestamp(),
             status: 'active',
             skills: [],
-            college: 'GEC',
+            college: role === 'organization' ? 'Organization' : 'GEC',
+            role: role,
         });
     }
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(role: 'student' | 'organization' = 'student') {
     try {
         const result = await signInWithPopup(auth, provider);
-        await handleUserDocument(result.user);
+        await handleUserDocument(result.user, role);
         return result.user;
     } catch (error) {
         console.error("Error signing in with Google: ", error);
