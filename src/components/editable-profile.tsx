@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -38,7 +38,27 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-const colleges = ["Goa College of Engineering", "IIT Goa", "NIT Goa", "BITS Pilani Goa"];
+const educationData = {
+    "Raipur": [
+        "Government Engineering College, Raipur",
+        "National Institute of Technology, Raipur (NIT Raipur)",
+        "International Institute of Information Technology, Naya Raipur (IIIT-NR)",
+        "Rungta College of Engineering and Technology, Raipur",
+        "Shri Shankaracharya Technical Campus, Bhilai (Raipur Campus)"
+    ],
+    "Bhilai": [
+        "Bhilai Institute of Technology, Durg (BIT Durg)",
+        "Shri Shankaracharya Technical Campus, Bhilai",
+        "Rungta College of Engineering and Technology, Bhilai",
+        "Chhatrapati Shivaji Institute of Technology, Durg"
+    ],
+    "Bilaspur": [
+        "Government Engineering College, Bilaspur",
+        "Chouksey Engineering College, Bilaspur",
+        "J. K. Institute of Engineering, Bilaspur"
+    ]
+};
+const cities = Object.keys(educationData);
 const themes = ["software", "hardware", "event", "design"];
 
 interface EditableProfileProps {
@@ -50,10 +70,14 @@ interface EditableProfileProps {
 export function EditableProfile({ user, onClose, onProfileUpdate }: EditableProfileProps) {
   const { toast } = useToast();
   const [newSkill, setNewSkill] = useState('');
+  const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
+  const [availableColleges, setAvailableColleges] = useState<string[]>([]);
 
   const {
     control,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -75,6 +99,26 @@ export function EditableProfile({ user, onClose, onProfileUpdate }: EditableProf
     control,
     name: "skills",
   });
+  
+  const currentCollege = watch('college');
+
+  useEffect(() => {
+    if (currentCollege) {
+      for (const city in educationData) {
+        if (educationData[city as keyof typeof educationData].includes(currentCollege)) {
+          setSelectedCity(city);
+          setAvailableColleges(educationData[city as keyof typeof educationData]);
+          break;
+        }
+      }
+    }
+  }, [currentCollege]);
+  
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    setAvailableColleges(educationData[city as keyof typeof educationData] || []);
+    setValue('college', ''); // Reset college when city changes
+  }
 
   const handleAddSkill = () => {
     if (newSkill.trim() && fields.length < 10) {
@@ -160,17 +204,29 @@ export function EditableProfile({ user, onClose, onProfileUpdate }: EditableProf
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Select onValueChange={handleCityChange} value={selectedCity}>
+                <SelectTrigger id="city">
+                  <SelectValue placeholder="Select your city" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="college">College</Label>
               <Controller
                 name="college"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCity}>
                     <SelectTrigger id="college">
                       <SelectValue placeholder="Select your college" />
                     </SelectTrigger>
                     <SelectContent>
-                      {colleges.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {availableColleges.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 )}
