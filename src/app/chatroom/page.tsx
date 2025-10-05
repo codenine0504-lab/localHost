@@ -91,12 +91,14 @@ export default function ChatRoomPage() {
             const otherUserId = roomData.members.find((id: string) => id !== user.id);
             const otherUserData = roomData.memberDetails?.[otherUserId];
             
-            dms.push({ 
-                id: roomDoc.id, 
-                name: otherUserData?.displayName || 'Direct Message', 
-                imageUrl: otherUserData?.photoURL || '',
-                isDm: true
-            });
+            if (otherUserData?.displayName) { // Only add DMs with a valid other user
+                dms.push({ 
+                    id: roomDoc.id, 
+                    name: otherUserData.displayName, 
+                    imageUrl: otherUserData.photoURL || '',
+                    isDm: true
+                });
+            }
         }
         setDmRooms(checkNotifications(dms, user.id));
         dmLoaded = true;
@@ -238,5 +240,3 @@ export default function ChatRoomPage() {
     </div>
   );
 }
-
-    
