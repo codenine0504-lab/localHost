@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
 import { signInWithGoogle, signOut } from "@/lib/auth";
 import { EditableProfile } from "@/components/editable-profile";
+import { SuggestionDialog } from "@/components/suggestion-dialog";
 
 
 function ProfileSkeleton() {
@@ -294,6 +295,7 @@ export default function PublicProfilePage() {
                                     <Button variant="outline" className="w-full" onClick={() => setIsEditing(true)}>
                                         <Settings className="mr-2 h-4 w-4" /> Edit Profile
                                     </Button>
+                                    <SuggestionDialog />
                                     <Button variant="outline" className="w-full" onClick={handleSignOut}>
                                         <LogOut className="mr-2 h-4 w-4" /> Sign Out
                                     </Button>
