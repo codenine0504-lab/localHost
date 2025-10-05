@@ -8,17 +8,28 @@ import { InstallPwaButton } from '@/components/install-pwa-button';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isWelcome, setIsWelcome] = useState(true);
+  const [showNav, setShowNav] = useState(false);
 
   useEffect(() => {
-    // We determine if we are on the welcome screen based on local storage.
-    // This client-side check ensures the server doesn't prematurely decide to show the nav.
-    const hasVisited = localStorage.getItem('hasVisited');
-    setIsWelcome(!hasVisited);
-  }, [pathname]); // Re-check when the path changes
+    const checkNavVisibility = () => {
+      const hasVisited = localStorage.getItem('hasVisited');
+      setShowNav(!!hasVisited);
+    }
+    
+    // Check immediately on mount
+    checkNavVisibility();
 
-  // The welcome screen should not have the main navigation or its padding.
-  const showNav = !isWelcome;
+    // Listen for storage changes to update immediately
+    const handleStorageChange = () => {
+      checkNavVisibility();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [pathname]);
 
   return (
     <div className="relative flex min-h-screen flex-col bg-background">

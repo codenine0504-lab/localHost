@@ -92,8 +92,7 @@ export default function Home() {
   const handleWelcomeFinish = () => {
     setShowWelcome(false);
     localStorage.setItem('hasVisited', 'true');
-    // We might need to force a re-render or page reload if nav doesn't appear
-    // For now, setting state should be enough to trigger AppLayout's useEffect
+    // We manually dispatch a storage event to make sure the AppLayout updates immediately
     window.dispatchEvent(new Event('storage'));
   }
 
