@@ -19,26 +19,31 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
         }
 
         const checkNotifications = () => {
-             // Check for new join requests
-            const hasNewJoinRequestsKey = Object.keys(localStorage).find(key => key.startsWith('hasNewJoinRequests_'));
-            if (hasNewJoinRequestsKey) {
+            let notificationFound = false;
+
+            // Check for new join requests
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                 if (key && key.startsWith('hasNewJoinRequests_') && localStorage.getItem(key) === 'true') {
+                    notificationFound = true;
+                    break;
+                }
+            }
+            
+            if (notificationFound) {
                 setHasNotification(true);
                 return;
             }
 
             // Check for new messages in any chat
-            let hasNewMessage = false;
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('lastMessageTimestamp_')) {
-                    const parts = key.split('_');
-                    if (parts.length < 3) continue; // Skip malformed keys
-                    const roomId = parts.slice(2).join('_');
+                    const roomId = key.substring('lastMessageTimestamp_'.length);
                     
                     const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${roomId}`);
-                    // Only show notification if the last message was not from the current user
                     if (lastMessageSenderId === user.id) {
-                        continue;
+                        continue; // It's our own message, skip.
                     }
 
                     const lastMessageTimestampStr = localStorage.getItem(key);
@@ -48,19 +53,22 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                     const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
                     if (lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp) {
-                        hasNewMessage = true;
+                        notificationFound = true;
                         break;
                     }
                 }
             }
 
-            setHasNotification(hasNewMessage);
+            setHasNotification(notificationFound);
         };
 
         checkNotifications();
 
         const handleStorageChange = (event: Event) => {
-            checkNotifications();
+            // Check if the event is 'storage' to avoid reacting to other events.
+            if ((event as StorageEvent).key?.includes('lastMessage') || (event as StorageEvent).key?.includes('lastRead') || (event as StorageEvent).key?.includes('hasNewJoinRequests')) {
+                checkNotifications();
+            }
         };
 
         window.addEventListener('storage', handleStorageChange);
