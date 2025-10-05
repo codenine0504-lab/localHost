@@ -439,10 +439,10 @@ export default function ChatPage() {
   const getSenderFallback = (senderId: string) => {
     if (senderId === user?.id) return getInitials(user.displayName);
     const member = memberCache.current.get(senderId);
-    return member?.displayName?.substring(0, 2).toUpperCase() || 'M';
+    return getInitials(member?.displayName);
   };
   
-  const getInitials = (name: string | null | undefined) => {
+  const getInitials = (name: string | null | undefined): string => {
     if (!name) return "U";
     const nameParts = name.split(" ");
     if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {

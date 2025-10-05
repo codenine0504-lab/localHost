@@ -59,18 +59,24 @@ export function UserProfileCard({ user: profileUser, isOpen, onOpenChange }: Use
 
         if (!chatRoomDoc.exists()) {
             const batch = writeBatch(db);
+
+            const currentUserDoc = await getDoc(doc(db, 'users', user.id));
+            const otherUserDoc = await getDoc(doc(db, 'users', profileUser.id));
+
+            const currentUserData = currentUserDoc.data();
+            const otherUserData = otherUserDoc.data();
             
             batch.set(chatRoomRef, {
                 members: [user.id, profileUser.id],
                 createdAt: serverTimestamp(),
                 memberDetails: {
                     [user.id]: {
-                        displayName: user.displayName,
-                        photoURL: user.photoURL,
+                        displayName: currentUserData?.displayName || 'User',
+                        photoURL: currentUserData?.photoURL || '',
                     },
                     [profileUser.id]: {
-                        displayName: profileUser.displayName,
-                        photoURL: profileUser.photoURL,
+                        displayName: otherUserData?.displayName || 'User',
+                        photoURL: otherUserData?.photoURL || '',
                     }
                 }
             });
@@ -99,10 +105,10 @@ export function UserProfileCard({ user: profileUser, isOpen, onOpenChange }: Use
   };
 
   const socialLinks = [
-    { platform: 'github', value: profileUser.github, icon: Github, urlPrefix: 'https://github.com/' },
-    { platform: 'linkedin', value: profileUser.linkedin, icon: Linkedin, urlPrefix: '' },
-    { platform: 'instagram', value: profileUser.instagram, icon: Instagram, urlPrefix: 'https://instagram.com/' },
-    { platform: 'otherLink', value: profileUser.otherLink, icon: LinkIcon, urlPrefix: '' },
+    { platform: 'github', value: profileUser.github, urlPrefix: 'https://github.com/' },
+    { platform: 'linkedin', value: profileUser.linkedin, urlPrefix: '' },
+    { platform: 'instagram', value: profileUser.instagram, urlPrefix: 'https://instagram.com/' },
+    { platform: 'otherLink', value: profileUser.otherLink, urlPrefix: '' },
   ].filter(link => link.value);
 
   const isOwnProfile = user?.id === profileUser.id;
@@ -139,7 +145,10 @@ export function UserProfileCard({ user: profileUser, isOpen, onOpenChange }: Use
                     <div className="flex items-center justify-center gap-4 mt-4">
                         {socialLinks.map(link => (
                             <Link key={link.platform} href={`${link.urlPrefix}${link.value}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                                <link.icon className="h-5 w-5" />
+                                {link.platform === 'github' && <Github className="h-5 w-5" />}
+                                {link.platform === 'linkedin' && <Linkedin className="h-5 w-5" />}
+                                {link.platform === 'instagram' && <Instagram className="h-5 w-5" />}
+                                {link.platform === 'otherLink' && <LinkIcon className="h-5 w-5" />}
                             </Link>
                         ))}
                     </div>

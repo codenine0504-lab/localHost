@@ -153,17 +153,23 @@ export default function PublicProfilePage() {
         if (!chatRoomDoc.exists()) {
              const batch = writeBatch(db);
              
+             const currentUserDoc = await getDoc(doc(db, 'users', user.id));
+             const otherUserDoc = await getDoc(doc(db, 'users', profileUser.id));
+
+             const currentUserData = currentUserDoc.data();
+             const otherUserData = otherUserDoc.data();
+             
              batch.set(chatRoomRef, {
                 members: [user.id, profileUser.id],
                 createdAt: serverTimestamp(),
                 memberDetails: {
                     [user.id]: {
-                        displayName: user.displayName,
-                        photoURL: user.photoURL,
+                        displayName: currentUserData?.displayName || 'User',
+                        photoURL: currentUserData?.photoURL || '',
                     },
                     [profileUser.id]: {
-                        displayName: profileUser.displayName,
-                        photoURL: profileUser.photoURL,
+                        displayName: otherUserData?.displayName || 'User',
+                        photoURL: otherUserData?.photoURL || '',
                     }
                 }
             });
