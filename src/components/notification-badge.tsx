@@ -59,13 +59,8 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
         checkNotifications();
 
-        const handleStorageChange = (event: StorageEvent | Event) => {
-            const isCustomEvent = !(event instanceof StorageEvent);
-            const key = isCustomEvent ? null : (event as StorageEvent).key;
-
-            if (isCustomEvent || (key && (key.includes('lastMessageTimestamp_') || key.includes('lastRead_') || key.includes('hasNewJoinRequests_') || key.includes('lastMessageSenderId_')))) {
-                checkNotifications();
-            }
+        const handleStorageChange = (event: Event) => {
+            checkNotifications();
         };
 
         window.addEventListener('storage', handleStorageChange);
