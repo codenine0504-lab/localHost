@@ -80,6 +80,7 @@ export default function Home() {
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
+    // This check now runs on the client-side
     const hasVisited = localStorage.getItem('hasVisited');
     if (hasVisited) {
       setShowWelcome(false);
@@ -91,6 +92,9 @@ export default function Home() {
   const handleWelcomeFinish = () => {
     setShowWelcome(false);
     localStorage.setItem('hasVisited', 'true');
+    // We might need to force a re-render or page reload if nav doesn't appear
+    // For now, setting state should be enough to trigger AppLayout's useEffect
+    window.dispatchEvent(new Event('storage'));
   }
 
   useEffect(() => {
@@ -115,10 +119,10 @@ export default function Home() {
             setLoading(false);
         }
     };
-    if (!authLoading) {
+    if (!authLoading && !showWelcome) {
         fetchData();
     }
-  }, [authLoading]);
+  }, [authLoading, showWelcome]);
   
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
@@ -129,15 +133,16 @@ export default function Home() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  if (authLoading || loading) {
-    return <AppSkeleton />;
-  }
-
   if (showWelcome) {
     return (
       <WelcomeScreen onFinish={handleWelcomeFinish} />
     );
   }
+
+  if (authLoading || loading) {
+    return <AppSkeleton />;
+  }
+
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 space-y-16">

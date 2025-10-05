@@ -68,7 +68,7 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
 
     const handleGoogleSignIn = async () => {
         try {
-            await signInWithGoogle();
+            await signInWithGoogle('student');
             onFinish();
         } catch (error) {
             console.error("Google sign-in error:", error);
@@ -116,10 +116,31 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
          <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white overflow-x-hidden py-16">
             <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.2),transparent)]"></div>
             <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl p-4">
-                <h2 className="text-3xl font-bold mb-8">Ready to Dive In?</h2>
-                    <p className="text-gray-300 text-center max-w-2xl mb-8">
-                        Sign in to create your profile, host projects, and collaborate with a vibrant community. Or, feel free to look around as a guest.
-                    </p>
+                <h2 className="text-3xl font-bold mb-8">What LocalHost Offers</h2>
+                <Carousel
+                    plugins={[plugin.current]}
+                    className="w-full max-w-xs sm:max-w-md md:max-w-lg"
+                    onMouseEnter={() => plugin.current.stop()}
+                    onMouseLeave={() => plugin.current.play()}
+                >
+                    <CarouselContent>
+                        {features.map((feature, index) => (
+                        <CarouselItem key={index}>
+                            <div className="p-1">
+                            <Card className="bg-white/5 border-white/10">
+                                <CardContent className="flex flex-col items-center justify-center p-6 text-center gap-4">
+                                    <div className="p-4 bg-primary/20 rounded-full">
+                                        {feature.icon}
+                                    </div>
+                                    <h3 className="text-xl font-semibold">{feature.title}</h3>
+                                    <p className="text-gray-300">{feature.description}</p>
+                                </CardContent>
+                            </Card>
+                            </div>
+                        </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                </Carousel>
                 <div className="mt-8 flex gap-4">
                      <Button
                         size="lg"
