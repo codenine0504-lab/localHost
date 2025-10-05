@@ -6,6 +6,7 @@ import { useAuth } from './auth-provider';
 import { useUserLastRead } from '@/hooks/use-user-last-read';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useJoinRequests } from '@/hooks/use-join-requests';
 
 interface NotificationBadgeProps {
     children: React.ReactNode;
@@ -20,12 +21,13 @@ interface ChatRoom {
 export function NotificationBadge({ children }: NotificationBadgeProps) {
     const { user } = useAuth();
     const { lastRead, loading: lastReadLoading } = useUserLastRead(user?.id);
-    const [hasNotification, setHasNotification] = useState(false);
+    const { requests: joinRequests, loading: requestsLoading } = useJoinRequests(user?.id);
+    const [hasChatNotification, setHasChatNotification] = useState(false);
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
 
     useEffect(() => {
         if (!user) {
-            setHasNotification(false);
+            setHasChatNotification(false);
             setChatRooms([]);
             return;
         }
@@ -53,7 +55,7 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
     useEffect(() => {
         if (!user || lastReadLoading || chatRooms.length === 0) {
-            setHasNotification(false);
+            setHasChatNotification(false);
             return;
         }
 
@@ -67,9 +69,12 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                 break;
             }
         }
-        setHasNotification(notificationFound);
+        setHasChatNotification(notificationFound);
 
     }, [user, lastRead, lastReadLoading, chatRooms]);
+
+    const hasJoinRequestNotification = !requestsLoading && joinRequests.length > 0;
+    const hasNotification = hasChatNotification || hasJoinRequestNotification;
 
     return (
         <div className="relative">
