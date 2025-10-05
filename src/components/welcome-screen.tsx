@@ -37,22 +37,22 @@ const AnimatedLogo = () => (
 
 const features = [
     {
-      icon: <Search className="h-8 w-8 text-primary" />,
+      icon: <Search className="h-8 w-8 text-white" />,
       title: "Find Your Team",
       description: "Connect with people who have the skills you need.",
     },
     {
-      icon: <Layers className="h-8 w-8 text-primary" />,
+      icon: <Layers className="h-8 w-8 text-white" />,
       title: "Launch Your Vision",
       description: "Host your own project and bring your ideas to life.",
     },
     {
-      icon: <Users className="h-8 w-8 text-primary" />,
+      icon: <Users className="h-8 w-8 text-white" />,
       title: "Join a Project",
       description: "Explore existing projects and contribute your skills.",
     },
     {
-      icon: <MessageCircle className="h-8 w-8 text-primary" />,
+      icon: <MessageCircle className="h-8 w-8 text-white" />,
       title: "Collaborate Instantly",
       description: "Use real-time chat to work with your collaborators.",
     },
@@ -82,19 +82,19 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
 
     if (step === 0) {
         return (
-            <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-x-hidden py-16">
-                 <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.1),transparent)]"></div>
+            <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white overflow-x-hidden py-16">
+                 <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.2),transparent)]"></div>
                  <div className="relative z-10 flex flex-col items-center justify-center text-center p-4">
                     <AnimatedLogo />
                     
                     <div className="mt-8">
-                         <p className="text-lg text-muted-foreground mb-2 tracking-widest">A GEC startup</p>
-                         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
+                         <p className="text-lg text-gray-400 mb-2 tracking-widest">A GEC startup</p>
+                         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
                              Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-blue-500">LocalHost</span>
                          </h1>
                     </div>
 
-                    <p className="mt-6 max-w-lg text-lg text-muted-foreground">
+                    <p className="mt-6 max-w-lg text-lg text-gray-300">
                         The ultimate platform to connect with peers, build amazing projects, and bring your ideas to life.
                     </p>
                     
@@ -113,17 +113,17 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
     }
 
     return (
-        <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-x-hidden py-16">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.1),transparent)]"></div>
+         <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white overflow-x-hidden py-16">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--primary)/0.2),transparent)]"></div>
             <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-4xl p-4">
-                <h2 className="text-3xl font-bold text-foreground mb-8">Ready to Dive In?</h2>
-                    <p className="text-muted-foreground text-center max-w-2xl mb-8">
+                <h2 className="text-3xl font-bold mb-8">Ready to Dive In?</h2>
+                    <p className="text-gray-300 text-center max-w-2xl mb-8">
                         Sign in to create your profile, host projects, and collaborate with a vibrant community. Or, feel free to look around as a guest.
                     </p>
                 <div className="mt-8 flex gap-4">
                      <Button
                         size="lg"
-                        className="bg-primary text-primary-foreground"
+                        className="bg-white text-gray-900 hover:bg-gray-200"
                         onClick={handleGoogleSignIn}
                     >
                         Sign in with Google
@@ -131,6 +131,7 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                     <Button
                         size="lg"
                         variant="outline"
+                        className="border-gray-500 text-white hover:bg-gray-800 hover:text-white"
                         onClick={onFinish}
                     >
                         Skip for now

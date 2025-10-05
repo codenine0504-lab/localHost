@@ -38,6 +38,7 @@ export async function signInWithGoogle(role: 'student' | 'organization' = 'stude
 export async function signOut() {
     try {
         await firebaseSignOut(auth);
+        localStorage.removeItem('hasVisited');
     } catch (error) {
         console.error("Error signing out: ", error);
         throw error;
