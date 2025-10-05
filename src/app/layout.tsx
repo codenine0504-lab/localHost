@@ -2,7 +2,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { ThemeProvider } from '@/components/theme-provider';
 import { MainNav } from '@/components/main-nav';
 import { InstallPwaButton } from '@/components/install-pwa-button';
 import { AuthProvider } from '@/components/auth-provider';
@@ -35,12 +34,6 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body className="font-body antialiased overflow-x-hidden">
-         <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem={false}
-            disableTransitionOnChange
-        >
           <AuthProvider>
             <div className="relative flex min-h-screen flex-col bg-background">
                 <InstallPwaButton />
@@ -49,7 +42,6 @@ export default function RootLayout({
             </div>
             <Toaster />
           </AuthProvider>
-        </ThemeProvider>
       </body>
     </html>
   );

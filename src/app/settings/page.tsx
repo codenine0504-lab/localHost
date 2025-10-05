@@ -2,7 +2,6 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { AnimatedHeader } from "@/components/animated-header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth-provider";
@@ -63,7 +62,6 @@ export default function SettingsPage() {
                     title="Settings"
                     description="Manage your application settings."
                 >
-                    <ThemeToggle />
                 </AnimatedHeader>
                 <div className="max-w-2xl mx-auto space-y-6">
                     <Card>
@@ -97,7 +95,7 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                              <p className="text-sm text-muted-foreground">
-                                    You can change the theme using the toggle in the header. Select between light and dark mode.
+                                    The application is set to a light theme by default.
                                 </p>
                         </CardContent>
                     </Card>
