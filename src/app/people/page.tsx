@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnimatedHeader } from '@/components/animated-header';
 import { Input } from '@/components/ui/input';
-import { Search, Star } from 'lucide-react';
+import { Search, Star, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
@@ -179,7 +179,12 @@ export default function PeoplePage() {
                                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
-                                    <h3 className="font-semibold">{user.displayName || 'Anonymous User'}</h3>
+                                    <div className="flex items-center gap-1.5">
+                                        <h3 className="font-semibold">{user.displayName || 'Anonymous User'}</h3>
+                                        {user.role === 'organization' && (
+                                            <CheckCircle2 className="h-4 w-4 text-blue-500" />
+                                        )}
+                                    </div>
                                     {hasSkills ? (
                                         <div className="flex flex-wrap items-center gap-1.5 mt-2">
                                             {primarySkill && (

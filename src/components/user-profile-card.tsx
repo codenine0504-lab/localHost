@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Instagram, Github, Linkedin, Link as LinkIcon, MessageSquare, Briefcase, School } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, MessageSquare, Briefcase, School, CheckCircle2 } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -109,7 +109,12 @@ export function UserProfileCard({ user: profileUser, isOpen, onOpenChange }: Use
                     <AvatarFallback>{getInitials(profileUser.displayName)}</AvatarFallback>
                 </Avatar>
                 <DialogHeader className="mt-4">
-                    <DialogTitle className="text-2xl font-bold">{profileUser.displayName}</DialogTitle>
+                    <div className="flex items-center gap-1.5 justify-center">
+                        <DialogTitle className="text-2xl font-bold">{profileUser.displayName}</DialogTitle>
+                        {profileUser.role === 'organization' && (
+                           <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                        )}
+                    </div>
                 </DialogHeader>
                 {profileUser.status && profileUser.status !== 'none' && (
                     <Badge variant={profileUser.status === 'seeking' ? 'default' : 'secondary'} className="mt-2">

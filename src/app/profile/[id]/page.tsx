@@ -9,7 +9,7 @@ import { doc, getDoc, collection, query, where, getDocs, serverTimestamp, writeB
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
-import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn, CheckCircle2 } from "lucide-react";
 import { useRouter, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
@@ -198,7 +198,12 @@ export default function PublicProfilePage() {
                             <AvatarFallback>{getInitials(profileUser.displayName)}</AvatarFallback>
                         </Avatar>
                         <div className="grid gap-1">
-                            <CardTitle className="text-xl break-all">{profileUser.displayName}</CardTitle>
+                            <div className="flex items-center gap-1.5 justify-center">
+                                <CardTitle className="text-xl break-all">{profileUser.displayName}</CardTitle>
+                                {profileUser.role === 'organization' && (
+                                    <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                                )}
+                            </div>
                             {profileUser.status && profileUser.status !== 'none' && (
                                 <Badge variant={profileUser.status === 'seeking' ? 'default' : 'secondary'} className="mx-auto">
                                     {profileUser.status === 'seeking' ? 'Seeking Collaboration' : 'Actively Building'}
