@@ -220,7 +220,7 @@ export default function PublicProfilePage() {
     <div className="container mx-auto py-12 px-4 md:px-6">
         <AnimatedHeader title={profileUser.displayName || 'User Profile'} description={profileUser.college || 'Discover this user\'s profile'} />
         
-        <div>
+        <div className="md:pt-0">
             <div className="grid gap-8 md:grid-cols-3">
                 <div className="md:col-span-1 space-y-6">
                     <Card className="overflow-hidden relative">
