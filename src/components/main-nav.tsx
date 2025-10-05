@@ -9,6 +9,8 @@ import { NotificationBadge } from './notification-badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from './auth-provider';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Skeleton } from './ui/skeleton';
+
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, auth: false },
@@ -101,8 +103,9 @@ function BottomNav() {
         
         {/* Profile/Login Icon */}
         <motion.div layout className="relative flex items-center justify-center">
-           {!loading && (
-             user ? (
+           {loading ? (
+                <Skeleton className="h-8 w-8 rounded-full" />
+            ) : user ? (
                <Link href={`/profile/${user.id}`} className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
                    <User className="h-6 w-6" />
                </Link>
@@ -111,7 +114,7 @@ function BottomNav() {
                    <User className="h-6 w-6" />
                </Link>
              )
-           )}
+           }
         </motion.div>
 
       </motion.nav>
@@ -122,3 +125,5 @@ function BottomNav() {
 export function MainNav() {
   return <BottomNav />;
 }
+
+    

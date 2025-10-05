@@ -59,16 +59,16 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
         checkNotifications();
 
-        const handleStorageChange = (event: StorageEvent) => {
-             // Only run check if the change is relevant to notifications
-            if (event.key?.includes('lastMessageTimestamp_') || event.key?.includes('lastRead_') || event.key?.includes('hasNewJoinRequests_') || event.key?.includes('lastMessageSenderId_')) {
+        const handleStorageChange = (event: StorageEvent | Event) => {
+            const isCustomEvent = !(event instanceof StorageEvent);
+            const key = isCustomEvent ? null : (event as StorageEvent).key;
+
+            if (isCustomEvent || (key && (key.includes('lastMessageTimestamp_') || key.includes('lastRead_') || key.includes('hasNewJoinRequests_') || key.includes('lastMessageSenderId_')))) {
                 checkNotifications();
             }
         };
 
         window.addEventListener('storage', handleStorageChange);
-
-        // Also check when the document becomes visible
         document.addEventListener('visibilitychange', checkNotifications);
 
         return () => {

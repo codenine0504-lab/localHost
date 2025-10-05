@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ThumbsUp } from 'lucide-react';
 import { AnimatedHeader } from '@/components/animated-header';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth-provider';
@@ -21,8 +21,8 @@ interface ChatRoom {
 }
 
 const tabs = [
-    { id: 'general', label: 'General' },
     { id: 'projects', label: 'Projects' },
+    { id: 'general', label: 'Direct Messages' },
 ];
 
 function ChatRoomListSkeleton() {
@@ -45,19 +45,21 @@ export default function ChatRoomPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('projects');
 
-  const checkNotifications = (rooms: ChatRoom[]): ChatRoom[] => {
+  const checkNotifications = (rooms: ChatRoom[], currentUserId: string | undefined): ChatRoom[] => {
       return rooms.map(room => {
           const lastMessageTimestampStr = localStorage.getItem(`lastMessageTimestamp_${room.id}`);
           const lastReadTimestampStr = localStorage.getItem(`lastRead_${room.id}`);
+          const lastMessageSenderId = localStorage.getItem(`lastMessageSenderId_${room.id}`);
           
           const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
           const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
-          const hasNewMessage = lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp;
+          const hasNewMessage = lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp && lastMessageSenderId !== currentUserId;
+          const hasNewJoinRequest = !!localStorage.getItem(`hasNewJoinRequests_${room.id}`);
 
           return {
               ...room,
-              hasNotification: hasNewMessage
+              hasNotification: hasNewMessage || hasNewJoinRequest,
           };
       });
   };
@@ -65,6 +67,8 @@ export default function ChatRoomPage() {
   useEffect(() => {
     if (!user) {
         setLoading(false);
+        setDmRooms([]);
+        setProjectRooms([]);
         return;
     };
     
@@ -94,7 +98,7 @@ export default function ChatRoomPage() {
                 isDm: true
             });
         }
-        setDmRooms(checkNotifications(dms));
+        setDmRooms(checkNotifications(dms, user.id));
         dmLoaded = true;
         checkLoadingDone();
     }, (error) => {
@@ -106,8 +110,12 @@ export default function ChatRoomPage() {
     // Listener for Project Chats
     const projectChatQuery = query(collection(db, 'ProjectChats'), where('members', 'array-contains', user.id));
     const unsubscribeProjects = onSnapshot(projectChatQuery, (snapshot) => {
-        const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), isDm: false } as ChatRoom));
-        setProjectRooms(checkNotifications(projects));
+        const projects: ChatRoom[] = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            projects.push({ id: doc.id, name: data.name, imageUrl: data.imageUrl, isDm: false });
+        });
+        setProjectRooms(checkNotifications(projects, user.id));
         projectLoaded = true;
         checkLoadingDone();
     }, (error) => {
@@ -117,8 +125,8 @@ export default function ChatRoomPage() {
     });
 
     const handleStorageChange = () => {
-        setProjectRooms(prevRooms => checkNotifications(prevRooms));
-        setDmRooms(prevRooms => checkNotifications(prevRooms));
+        setProjectRooms(prevRooms => checkNotifications(prevRooms, user.id));
+        setDmRooms(prevRooms => checkNotifications(prevRooms, user.id));
     }
     window.addEventListener('storage', handleStorageChange);
 
@@ -142,8 +150,12 @@ export default function ChatRoomPage() {
       }
       if (rooms.length === 0) {
           return (
-              <div className="text-center text-muted-foreground py-10 h-full flex flex-col items-center justify-center">
-                  <p>{isDm ? "You have no direct messages." : "You haven't joined any project chats yet."}</p>
+              <div className="text-center text-muted-foreground py-10 h-full flex flex-col items-center justify-center space-y-4">
+                  <ThumbsUp className="h-16 w-16 text-muted-foreground/50" />
+                  <div>
+                    <p className="font-semibold text-lg">{isDm ? "No direct messages yet." : "You're all caught up!"}</p>
+                    <p className="text-sm">{isDm ? "Start a conversation from someone's profile." : "You haven't joined any project chats yet."}</p>
+                  </div>
               </div>
           );
       }
@@ -161,8 +173,8 @@ export default function ChatRoomPage() {
                                 <Image
                                     src={room.imageUrl}
                                     alt={`${room.name} icon`}
-                                    layout="fill"
-                                    objectFit="cover"
+                                    fill
+                                    style={{objectFit: 'cover'}}
                                     data-ai-hint="chatroom icon"
                                 />
                             </div>
@@ -224,3 +236,5 @@ export default function ChatRoomPage() {
     </div>
   );
 }
+
+    

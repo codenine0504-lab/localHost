@@ -143,6 +143,8 @@ export default function ChatPage() {
                 isDmChat = false;
                 setChatCollection('ProjectChats');
             } else {
+                toast({ title: "Chat not found", description: "This chat room no longer exists.", variant: "destructive"});
+                router.push('/chatroom');
                 setLoading(false);
                 return;
             }
@@ -198,6 +200,11 @@ export default function ChatPage() {
         
         setProjectDetails(projDetails);
 
+        if (!projDetails.members?.includes(user.id) && !isDm) {
+             setLoading(false);
+             return;
+        }
+
         const memberIds = new Set(projDetails?.members);
         if(projDetails?.owner) memberIds.add(projDetails.owner);
         (projDetails?.admins || []).forEach(id => memberIds.add(id));
@@ -227,7 +234,7 @@ export default function ChatPage() {
     } finally {
         setLoading(false);
     }
-  }, [chatId, user]);
+  }, [chatId, user, router, toast]);
 
 
   useEffect(() => {
@@ -401,7 +408,7 @@ export default function ChatPage() {
   }
   
   if (!chatRoom) {
-    return <div className="text-center p-8">Chat room not found.</div>
+    return <div className="text-center p-8">Chat room not found or you do not have access.</div>
   }
 
   const getSenderName = (senderId: string) => {
@@ -509,22 +516,25 @@ export default function ChatPage() {
             )}
         </div>
         
-        <div className="p-4 bg-background border-t">
-            <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
-            <div className="relative">
-                <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={getPlaceholderText()}
-                    className="pr-12"
-                    disabled={!user || (!isMember && !isDm)}
-                />
-                <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user || (!isMember && !isDm)}>
-                    <Send className="h-4 w-4" />
-                </Button>
+        {(isMember || isDm) && (
+            <div className="p-4 bg-background border-t">
+                <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto w-full">
+                <div className="relative">
+                    <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder={getPlaceholderText()}
+                        className="pr-12"
+                        disabled={!user || (!isMember && !isDm)}
+                    />
+                    <Button type="submit" size="icon" variant="ghost" className="absolute top-1/2 right-1 -translate-y-1/2 h-8 w-8 text-primary" disabled={newMessage.trim() === '' || !user || (!isMember && !isDm)}>
+                        <Send className="h-4 w-4" />
+                    </Button>
+                </div>
+                </form>
             </div>
-            </form>
-        </div>
+        )}
+
         {projectDetails && !isDm && user && (
              <ChatSidebar 
                 isOpen={isSidebarOpen} 
