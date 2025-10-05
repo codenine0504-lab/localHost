@@ -56,16 +56,6 @@ export default function PeoplePage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (authLoading) {
-      setLoading(true);
-      return;
-    }
-    if (!user) {
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
-    
     let q;
     const isStatusFilter = ['seeking', 'active'].includes(activeTab);
     
@@ -87,7 +77,10 @@ export default function PeoplePage() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const userList: AppUser[] = [];
       querySnapshot.forEach((doc) => {
-        userList.push({ id: doc.id, ...doc.data() } as AppUser);
+        // Exclude anonymous or incomplete profiles from the list
+        if (doc.data().displayName) {
+          userList.push({ id: doc.id, ...doc.data() } as AppUser);
+        }
       });
       setUsers(userList);
       setLoading(false);
@@ -97,11 +90,11 @@ export default function PeoplePage() {
     });
 
     return () => unsubscribe();
-  }, [activeTab, user, authLoading]);
+  }, [activeTab]);
 
-  const filteredUsers = user ? users.filter((u) =>
+  const filteredUsers = users.filter((u) =>
     u.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  );
 
   const getInitials = (name: string | null | undefined): string => {
     if (!name) return "U";
@@ -143,26 +136,6 @@ export default function PeoplePage() {
   const getPrimarySkill = (skills: Skill[] | undefined) => {
       if (!skills) return null;
       return skills.find(skill => skill.isPrimary);
-  }
-
-  if (!authLoading && !user) {
-    return (
-        <div className="container mx-auto py-12 px-4 md:px-6">
-            <AnimatedHeader title="Discover People" description="Sign in to connect with students and creators." />
-             <Card className="max-w-md mx-auto">
-                <CardHeader>
-                    <CardTitle>Get full access</CardTitle>
-                    <CardDescription>Sign in to discover and message other users.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button onClick={handleSignIn} className="w-full">
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Sign In with Google
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
-    )
   }
 
   return (
