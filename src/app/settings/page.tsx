@@ -13,13 +13,6 @@ export default function SettingsPage() {
     const { user, loading } = useAuth();
     const { toast } = useToast();
     
-    const handleClearData = () => {
-        const hasVisited = localStorage.getItem('hasVisited');
-        localStorage.clear();
-        if(hasVisited) localStorage.setItem('hasVisited', hasVisited);
-        window.location.reload();
-    }
-    
     const handleSignIn = async () => {
         try {
             await signInWithGoogle();
@@ -86,29 +79,6 @@ export default function SettingsPage() {
                                     Sign In with Google
                                 </Button>
                             )}
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Appearance</CardTitle>
-                            <CardDescription>Customize the look and feel of the application.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                             <p className="text-sm text-muted-foreground">
-                                    The application is set to a light theme by default.
-                                </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Local Data</CardTitle>
-                            <CardDescription>Manage data stored on your device.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <p className="text-sm text-muted-foreground mb-4">
-                                Clearing local data will reset chat read receipts. The welcome screen will show again if you sign out.
-                            </p>
-                            <Button variant="destructive" onClick={handleClearData}>Clear Local Data</Button>
                         </CardContent>
                     </Card>
                 </div>
