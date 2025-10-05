@@ -115,6 +115,7 @@ export function HostProjectDialog({ children }: { children: React.ReactNode }) {
         requiresRequestToJoin: true,
         views: 0,
         applicantCount: 0,
+        isAssigned: false,
       };
 
       const projectDocRef = await addDoc(collection(db, collectionName), projectPayload);

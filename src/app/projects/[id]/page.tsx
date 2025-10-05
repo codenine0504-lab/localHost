@@ -21,6 +21,7 @@ interface Project {
   requiresRequestToJoin?: boolean;
   budget?: number;
   owner: string;
+  isAssigned?: boolean;
 }
 
 function ProjectPageSkeleton() {

@@ -36,6 +36,7 @@ interface Project {
   applicantCount?: number;
   owner: string;
   members?: string[];
+  isAssigned?: boolean;
 }
 
 interface ProjectDetailsDialogProps {
@@ -216,9 +217,9 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
         <Button
             className="w-full sm:w-auto"
             onClick={isMember ? () => router.push(`/chatroom/${project.id}`) : handleJoinOrRequest}
-            disabled={requestStatus === 'pending' || requestStatus === 'sent' || authLoading}
+            disabled={requestStatus === 'pending' || requestStatus === 'sent' || authLoading || project.isAssigned}
         >
-            {getButtonText()}
+            {project.isAssigned ? 'Task Assigned' : getButtonText()}
         </Button>
     )
   }
@@ -236,6 +237,9 @@ export function ProjectDetailsDialog({ project, children, open, onOpenChange }: 
                     objectFit="cover"
                     data-ai-hint="project image landscape"
                 />
+                 {project.isAssigned && (
+                    <Badge className="absolute top-2 right-2" variant="secondary">Task Assigned</Badge>
+                )}
             </div>
             <div className="pt-6 flex-1">
                 <DialogHeader className="text-left">

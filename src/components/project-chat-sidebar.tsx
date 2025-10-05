@@ -48,6 +48,7 @@ interface ProjectDetails {
     admins?: string[];
     requiresRequestToJoin?: boolean;
     budget?: number;
+    isAssigned?: boolean;
 }
 
 interface Member {
@@ -142,7 +143,7 @@ export function ProjectChatSidebar({ isOpen, onOpenChange, project, members, onP
         });
     };
     
-    const handleSettingToggle = async (setting: 'isPrivate', value: boolean) => {
+    const handleSettingToggle = async (setting: 'isPrivate' | 'isAssigned', value: boolean) => {
         setIsProcessing(true);
 
         try {
@@ -176,7 +177,10 @@ export function ProjectChatSidebar({ isOpen, onOpenChange, project, members, onP
                 await updateDoc(doc(db, 'ProjectChats', project.id), { isPrivate: value });
 
                 toast({ title: "Success", description: `Project visibility updated to ${value ? 'Private' : 'Public'}.` });
-            } 
+            } else if (setting === 'isAssigned') {
+                await updateDoc(projectRef, { isAssigned: value });
+                toast({ title: "Success", description: `Project marked as ${value ? 'assigned' : 'not assigned'}.` });
+            }
             onProjectUpdate();
         } catch (error) {
             console.error("Error updating setting:", error);
@@ -427,6 +431,15 @@ export function ProjectChatSidebar({ isOpen, onOpenChange, project, members, onP
                                     </span>
                                 </Label>
                                 <Switch id="isPrivate" checked={project.isPrivate} onCheckedChange={(val) => handleSettingToggle('isPrivate', val)} disabled={isProcessing} />
+                            </div>
+                             <div className="flex items-center justify-between">
+                                <Label htmlFor="isAssigned" className="flex flex-col gap-1">
+                                    <span>Task Assigned</span>
+                                    <span className="text-xs font-normal text-muted-foreground">
+                                         {project.isAssigned ? "Project is marked as assigned." : "Mark this project as assigned."}
+                                    </span>
+                                </Label>
+                                <Switch id="isAssigned" checked={!!project.isAssigned} onCheckedChange={(val) => handleSettingToggle('isAssigned', val)} disabled={isProcessing} />
                             </div>
                              {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
                         </div>
