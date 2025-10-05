@@ -132,8 +132,8 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                                     <div className="p-4 bg-primary/20 rounded-full">
                                         {feature.icon}
                                     </div>
-                                    <h3 className="text-xl font-semibold">{feature.title}</h3>
-                                    <p className="text-gray-300">{feature.description}</p>
+                                    <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
+                                    <p className="text-gray-200">{feature.description}</p>
                                 </CardContent>
                             </Card>
                             </div>
@@ -141,18 +141,18 @@ export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
                         ))}
                     </CarouselContent>
                 </Carousel>
-                <div className="mt-8 flex gap-4">
+                <div className="mt-8 flex flex-col items-center gap-4">
                      <Button
                         size="lg"
-                        className="bg-white text-gray-900 hover:bg-gray-200"
+                        className="bg-white text-gray-900 hover:bg-gray-200 w-full max-w-[200px]"
                         onClick={handleGoogleSignIn}
                     >
                         Sign in with Google
                     </Button>
                     <Button
                         size="lg"
-                        variant="outline"
-                        className="border-gray-500 text-white hover:bg-gray-800 hover:text-white"
+                        variant="link"
+                        className="text-white hover:text-gray-200"
                         onClick={onFinish}
                     >
                         Skip for now
