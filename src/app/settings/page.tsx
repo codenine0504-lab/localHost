@@ -59,8 +59,10 @@ export default function SettingsPage() {
                 <div className="max-w-2xl mx-auto space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Account</CardTitle>
-                            <CardDescription>Manage your account and sign-in status.</CardDescription>
+                            <CardTitle>{user ? 'Account' : 'Get Full Access'}</CardTitle>
+                            <CardDescription>
+                                {user ? 'Manage your account and sign-in status.' : 'Sign in to message users and join projects.'}
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {loading ? (
