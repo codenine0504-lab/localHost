@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, MessageSquare, Users, UserCircle, Settings } from 'lucide-react';
+import { Home, Compass, MessageSquare, Users, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,7 +41,7 @@ function BottomNav() {
     <footer className="fixed bottom-0 left-0 right-0 w-full z-50 p-2 md:bottom-4">
       <motion.nav
         layout
-        className="flex h-16 max-w-md mx-auto items-center justify-around rounded-full border border-white/10 bg-black backdrop-blur-sm shadow-lg px-2"
+        className="flex h-16 max-w-md mx-auto items-center justify-around rounded-full border bg-background/80 backdrop-blur-sm shadow-lg px-2"
       >
         {visibleNavItems.map((item) => {
           const isActive = (pathname === '/' && item.href === '/') || (pathname.startsWith(item.href) && item.href !== '/');
@@ -52,7 +52,7 @@ function BottomNav() {
               href={item.href}
               className={cn(
                 'relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10',
-                isActive ? 'text-primary-foreground' : 'hover:text-accent-foreground'
+                isActive ? 'text-primary-foreground' : 'hover:text-foreground'
               )}
             >
               <motion.div
@@ -103,14 +103,14 @@ function BottomNav() {
         <motion.div layout className="relative flex items-center justify-center">
            {!loading && (
              user ? (
-               <Link href={`/profile/${user.id}`} className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-accent-foreground w-12 h-12">
+               <Link href={`/profile/${user.id}`} className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
                    <Avatar className="h-8 w-8">
                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                    </Avatar>
                </Link>
              ) : (
-               <Link href="/settings" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-accent-foreground w-12 h-12">
+               <Link href="/settings" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
                    <Settings className="h-6 w-6" />
                </Link>
              )

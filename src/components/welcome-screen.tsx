@@ -10,7 +10,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { signInWithGoogle } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useTheme } from 'next-themes';
 
 interface WelcomeScreenProps {
   onFinish: () => void;
@@ -63,7 +62,6 @@ const features = [
 export function WelcomeScreen({ onFinish }: WelcomeScreenProps) {
     const [showFeatures, setShowFeatures] = useState(false);
     const { toast } = useToast();
-    const { theme } = useTheme();
     const plugin = React.useRef(
         Autoplay({ delay: 2500, stopOnInteraction: true })
     );
