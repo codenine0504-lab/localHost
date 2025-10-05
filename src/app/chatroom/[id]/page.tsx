@@ -469,7 +469,7 @@ export default function ChatPage() {
   function ChatView() {
     return (
         <ScrollArea className="h-full" ref={scrollAreaRef}>
-            <div className="space-y-4 max-w-4xl mx-auto w-full p-4 pb-24 md:pb-4">
+            <div className="space-y-4 max-w-4xl mx-auto w-full p-4">
                 {messages.length === 0 ? <NoChatView /> : messages.map((msg) => (
                     <div key={msg.id} className={`flex items-start gap-3 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                         {msg.senderId !== user?.id && (
@@ -578,3 +578,5 @@ export default function ChatPage() {
      </div>
   );
 }
+
+    
