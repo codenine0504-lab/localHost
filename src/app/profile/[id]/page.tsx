@@ -9,7 +9,7 @@ import { doc, getDoc, collection, query, where, getDocs, serverTimestamp, writeB
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
-import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn, CheckCircle2, LogOut } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn, CheckCircle2, LogOut, Settings } from "lucide-react";
 import { useRouter, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
@@ -17,6 +17,7 @@ import type { AppUser } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
 import { signInWithGoogle, signOut } from "@/lib/auth";
+import { EditableProfile } from "@/components/editable-profile";
 
 
 function ProfileSkeleton() {
@@ -57,31 +58,32 @@ export default function PublicProfilePage() {
   const { user } = useAuth();
   const [profileUser, setProfileUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const userId = params.id as string;
   const isOwnProfile = user?.id === userId;
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!userId) {
-          setLoading(false);
-          return;
-      };
-
-      setLoading(true);
-      const userDocRef = doc(db, "users", userId);
-      const userDoc = await getDoc(userDocRef);
-
-      if (userDoc.exists()) {
-        setProfileUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
-      } else {
-        // Handle user not found
-      }
-      setLoading(false);
+  const fetchUser = async () => {
+    if (!userId) {
+        setLoading(false);
+        return;
     };
 
+    setLoading(true);
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      setProfileUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+    } else {
+      // Handle user not found
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchUser();
   }, [userId]);
   
@@ -193,6 +195,19 @@ export default function PublicProfilePage() {
       </div>
     );
   }
+  
+  if (isOwnProfile && isEditing) {
+      return (
+          <EditableProfile 
+            user={profileUser}
+            onClose={() => setIsEditing(false)}
+            onProfileUpdate={() => {
+                fetchUser();
+                setIsEditing(false);
+            }}
+          />
+      )
+  }
 
   const socialLinks = [
     { platform: 'github', value: profileUser.github, icon: Github, urlPrefix: 'https://github.com/' },
@@ -235,9 +250,14 @@ export default function PublicProfilePage() {
                              </Button>
                          )}
                          {isOwnProfile && (
-                             <Button variant="outline" className="w-full" onClick={handleSignOut}>
-                                 <LogOut className="mr-2 h-4 w-4" /> Sign Out
-                             </Button>
+                            <div className="flex flex-col gap-2">
+                                <Button variant="outline" className="w-full" onClick={() => setIsEditing(true)}>
+                                    <Settings className="mr-2 h-4 w-4" /> Edit Profile
+                                </Button>
+                                <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                                    <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                                </Button>
+                            </div>
                          )}
                          {socialLinks.length > 0 && (
                             <div className="flex items-center justify-center gap-4 mt-4">
@@ -296,8 +316,28 @@ export default function PublicProfilePage() {
                         )}
                     </CardContent>
                 </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><School className="h-5 w-5" /> Interests</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         {profileUser.interests && profileUser.interests.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {profileUser.interests.map(interest => (
+                                    <Badge key={interest} variant="outline">
+                                        {interest}
+                                    </Badge>
+                                ))}
+                            </div>
+                        ) : (
+                             <p className="text-sm text-muted-foreground">No interests listed yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     </div>
   );
 }
+
+    

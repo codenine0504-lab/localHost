@@ -24,9 +24,13 @@ export interface AppUser {
   college?: string;
   status?: 'seeking' | 'active' | 'none';
   skills?: Skill[];
+  interests?: string[];
   instagram?: string;
   github?: string;
   linkedin?: string;
   otherLink?: string;
   role?: 'student' | 'organization';
+  bio?: string;
 }
+
+    
