@@ -220,124 +220,124 @@ export default function PublicProfilePage() {
     <div className="container mx-auto py-12 px-4 md:px-6">
         <AnimatedHeader title={profileUser.displayName || 'User Profile'} description={profileUser.college || 'Discover this user\'s profile'} />
         
-        <div className="grid gap-8 md:grid-cols-3">
-            <div className="md:col-span-1 space-y-6">
-                <Card className="overflow-hidden relative">
-                     <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-primary/20 to-accent/20" />
-                    <CardHeader className="flex flex-col items-center text-center gap-4 p-6 bg-transparent relative z-10">
-                        <Avatar className="h-24 w-24 border-4 border-background shadow-md">
-                            <AvatarImage src={profileUser.photoURL || undefined} alt="User avatar" />
-                            <AvatarFallback>{getInitials(profileUser.displayName)}</AvatarFallback>
-                        </Avatar>
-                        <div className="grid gap-1">
-                            <div className="flex items-center gap-1.5 justify-center">
-                                <CardTitle className="text-xl break-all">{profileUser.displayName}</CardTitle>
-                                {profileUser.role === 'organization' && (
-                                    <CheckCircle2 className="h-5 w-5 text-blue-500" />
+        <div>
+            <div className="grid gap-8 md:grid-cols-3">
+                <div className="md:col-span-1 space-y-6">
+                    <Card className="overflow-hidden relative">
+                         <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-primary/20 to-accent/20" />
+                        <CardHeader className="flex flex-col items-center text-center gap-4 p-6 bg-transparent relative z-10">
+                            <Avatar className="h-24 w-24 border-4 border-background shadow-md">
+                                <AvatarImage src={profileUser.photoURL || undefined} alt="User avatar" />
+                                <AvatarFallback>{getInitials(profileUser.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="grid gap-1">
+                                <div className="flex items-center gap-1.5 justify-center">
+                                    <CardTitle className="text-xl break-all">{profileUser.displayName}</CardTitle>
+                                    {profileUser.role === 'organization' && (
+                                        <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                                    )}
+                                </div>
+                                {profileUser.status && profileUser.status !== 'none' && (
+                                    <Badge variant={profileUser.status === 'seeking' ? 'default' : 'secondary'} className="mx-auto">
+                                        {profileUser.status === 'seeking' ? 'Seeking Collaboration' : 'Actively Building'}
+                                    </Badge>
                                 )}
                             </div>
-                            {profileUser.status && profileUser.status !== 'none' && (
-                                <Badge variant={profileUser.status === 'seeking' ? 'default' : 'secondary'} className="mx-auto">
-                                    {profileUser.status === 'seeking' ? 'Seeking Collaboration' : 'Actively Building'}
-                                </Badge>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                         {!isOwnProfile && user && (
-                             <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
-                                 <MessageSquare className="mr-2 h-4 w-4" /> Message
-                             </Button>
-                         )}
-                         {isOwnProfile && (
-                            <div className="flex flex-col gap-2">
-                                <Button variant="outline" className="w-full" onClick={() => setIsEditing(true)}>
-                                    <Settings className="mr-2 h-4 w-4" /> Edit Profile
-                                </Button>
-                                <Button variant="outline" className="w-full" onClick={handleSignOut}>
-                                    <LogOut className="mr-2 h-4 w-4" /> Sign Out
-                                </Button>
-                            </div>
-                         )}
-                         {socialLinks.length > 0 && (
-                            <div className="flex items-center justify-center gap-4 mt-4">
-                                {socialLinks.map(link => (
-                                    <Link key={link.platform} href={`${link.urlPrefix}${link.value}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                                        <link.icon className="h-5 w-5" />
-                                    </Link>
-                                ))}
-                            </div>
-                         )}
-                    </CardContent>
-                </Card>
-                {!user && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Get full access</CardTitle>
-                            <CardDescription>Sign in to message users and join projects.</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <Button onClick={handleSignIn} className="w-full">
-                                <LogIn className="mr-2 h-4 w-4" />
-                                Sign In with Google
-                            </Button>
+                        <CardContent className="p-6">
+                             {!isOwnProfile && user && (
+                                 <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
+                                     <MessageSquare className="mr-2 h-4 w-4" /> Message
+                                 </Button>
+                             )}
+                             {isOwnProfile && (
+                                <div className="flex flex-col gap-2">
+                                    <Button variant="outline" className="w-full" onClick={() => setIsEditing(true)}>
+                                        <Settings className="mr-2 h-4 w-4" /> Edit Profile
+                                    </Button>
+                                    <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                                        <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                                    </Button>
+                                </div>
+                             )}
+                             {socialLinks.length > 0 && (
+                                <div className="flex items-center justify-center gap-4 mt-4">
+                                    {socialLinks.map(link => (
+                                        <Link key={link.platform} href={`${link.urlPrefix}${link.value}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                                            <link.icon className="h-5 w-5" />
+                                        </Link>
+                                    ))}
+                                </div>
+                             )}
                         </CardContent>
                     </Card>
-                )}
-            </div>
-            <div className="md:col-span-2 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5" /> Skills</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {profileUser.skills && profileUser.skills.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                {profileUser.skills.map(skill => (
-                                    <Badge key={skill.name} variant={skill.isPrimary ? 'default' : 'secondary'}>
-                                        {skill.name}
-                                    </Badge>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">No skills listed yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><School className="h-5 w-5" /> Education</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {profileUser.college ? (
-                            <p>{profileUser.college}</p>
-                        ) : (
-                             <p className="text-sm text-muted-foreground">No college information provided.</p>
-                        )}
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><School className="h-5 w-5" /> Interests</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                         {profileUser.interests && profileUser.interests.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                {profileUser.interests.map(interest => (
-                                    <Badge key={interest} variant="outline">
-                                        {interest}
-                                    </Badge>
-                                ))}
-                            </div>
-                        ) : (
-                             <p className="text-sm text-muted-foreground">No interests listed yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
+                    {!user && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Get full access</CardTitle>
+                                <CardDescription>Sign in to message users and join projects.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button onClick={handleSignIn} className="w-full">
+                                    <LogIn className="mr-2 h-4 w-4" />
+                                    Sign In with Google
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+                <div className="md:col-span-2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Briefcase className="h-5 w-5" /> Skills</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {profileUser.skills && profileUser.skills.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {profileUser.skills.map(skill => (
+                                        <Badge key={skill.name} variant={skill.isPrimary ? 'default' : 'secondary'}>
+                                            {skill.name}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No skills listed yet.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><School className="h-5 w-5" /> Education</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {profileUser.college ? (
+                                <p>{profileUser.college}</p>
+                            ) : (
+                                 <p className="text-sm text-muted-foreground">No college information provided.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><School className="h-5 w-5" /> Interests</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                             {profileUser.interests && profileUser.interests.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {profileUser.interests.map(interest => (
+                                        <Badge key={interest} variant="outline">
+                                            {interest}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : (
+                                 <p className="text-sm text-muted-foreground">No interests listed yet.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     </div>
   );
 }
-
-    
