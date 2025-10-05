@@ -160,7 +160,7 @@ export default function ChatPage() {
 
         if (isDmChat) {
              const otherUserId = chatRoomData.members.find((id: string) => id !== user.id);
-             const otherUserData = chatRoomData.memberDetails?.[otherUserId];
+             const otherUserData = roomData.memberDetails?.[otherUserId];
              projDetails = {
                 id: chatId,
                 title: otherUserData?.displayName || 'Direct Message',
