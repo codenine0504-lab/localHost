@@ -110,7 +110,7 @@ function BottomNav() {
                    </Avatar>
                </Link>
              ) : (
-               <Link href="/settings" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
+               <Link href="/login" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
                    <Settings className="h-6 w-6" />
                </Link>
              )
