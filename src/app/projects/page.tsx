@@ -185,11 +185,11 @@ export default function ProjectsPage() {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="flex items-center justify-between text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-2">
                                         <Eye className="h-4 w-4" />
                                         <span>{project.views || 0}</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-2">
                                         <Users className="h-4 w-4" />
                                         <span>{project.applicantCount || 0}</span>
                                     </div>
