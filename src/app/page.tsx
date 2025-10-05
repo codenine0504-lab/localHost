@@ -101,7 +101,7 @@ export default function Home() {
         setLoading(true);
         try {
             // Fetch featured projects
-            const projectsQuery = query(collection(db, 'projects'), orderBy('views', 'desc'), limit(6));
+            const projectsQuery = query(collection(db, 'projects'), orderBy('createdAt', 'desc'), limit(2));
             const projectsSnapshot = await getDocs(projectsQuery);
             const projs = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
             setFeaturedProjects(projs);
@@ -289,3 +289,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
