@@ -20,22 +20,6 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
         const checkNotifications = () => {
             let notificationFound = false;
-
-            // Check for new join requests
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                 if (key && key.startsWith('hasNewJoinRequests_') && localStorage.getItem(key) === 'true') {
-                    notificationFound = true;
-                    break;
-                }
-            }
-            
-            if (notificationFound) {
-                setHasNotification(true);
-                return;
-            }
-
-            // Check for new messages in any chat
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('lastMessageTimestamp_')) {
@@ -58,7 +42,6 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
                     }
                 }
             }
-
             setHasNotification(notificationFound);
         };
 
@@ -66,7 +49,7 @@ export function NotificationBadge({ children }: NotificationBadgeProps) {
 
         const handleStorageChange = (event: Event) => {
             // Check if the event is 'storage' to avoid reacting to other events.
-            if ((event as StorageEvent).key?.includes('lastMessage') || (event as StorageEvent).key?.includes('lastRead') || (event as StorageEvent).key?.includes('hasNewJoinRequests')) {
+            if ((event as StorageEvent).key?.includes('lastMessage') || (event as StorageEvent).key?.includes('lastRead')) {
                 checkNotifications();
             }
         };

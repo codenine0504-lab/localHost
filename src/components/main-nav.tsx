@@ -28,7 +28,7 @@ function BottomNav() {
     return null;
   }
   
-  const getInitials = (name: string | null | undefined) => {
+  const getInitials = (name: string | null | undefined): string => {
     if (!name) return "U";
     const nameParts = name.split(" ");
     if (nameParts.length > 1 && nameParts[0] && nameParts[1]) {

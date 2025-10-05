@@ -267,25 +267,14 @@ export default function ChatPage() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JoinRequest));
-            const isAdmin = user && projectDetails?.admins?.includes(user.id);
             setJoinRequests(requests);
-            
-            if (requests.length > 0 && isAdmin) {
-                localStorage.setItem(`hasNewJoinRequests_${chatId}`, 'true');
-            } else {
-                localStorage.removeItem(`hasNewJoinRequests_${chatId}`);
-            }
-            if (isAdmin && requests.length > 0) {
-                 localStorage.removeItem(`hasNewJoinRequests_${chatId}`);
-            }
-            window.dispatchEvent(new Event('storage'));
         }, (error) => {
             console.error("Error fetching join requests:", error);
             toast({ title: "Error", description: "Could not fetch join requests.", variant: "destructive" });
         });
 
         return () => unsubscribe();
-    }, [chatId, toast, isDm, user, projectDetails]);
+    }, [chatId, toast, isDm]);
 
 
   useEffect(() => {
@@ -582,3 +571,5 @@ export default function ChatPage() {
      </div>
   );
 }
+
+    

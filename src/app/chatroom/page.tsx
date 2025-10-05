@@ -17,7 +17,6 @@ interface ChatRoom {
   name: string;
   imageUrl?: string;
   hasNotification?: boolean;
-  isDm?: boolean;
 }
 
 const tabs = [
@@ -54,12 +53,9 @@ export default function ChatRoomPage() {
           const lastMessageTimestamp = lastMessageTimestampStr ? parseInt(lastMessageTimestampStr, 10) : 0;
           const lastReadTimestamp = lastReadTimestampStr ? parseInt(lastReadTimestampStr, 10) : 0;
 
-          const hasNewMessage = lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp && lastMessageSenderId !== currentUserId;
-          const hasNewJoinRequest = !room.isDm && !!localStorage.getItem(`hasNewJoinRequests_${room.id}`);
-
           return {
               ...room,
-              hasNotification: hasNewMessage || hasNewJoinRequest,
+              hasNotification: lastMessageTimestamp > 0 && lastMessageTimestamp > lastReadTimestamp && lastMessageSenderId !== currentUserId,
           };
       });
   };
@@ -95,8 +91,7 @@ export default function ChatRoomPage() {
                 dms.push({ 
                     id: roomDoc.id, 
                     name: otherUserData.displayName, 
-                    imageUrl: otherUserData.photoURL || '',
-                    isDm: true
+                    imageUrl: otherUserData.photoURL || ''
                 });
             }
         }
@@ -115,7 +110,7 @@ export default function ChatRoomPage() {
         const projects: ChatRoom[] = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            projects.push({ id: doc.id, name: data.name, imageUrl: data.imageUrl, isDm: false });
+            projects.push({ id: doc.id, name: data.name, imageUrl: data.imageUrl });
         });
         setProjectRooms(checkNotifications(projects, user.id));
         projectLoaded = true;
@@ -240,3 +235,5 @@ export default function ChatRoomPage() {
     </div>
   );
 }
+
+    
