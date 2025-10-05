@@ -32,7 +32,7 @@ export const requestForToken = async () => {
       const permission = await Notification.requestPermission();
       if (permission === "granted") {
         const token = await getToken(messaging, {
-          vapidKey: "YOUR_PUBLIC_VAPID_KEY", // TODO: Add your VAPID key here
+          vapidKey: "BJlE8ornMI0iCYUeoUMSje7mxfohdpJBuid2v8l4iQKJPvfjvlr5EypSz83hvNX9xNA7pnJ1N7B8n4HYJ-RhsEA", // TODO: Add your VAPID key here
         });
         console.log("FCM Token:", token);
         // Save this token to your Firestore or backend
