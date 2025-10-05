@@ -393,9 +393,13 @@ export default function ChatPage() {
             const requestData = requestDoc.data() as JoinRequest;
             const projectCollection = requestData.projectCollection || (projectDetails?.isPrivate ? 'privateProjects' : 'projects');
             const projectRef = doc(db, projectCollection, chatId);
+            const chatRoomRef = doc(db, 'ProjectChats', chatId);
 
             if (action === 'approve') {
                 await updateDoc(projectRef, {
+                    members: arrayUnion(userId)
+                });
+                 await updateDoc(chatRoomRef, {
                     members: arrayUnion(userId)
                 });
                 await updateDoc(requestRef, { status: 'approved' });
@@ -578,5 +582,3 @@ export default function ChatPage() {
      </div>
   );
 }
-
-    
