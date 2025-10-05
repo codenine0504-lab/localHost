@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, MessageSquare, Search, User } from 'lucide-react';
+import { Home, Compass, MessageSquare, Search, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -110,8 +110,8 @@ function BottomNav() {
                    <User className="h-6 w-6" />
                </Link>
              ) : (
-               <Link href="/login" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
-                   <User className="h-6 w-6" />
+               <Link href="/settings" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
+                   <Settings className="h-6 w-6" />
                </Link>
              )
            }

@@ -55,7 +55,7 @@ function ProfileSkeleton() {
 }
 
 export default function PublicProfilePage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [profileUser, setProfileUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -70,6 +70,10 @@ export default function PublicProfilePage() {
         setLoading(false);
         return;
     };
+    if (!user && !authLoading) {
+        setLoading(false);
+        return;
+    }
 
     setLoading(true);
     const userDocRef = doc(db, "users", userId);
@@ -85,7 +89,7 @@ export default function PublicProfilePage() {
 
   useEffect(() => {
     fetchUser();
-  }, [userId]);
+  }, [userId, user, authLoading]);
   
   const handleSignIn = async () => {
         try {
@@ -187,13 +191,33 @@ export default function PublicProfilePage() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
         <div className="container mx-auto py-12 px-4 md:px-6">
             <AnimatedHeader title="Loading Profile" description="Please wait..." />
             <ProfileSkeleton />
         </div>
     );
+  }
+
+  if (!user) {
+     return (
+        <div className="container mx-auto py-12 px-4 md:px-6">
+            <AnimatedHeader title="View Profile" description="Sign in to view user profiles and connect with others." />
+             <Card className="max-w-md mx-auto">
+                <CardHeader>
+                    <CardTitle>Get full access</CardTitle>
+                    <CardDescription>Sign in to message users and join projects.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={handleSignIn} className="w-full">
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Sign In with Google
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    )
   }
 
   if (!profileUser) {
@@ -280,20 +304,6 @@ export default function PublicProfilePage() {
                              )}
                         </CardContent>
                     </Card>
-                    {!user && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Get full access</CardTitle>
-                                <CardDescription>Sign in to message users and join projects.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Button onClick={handleSignIn} className="w-full">
-                                    <LogIn className="mr-2 h-4 w-4" />
-                                    Sign In with Google
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
                 </div>
                 <div className="md:col-span-2 space-y-6">
                     <Card>
