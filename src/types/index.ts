@@ -22,6 +22,7 @@ export interface AppUser {
   displayName: string | null;
   photoURL: string | null;
   email?: string | null;
+  city?: string;
   college?: string;
   status?: 'seeking' | 'active' | 'none';
   skills?: Skill[];

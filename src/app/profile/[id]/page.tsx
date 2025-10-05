@@ -9,7 +9,7 @@ import { doc, getDoc, collection, query, where, getDocs, serverTimestamp, writeB
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
-import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn, CheckCircle2, LogOut, Settings } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn, CheckCircle2, LogOut, Settings, MapPin } from "lucide-react";
 import { useRouter, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
@@ -258,7 +258,7 @@ export default function PublicProfilePage() {
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
-        <AnimatedHeader title={profileUser.displayName || 'User Profile'} description={profileUser.college || 'Discover this user\'s profile'} />
+        <AnimatedHeader title={profileUser.displayName || 'User Profile'} description={profileUser.college ? `${profileUser.college}${profileUser.city ? `, ${profileUser.city}` : ''}` : 'Discover this user\'s profile'} />
         
         <div className="md:pt-0">
             <div className="grid gap-8 md:grid-cols-3">
@@ -337,8 +337,11 @@ export default function PublicProfilePage() {
                             <CardTitle className="flex items-center gap-2"><School className="h-5 w-5" /> Education</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {profileUser.college ? (
-                                <p>{profileUser.college}</p>
+                            {profileUser.college || profileUser.city ? (
+                                <div className="space-y-1">
+                                    {profileUser.college && <p>{profileUser.college}</p>}
+                                    {profileUser.city && <p className="text-sm text-muted-foreground flex items-center gap-1.5"><MapPin className="h-4 w-4" />{profileUser.city}</p>}
+                                </div>
                             ) : (
                                  <p className="text-sm text-muted-foreground">No college information provided.</p>
                             )}

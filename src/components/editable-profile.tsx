@@ -23,6 +23,7 @@ import type { AppUser, Skill } from '@/types';
 const profileSchema = z.object({
   displayName: z.string().min(1, "Display name is required."),
   bio: z.string().max(200, "Bio must be 200 characters or less.").optional(),
+  city: z.string().optional(),
   college: z.string().optional(),
   status: z.enum(['none', 'seeking', 'active']),
   skills: z.array(z.object({
@@ -70,7 +71,6 @@ interface EditableProfileProps {
 export function EditableProfile({ user, onClose, onProfileUpdate }: EditableProfileProps) {
   const { toast } = useToast();
   const [newSkill, setNewSkill] = useState('');
-  const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
   const [availableColleges, setAvailableColleges] = useState<string[]>([]);
 
   const {
@@ -84,6 +84,7 @@ export function EditableProfile({ user, onClose, onProfileUpdate }: EditableProf
     defaultValues: {
       displayName: user.displayName || '',
       bio: user.bio || '',
+      city: user.city || '',
       college: user.college || '',
       status: user.status || 'none',
       skills: user.skills || [],
@@ -100,25 +101,29 @@ export function EditableProfile({ user, onClose, onProfileUpdate }: EditableProf
     name: "skills",
   });
   
-  const currentCollege = watch('college');
+  const selectedCity = watch('city');
+  const selectedCollege = watch('college');
 
   useEffect(() => {
-    if (currentCollege) {
+    if (selectedCity) {
+      setAvailableColleges(educationData[selectedCity as keyof typeof educationData] || []);
+    } else {
+      setAvailableColleges([]);
+    }
+  }, [selectedCity]);
+  
+  // Pre-populate city if college is already selected
+  useEffect(() => {
+    if (selectedCollege && !selectedCity) {
       for (const city in educationData) {
-        if (educationData[city as keyof typeof educationData].includes(currentCollege)) {
-          setSelectedCity(city);
-          setAvailableColleges(educationData[city as keyof typeof educationData]);
+        if (educationData[city as keyof typeof educationData].includes(selectedCollege)) {
+          setValue('city', city, { shouldValidate: true });
           break;
         }
       }
     }
-  }, [currentCollege]);
-  
-  const handleCityChange = (city: string) => {
-    setSelectedCity(city);
-    setAvailableColleges(educationData[city as keyof typeof educationData] || []);
-    setValue('college', ''); // Reset college when city changes
-  }
+  }, [selectedCollege, selectedCity, setValue]);
+
 
   const handleAddSkill = () => {
     if (newSkill.trim() && fields.length < 10) {
@@ -205,14 +210,23 @@ export function EditableProfile({ user, onClose, onProfileUpdate }: EditableProf
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
-              <Select onValueChange={handleCityChange} value={selectedCity}>
-                <SelectTrigger id="city">
-                  <SelectValue placeholder="Select your city" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="city"
+                control={control}
+                render={({ field }) => (
+                    <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        setValue('college', ''); // Reset college when city changes
+                    }} value={field.value}>
+                        <SelectTrigger id="city">
+                        <SelectValue placeholder="Select your city" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                )}
+              />
             </div>
 
             <div className="space-y-2">
