@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Compass, MessageSquare, Users, Settings } from 'lucide-react';
+import { Home, Compass, MessageSquare, Search, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBadge } from './notification-badge';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 const navItems = [
   { href: '/', label: 'Home', icon: Home, auth: false },
   { href: '/projects', label: 'Explore', icon: Compass, auth: false },
-  { href: '/people', label: 'People', icon: Users, auth: false },
+  { href: '/people', label: 'People', icon: Search, auth: false },
   { href: '/chatroom', label: 'Chat', icon: MessageSquare, auth: true },
 ];
 
@@ -104,14 +104,11 @@ function BottomNav() {
            {!loading && (
              user ? (
                <Link href={`/profile/${user.id}`} className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
-                   <Avatar className="h-8 w-8">
-                       <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
-                       <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                   </Avatar>
+                   <User className="h-6 w-6" />
                </Link>
              ) : (
                <Link href="/login" className="relative flex items-center justify-center rounded-full text-muted-foreground transition-colors z-10 hover:text-foreground w-12 h-12">
-                   <Settings className="h-6 w-6" />
+                   <User className="h-6 w-6" />
                </Link>
              )
            )}

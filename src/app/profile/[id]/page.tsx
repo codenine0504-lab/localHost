@@ -9,14 +9,14 @@ import { doc, getDoc, collection, query, where, getDocs, serverTimestamp, writeB
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedHeader } from "@/components/animated-header";
-import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn, CheckCircle2 } from "lucide-react";
+import { Instagram, Github, Linkedin, Link as LinkIcon, Briefcase, School, MessageSquare, LogIn, CheckCircle2, LogOut } from "lucide-react";
 import { useRouter, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
 import type { AppUser } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
-import { signInWithGoogle } from "@/lib/auth";
+import { signInWithGoogle, signOut } from "@/lib/auth";
 
 
 function ProfileSkeleton() {
@@ -61,6 +61,7 @@ export default function PublicProfilePage() {
   const params = useParams();
   const { toast } = useToast();
   const userId = params.id as string;
+  const isOwnProfile = user?.id === userId;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -100,6 +101,24 @@ export default function PublicProfilePage() {
             });
         }
     };
+    
+  const handleSignOut = async () => {
+    try {
+        await signOut();
+        toast({
+            title: "Signed Out",
+            description: "You have been successfully signed out.",
+        });
+        router.push('/');
+    } catch (error) {
+        console.error(error);
+        toast({
+            title: "Sign out failed",
+            description: "Could not sign out. Please try again.",
+            variant: "destructive"
+        });
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!profileUser || !user) {
@@ -181,8 +200,6 @@ export default function PublicProfilePage() {
     { platform: 'instagram', value: profileUser.instagram, icon: Instagram, urlPrefix: 'https://instagram.com/' },
     { platform: 'otherLink', value: profileUser.otherLink, icon: LinkIcon, urlPrefix: '' },
   ].filter(link => link.value);
-  
-  const isOwnProfile = user?.id === profileUser.id;
 
   return (
     <div className="container mx-auto py-12 px-4 md:px-6">
@@ -215,6 +232,11 @@ export default function PublicProfilePage() {
                          {!isOwnProfile && user && (
                              <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white" onClick={handleSendMessage}>
                                  <MessageSquare className="mr-2 h-4 w-4" /> Message
+                             </Button>
+                         )}
+                         {isOwnProfile && (
+                             <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                                 <LogOut className="mr-2 h-4 w-4" /> Sign Out
                              </Button>
                          )}
                          {socialLinks.length > 0 && (
